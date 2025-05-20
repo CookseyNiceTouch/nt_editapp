@@ -47,3 +47,16 @@ class ResolveAPI:
         except Exception as e:
             logger.error('Error retrieving project list: %s', e)
             return None 
+
+    def create_project(self, project_name):
+        logger.debug('Creating new project: %s', project_name)
+        try:
+            project = self.project_manager.CreateProject(project_name)
+            if project:
+                logger.debug('Project created successfully: %s', project_name)
+            else:
+                logger.warning('Project creation failed: %s', project_name)
+            return project
+        except Exception as e:
+            logger.error('Error creating project: %s', e)
+            return None 
