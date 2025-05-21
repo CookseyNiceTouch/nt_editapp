@@ -11,17 +11,25 @@ def main():
         while True:
             print("\nSelect an option:")
             print("1. List Projects")
-            print("2. Create New Project")
+            print("2. Create Timeline in New Project")
             print("3. Exit")
             choice = input("Enter your choice (1-3): ")
             if choice == '1':
                 projects = api.list_projects()
-                print('Projects:', projects)
+                print('Projects:')
+                for project in projects:
+                    print(f"  - {project}")
             elif choice == '2':
                 project_name = input("Enter the name for the new project: ")
+                timeline_name = input("Enter the name for the timeline (default: Timeline 1): ") or "Timeline 1"
                 project = api.create_project(project_name)
                 if project:
                     print(f"Project '{project_name}' created successfully.")
+                    timeline = api.create_timeline(project, timeline_name)
+                    if timeline:
+                        print(f"Timeline '{timeline_name}' created successfully in project '{project_name}'.")
+                    else:
+                        print(f"Failed to create timeline '{timeline_name}'.")
                 else:
                     print(f"Failed to create project '{project_name}'.")
             elif choice == '3':
