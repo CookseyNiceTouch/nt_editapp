@@ -28,3 +28,10 @@ dist-ssr
 *.MP4
 *.mp4*.mp4
 *.mp4
+
+
+# Ignore all .env folders and files
+.env/
+**/.env/
+.env
+**/.env

@@ -1,0 +1,88 @@
+{
+  "file_name": "20250509_MTC_2206.MP4",
+  "fps": 25.0,
+  "target_duration_frames": 750,
+  "actual_duration_frames": 761,
+  "segments": [
+    {
+      "segment_id": 1,
+      "speaker": "speaker1",
+      "frame_in": 297,
+      "frame_out": 362,
+      "text": "Hi, I'm Cooksy. And I'm Paul.",
+      "clip_order": 1
+    },
+    {
+      "segment_id": 2,
+      "speaker": "speaker1",
+      "frame_in": 380,
+      "frame_out": 511,
+      "text": "We've started something really exciting and we want you to be the first to know about it. It's all about creativity, innovation, and helping creators to do their best work faster, better, and easier.",
+      "clip_order": 2
+    },
+    {
+      "segment_id": 3,
+      "speaker": "speaker1",
+      "frame_in": 10495,
+      "frame_out": 10536,
+      "text": "Introducing Nice Touch. We're calling it the operating system for creators.",
+      "clip_order": 3
+    },
+    {
+      "segment_id": 4,
+      "speaker": "speaker1",
+      "frame_in": 11746,
+      "frame_out": 11782,
+      "text": "Not an actual OS",
+      "clip_order": 4
+    },
+    {
+      "segment_id": 5,
+      "speaker": "speaker1",
+      "frame_in": 11794,
+      "frame_out": 11855,
+      "text": "but a smart intuitive set of tools",
+      "clip_order": 5
+    },
+    {
+      "segment_id": 6,
+      "speaker": "speaker1",
+      "frame_in": 12414,
+      "frame_out": 12491,
+      "text": "that streamline your existing creative processes.",
+      "clip_order": 6
+    },
+    {
+      "segment_id": 7,
+      "speaker": "speaker1",
+      "frame_in": 12506,
+      "frame_out": 12633,
+      "text": "This means smoother workflows, fewer disruptions, more opportunities to create amazing work",
+      "clip_order": 7
+    },
+    {
+      "segment_id": 8,
+      "speaker": "speaker1",
+      "frame_in": 12633,
+      "frame_out": 12718,
+      "text": "leading to better projects, more gigs and more income for creators.",
+      "clip_order": 8
+    },
+    {
+      "segment_id": 9,
+      "speaker": "speaker1",
+      "frame_in": 23897,
+      "frame_out": 24012,
+      "text": "This is just the beginning. Who knows where we'll end up, but it's going to be big.",
+      "clip_order": 9
+    },
+    {
+      "segment_id": 10,
+      "speaker": "speaker1",
+      "frame_in": 24178,
+      "frame_out": 24201,
+      "text": "Join us for the journey.",
+      "clip_order": 10
+    }
+  ]
+}
