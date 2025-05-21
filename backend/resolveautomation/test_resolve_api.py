@@ -1,5 +1,6 @@
 import logging
 import os # For path joining
+import json # For pretty printing the dict
 from resolve_api import ResolveAPI
 
 logging.basicConfig(level=logging.DEBUG)
@@ -14,8 +15,9 @@ def main():
             print("1. List Resolve Projects")
             print("2. Create Resolve Project & Timeline")
             print("3. Get Media Pool Item Unique ID")
-            print("4. Exit")
-            choice = input("Enter your choice (1-4): ")
+            print("4. Add Clips to Timeline from JSON")
+            print("5. Exit")
+            choice = input("Enter your choice (1-5): ")
 
             if choice == '1':
                 projects = api.list_projects()
@@ -55,6 +57,18 @@ def main():
                 else:
                     print(f"Could not retrieve Unique ID for clip '{target_clip_input}'. Clip not found or error occurred. Check logs.")
             elif choice == '4':
+                default_json_filename = "82e06fc0-ebc4-4b67-944c-aefdb6fbb3ee.json"
+                json_file_name_input = input(f"Enter Nice Touch JSON filename (default: {default_json_filename}): ") or default_json_filename
+                nt_json_path = os.path.join("data", json_file_name_input)
+
+                print(f"Attempting to add clips to timeline using JSON: {nt_json_path}")
+                success = api.add_clips_to_timeline_from_json(nt_json_path)
+
+                if success:
+                    print(f"Successfully processed JSON and added clips to timeline (if any were valid and found). Check Resolve and logs.")
+                else:
+                    print(f"Failed to add clips to timeline using {nt_json_path}. Check logs for details.")
+            elif choice == '5':
                 print("Exiting.")
                 break
             else:
