@@ -1,0 +1,14 @@
+[project]
+name = "transcriptanalysis"
+version = "0.1.0"
+description = "Video transcript analysis tool that generates frame-accurate JSON transcripts"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "openai>=1.0.0",
+    "ffmpeg-python>=0.2.0",
+    "jsonschema>=4.0.0",
+]
+
+[project.scripts]
+videoanalyzer = "transcriptanalysis.videoanalyzer:main"
