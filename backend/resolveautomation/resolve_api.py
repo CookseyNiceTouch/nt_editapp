@@ -1,6 +1,7 @@
 import logging
 import sys
 import os
+import json # Added for reading JSON file
 
 # Setup basic logging
 logging.basicConfig(level=logging.DEBUG)
@@ -89,4 +90,61 @@ class ResolveAPI:
             return timeline
         except Exception as e:
             logger.error('Error creating timeline: %s', e)
+            return None 
+
+    def get_media_pool_item_unique_id(self, nt_project_json_path, target_clip_name):
+        logger.debug(f"Attempting to get Unique ID for clip '{target_clip_name}' using JSON '{nt_project_json_path}'")
+        try:
+            if not os.path.exists(nt_project_json_path):
+                logger.error(f"Nice Touch JSON file not found: {nt_project_json_path}")
+                return None
+            
+            with open(nt_project_json_path, 'r') as f:
+                nt_project_data = json.load(f)
+            
+            resolve_project_name = nt_project_data.get("resolve_project_name")
+            if not resolve_project_name:
+                logger.error("'resolve_project_name' not found in the JSON file.")
+                return None
+            logger.info(f"Target Resolve project name from JSON: {resolve_project_name}")
+
+            project = self.project_manager.LoadProject(resolve_project_name)
+            if not project:
+                current_project = self.project_manager.GetCurrentProject()
+                if current_project and current_project.GetName() == resolve_project_name:
+                    logger.info(f"Project '{resolve_project_name}' is already the current project.")
+                    project = current_project
+                else:
+                    logger.error(f"Could not load or find project '{resolve_project_name}'.")
+                    return None
+            
+            logger.info(f"Successfully accessed project: {project.GetName()}")
+
+            media_pool = project.GetMediaPool()
+            if not media_pool:
+                logger.error("Could not get Media Pool for the project.")
+                return None
+
+            root_folder = media_pool.GetRootFolder()
+            if not root_folder:
+                logger.error("Could not get root folder from Media Pool.")
+                return None
+            
+            clips_list = root_folder.GetClipList()
+            if not clips_list:
+                logger.warning(f"No clips found in the root folder for project '{project.GetName()}'.")
+                return None
+
+            for media_pool_item in clips_list:
+                if media_pool_item.GetName() == target_clip_name:
+                    logger.info(f"Found matching clip: {target_clip_name}")
+                    unique_id = media_pool_item.GetUniqueId()
+                    logger.info(f"Retrieved Unique ID: {unique_id}")
+                    return unique_id
+            
+            logger.warning(f"Clip '{target_clip_name}' not found in Media Pool for project '{project.GetName()}'.")
+            return None
+
+        except Exception as e:
+            logger.error(f"Error in get_media_pool_item_unique_id: {e}", exc_info=True)
             return None 

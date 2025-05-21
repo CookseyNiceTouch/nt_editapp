@@ -1,0 +1,19 @@
+{
+    "nice_touch_project_uuid": "82e06fc0-ebc4-4b67-944c-aefdb6fbb3ee",
+    "resolve_project_name": "Test",
+    "resolve_timeline_id": "YOUR_RESOLVE_TIMELINE_ID_HERE",
+    "clips": [
+        {
+            "mediapool_item_uuid": "MEDIA_POOL_ITEM_UUID_1_HERE",
+            "position_id": 1,
+            "start_frame": 0,
+            "end_frame": 100
+        },
+        {
+            "mediapool_item_uuid": "MEDIA_POOL_ITEM_UUID_2_HERE",
+            "position_id": 2,
+            "start_frame": 101,
+            "end_frame": 200
+        }
+    ]
+} 
