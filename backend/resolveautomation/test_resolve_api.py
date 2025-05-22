@@ -64,28 +64,18 @@ def main():
                 if not os.path.isabs(json_path_input):
                     json_path_input = os.path.abspath(json_path_input)
 
-                print(f"Attempting to build timeline using '{json_path_input}' (initial check)...")
-                # First call without confirm_delete_existing to check if timeline exists
-                result = api.build_timeline_from_edited_output(json_path_input, confirm_delete_existing=False)
+                default_timeline_name_build = "Nice Touch Timeline"
+                timeline_name_param = input(f"Enter target timeline name (default: {default_timeline_name_build}): ") or default_timeline_name_build
 
-                if result == "TIMELINE_EXISTS_CONFIRMATION_NEEDED":
-                    print("Timeline 'Nice Touch Timeline' already exists.")
-                    confirm = input("Delete it and proceed with building the new timeline? (y/n): ").lower()
-                    if confirm == 'y':
-                        print(f"Re-attempting to build timeline, confirming deletion...")
-                        final_result = api.build_timeline_from_edited_output(json_path_input, confirm_delete_existing=True)
-                        if final_result is True:
-                            print(f"Successfully built timeline from '{json_path_input}' after deleting existing one. Check Resolve and logs.")
-                        else:
-                            print(f"Failed to build timeline from '{json_path_input}' even after confirming deletion. Check logs.")
-                    else:
-                        print("Operation cancelled by user. Existing timeline was not deleted.")
-                elif result is True:
-                    print(f"Successfully built timeline from '{json_path_input}'. (No existing timeline found or it was handled implicitly). Check Resolve and logs.")
+                print(f"Attempting to build timeline '{timeline_name_param}' using '{json_path_input}'...")
+                result = api.build_timeline_from_edited_output(json_path_input, timeline_name_param)
+
+                if result is True:
+                    print(f"Successfully built/updated timeline '{timeline_name_param}' from '{json_path_input}'. Check Resolve and logs.")
                 elif result is False:
-                    print(f"Failed to build timeline using '{json_path_input}'. Check logs for details.")
+                    print(f"Failed to build/update timeline '{timeline_name_param}' using '{json_path_input}'. Check logs for details.")
                 else:
-                    # Should not happen if API returns bool or the specific string
+                    # Should not happen if API returns bool as per new logic
                     print(f"Unexpected result from API: {result}. Check logs.")
             elif choice == '5':
                 default_timeline_name = "Nice Touch Timeline"

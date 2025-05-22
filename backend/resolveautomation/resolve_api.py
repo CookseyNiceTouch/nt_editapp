@@ -331,11 +331,11 @@ class ResolveAPI:
         logger.info(f"Timeline '{timeline_name}' not found.")
         return None
 
-    def build_timeline_from_edited_output(self, edited_output_json_path, confirm_delete_existing=False):
-        logger.info(f"Attempting to build timeline from edited output JSON: {edited_output_json_path}, Confirm Delete: {confirm_delete_existing}")
+    def build_timeline_from_edited_output(self, edited_output_json_path, timeline_name_to_use="Nice Touch Timeline"):
+        logger.info(f"Attempting to build timeline '{timeline_name_to_use}' from edited output JSON: {edited_output_json_path}")
         project_uuid_for_log = "N/A"
         timeline_uuid_for_log = "N/A"
-        timeline_name_to_use = "Nice Touch Timeline"
+        # timeline_name_to_use = "Nice Touch Timeline" # Parameterized now
 
         try:
             # 1. Get Current Project
@@ -352,29 +352,50 @@ class ResolveAPI:
                 return False
 
             # 2. Handle Timeline
-            existing_timeline_object = self._find_timeline_by_name(project, timeline_name_to_use)
+            timeline = self._find_timeline_by_name(project, timeline_name_to_use)
 
-            if existing_timeline_object:
-                if not confirm_delete_existing:
-                    logger.info(f"Timeline '{timeline_name_to_use}' exists and confirmation to delete is not given.")
-                    return "TIMELINE_EXISTS_CONFIRMATION_NEEDED" # Special string to indicate user prompt is needed
+            if timeline:
+                logger.info(f"Found existing timeline: '{timeline.GetName()}' (UUID: {timeline.GetUniqueId()}). Clearing existing clips from track 1 (video & audio).")
+                project.SetCurrentTimeline(timeline) # Ensure it's the current timeline before modifying
                 
-                logger.info(f"Confirmation received. Deleting existing timeline '{timeline_name_to_use}' (UUID: {existing_timeline_object.GetUniqueId()}).")
-                # Note: project.DeleteTimeline() takes the timeline object itself.
-                delete_success = project.DeleteTimelines([existing_timeline_object]) 
-                if not delete_success:
-                    logger.error(f"Failed to delete existing timeline '{timeline_name_to_use}'. Please check Resolve.")
-                    return False # Indicate error
-                logger.info(f"Successfully deleted existing timeline '{timeline_name_to_use}'.")
+                all_clips_to_delete = []
+                # Get clips from the first video track
+                video_clips_on_track_1 = timeline.GetItemListInTrack("video", 1) 
+                if video_clips_on_track_1:
+                    logger.debug(f"Found {len(video_clips_on_track_1)} video clips on track 1.")
+                    all_clips_to_delete.extend(video_clips_on_track_1)
+                else:
+                    logger.debug("No video clips found on track 1.")
+
+                # Get clips from the first audio track
+                audio_clips_on_track_1 = timeline.GetItemListInTrack("audio", 1)
+                if audio_clips_on_track_1:
+                    logger.debug(f"Found {len(audio_clips_on_track_1)} audio clips on track 1.")
+                    all_clips_to_delete.extend(audio_clips_on_track_1)
+                else:
+                    logger.debug("No audio clips found on track 1.")
+                
+                if all_clips_to_delete:
+                    logger.info(f"Attempting to delete {len(all_clips_to_delete)} total clips (video and audio) from track 1 of timeline '{timeline.GetName()}'.")
+                    delete_success = timeline.DeleteClips(all_clips_to_delete) 
+                    if delete_success:
+                        logger.info(f"Successfully deleted {len(all_clips_to_delete)} clips from timeline '{timeline.GetName()}'.")
+                    else:
+                        logger.error(f"Failed to delete clips from timeline '{timeline.GetName()}'. Proceeding to add new clips might result in duplicates or errors.")
+                        # Potentially return False here if it's critical that old clips are removed
+                else:
+                    logger.info(f"No clips found on video track 1 or audio track 1 of timeline '{timeline.GetName()}' to delete.")
+            else:
+                logger.info(f"Timeline '{timeline_name_to_use}' not found. Creating new timeline.")
+                timeline = media_pool.CreateEmptyTimeline(timeline_name_to_use)
+                if not timeline:
+                    logger.error(f"Failed to create new timeline '{timeline_name_to_use}'.")
+                    return False
+                project.SetCurrentTimeline(timeline)
+                logger.info(f"Successfully created and set current timeline '{timeline.GetName()}'")
             
-            logger.info(f"Creating new timeline: '{timeline_name_to_use}'")
-            timeline = media_pool.CreateEmptyTimeline(timeline_name_to_use)
-            if not timeline:
-                logger.error(f"Failed to create new timeline '{timeline_name_to_use}'.")
-                return False
-            project.SetCurrentTimeline(timeline) 
             timeline_uuid_for_log = timeline.GetUniqueId()
-            logger.info(f"Successfully created and set current timeline '{timeline.GetName()}' with UUID: {timeline_uuid_for_log}")
+            logger.info(f"Using timeline '{timeline.GetName()}' with UUID: {timeline_uuid_for_log}")
 
             # 3. Read edited_output.json
             if not os.path.exists(edited_output_json_path):
