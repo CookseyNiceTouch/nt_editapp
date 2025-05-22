@@ -1,0 +1,80 @@
+{
+  "file_name": "20250509_MTC_2206.MP4",
+  "fps": 25.0,
+  "target_duration_frames": 750,
+  "actual_duration_frames": 732,
+  "segments": [
+    {
+      "segment_id": 1,
+      "speaker": "Cooksey",
+      "frame_in": 294,
+      "frame_out": 326,
+      "text": "Hi, I'm Cooksey.",
+      "clip_order": 1
+    },
+    {
+      "segment_id": 2,
+      "speaker": "Paul",
+      "frame_in": 342,
+      "frame_out": 364,
+      "text": "And I'm Paul.",
+      "clip_order": 2
+    },
+    {
+      "segment_id": 3,
+      "speaker": "Cooksey",
+      "frame_in": 378,
+      "frame_out": 510,
+      "text": "We've started something really exciting and we want you to be the first to know about it.",
+      "clip_order": 3
+    },
+    {
+      "segment_id": 4,
+      "speaker": "Cooksey",
+      "frame_in": 1889,
+      "frame_out": 1926,
+      "text": "Introducing Nice Touch.",
+      "clip_order": 4
+    },
+    {
+      "segment_id": 5,
+      "speaker": "Cooksey",
+      "frame_in": 1926,
+      "frame_out": 1992,
+      "text": "We're calling it the Operating System for Creators.",
+      "clip_order": 5
+    },
+    {
+      "segment_id": 6,
+      "speaker": "Cooksey",
+      "frame_in": 2220,
+      "frame_out": 2360,
+      "text": "This means smoother workflows, fewer disruptions, and more opportunities to create amazing work.",
+      "clip_order": 6
+    },
+    {
+      "segment_id": 7,
+      "speaker": "Cooksey",
+      "frame_in": 2468,
+      "frame_out": 2604,
+      "text": "We're not trying to automate creativity itself. We want to take away the mundane tasks that hold you back.",
+      "clip_order": 7
+    },
+    {
+      "segment_id": 8,
+      "speaker": "Cooksey",
+      "frame_in": 3942,
+      "frame_out": 4048,
+      "text": "This is just the beginning. Who knows where we'll end up, but it's going to be big.",
+      "clip_order": 8
+    },
+    {
+      "segment_id": 9,
+      "speaker": "Paul",
+      "frame_in": 4082,
+      "frame_out": 4118,
+      "text": "Join us for the journey.",
+      "clip_order": 9
+    }
+  ]
+}
