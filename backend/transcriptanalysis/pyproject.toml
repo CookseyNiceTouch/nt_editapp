@@ -5,9 +5,10 @@ description = "Video transcript analysis tool that generates frame-accurate JSON
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "openai>=1.0.0",
+    "requests>=2.28.0",
     "ffmpeg-python>=0.2.0",
     "jsonschema>=4.0.0",
+    "python-dotenv>=1.0.0",
 ]
 
 [project.scripts]
