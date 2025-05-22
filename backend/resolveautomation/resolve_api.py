@@ -15,6 +15,7 @@ class ResolveAPI:
         except ImportError as e:
             logger.error('Could not import DaVinciResolveScript: %s', e)
             raise
+        self.dvr_script = dvr_script # Store for later use
         
         # Try to get resolve object
         try:
@@ -330,11 +331,11 @@ class ResolveAPI:
         logger.info(f"Timeline '{timeline_name}' not found.")
         return None
 
-    def build_timeline_from_edited_output(self, edited_output_json_path, confirm_delete_existing=False):
-        logger.info(f"Attempting to build timeline from edited output JSON: {edited_output_json_path}, Confirm Delete: {confirm_delete_existing}")
+    def build_timeline_from_edited_output(self, edited_output_json_path, timeline_name_to_use="Nice Touch Timeline"):
+        logger.info(f"Attempting to build timeline '{timeline_name_to_use}' from edited output JSON: {edited_output_json_path}")
         project_uuid_for_log = "N/A"
         timeline_uuid_for_log = "N/A"
-        timeline_name_to_use = "Nice Touch Timeline"
+        # timeline_name_to_use = "Nice Touch Timeline" # Parameterized now
 
         try:
             # 1. Get Current Project
@@ -351,29 +352,50 @@ class ResolveAPI:
                 return False
 
             # 2. Handle Timeline
-            existing_timeline_object = self._find_timeline_by_name(project, timeline_name_to_use)
+            timeline = self._find_timeline_by_name(project, timeline_name_to_use)
 
-            if existing_timeline_object:
-                if not confirm_delete_existing:
-                    logger.info(f"Timeline '{timeline_name_to_use}' exists and confirmation to delete is not given.")
-                    return "TIMELINE_EXISTS_CONFIRMATION_NEEDED" # Special string to indicate user prompt is needed
+            if timeline:
+                logger.info(f"Found existing timeline: '{timeline.GetName()}' (UUID: {timeline.GetUniqueId()}). Clearing existing clips from track 1 (video & audio).")
+                project.SetCurrentTimeline(timeline) # Ensure it's the current timeline before modifying
                 
-                logger.info(f"Confirmation received. Deleting existing timeline '{timeline_name_to_use}' (UUID: {existing_timeline_object.GetUniqueId()}).")
-                # Note: project.DeleteTimeline() takes the timeline object itself.
-                delete_success = project.DeleteTimelines([existing_timeline_object]) 
-                if not delete_success:
-                    logger.error(f"Failed to delete existing timeline '{timeline_name_to_use}'. Please check Resolve.")
-                    return False # Indicate error
-                logger.info(f"Successfully deleted existing timeline '{timeline_name_to_use}'.")
+                all_clips_to_delete = []
+                # Get clips from the first video track
+                video_clips_on_track_1 = timeline.GetItemListInTrack("video", 1) 
+                if video_clips_on_track_1:
+                    logger.debug(f"Found {len(video_clips_on_track_1)} video clips on track 1.")
+                    all_clips_to_delete.extend(video_clips_on_track_1)
+                else:
+                    logger.debug("No video clips found on track 1.")
+
+                # Get clips from the first audio track
+                audio_clips_on_track_1 = timeline.GetItemListInTrack("audio", 1)
+                if audio_clips_on_track_1:
+                    logger.debug(f"Found {len(audio_clips_on_track_1)} audio clips on track 1.")
+                    all_clips_to_delete.extend(audio_clips_on_track_1)
+                else:
+                    logger.debug("No audio clips found on track 1.")
+                
+                if all_clips_to_delete:
+                    logger.info(f"Attempting to delete {len(all_clips_to_delete)} total clips (video and audio) from track 1 of timeline '{timeline.GetName()}'.")
+                    delete_success = timeline.DeleteClips(all_clips_to_delete) 
+                    if delete_success:
+                        logger.info(f"Successfully deleted {len(all_clips_to_delete)} clips from timeline '{timeline.GetName()}'.")
+                    else:
+                        logger.error(f"Failed to delete clips from timeline '{timeline.GetName()}'. Proceeding to add new clips might result in duplicates or errors.")
+                        # Potentially return False here if it's critical that old clips are removed
+                else:
+                    logger.info(f"No clips found on video track 1 or audio track 1 of timeline '{timeline.GetName()}' to delete.")
+            else:
+                logger.info(f"Timeline '{timeline_name_to_use}' not found. Creating new timeline.")
+                timeline = media_pool.CreateEmptyTimeline(timeline_name_to_use)
+                if not timeline:
+                    logger.error(f"Failed to create new timeline '{timeline_name_to_use}'.")
+                    return False
+                project.SetCurrentTimeline(timeline)
+                logger.info(f"Successfully created and set current timeline '{timeline.GetName()}'")
             
-            logger.info(f"Creating new timeline: '{timeline_name_to_use}'")
-            timeline = media_pool.CreateEmptyTimeline(timeline_name_to_use)
-            if not timeline:
-                logger.error(f"Failed to create new timeline '{timeline_name_to_use}'.")
-                return False
-            project.SetCurrentTimeline(timeline) 
             timeline_uuid_for_log = timeline.GetUniqueId()
-            logger.info(f"Successfully created and set current timeline '{timeline.GetName()}' with UUID: {timeline_uuid_for_log}")
+            logger.info(f"Using timeline '{timeline.GetName()}' with UUID: {timeline_uuid_for_log}")
 
             # 3. Read edited_output.json
             if not os.path.exists(edited_output_json_path):
@@ -458,3 +480,83 @@ class ResolveAPI:
             logger.error(f"Error in build_timeline_from_edited_output: {e}", exc_info=True)
             logger.error(f"Operation state: Project UUID: {project_uuid_for_log}, Timeline UUID: {timeline_uuid_for_log}")
             return False # General error 
+
+    def export_timeline_as_aaf(self, timeline_name="Nice Touch Timeline", output_dir="data/exports"):
+        logger.info(f"Attempting to export timeline '{timeline_name}' as AAF to directory '{output_dir}'")
+        project = self.project_manager.GetCurrentProject()
+        if not project:
+            logger.error("No project is currently open in DaVinci Resolve.")
+            return False
+
+        timeline = self._find_timeline_by_name(project, timeline_name)
+        if not timeline:
+            logger.error(f"Timeline '{timeline_name}' not found in project '{project.GetName()}'.")
+            return False
+
+        # Ensure output directory exists
+        if not os.path.isabs(output_dir):
+            output_dir = os.path.abspath(output_dir)
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Define AAF export settings
+        # Based on Resolve scripting documentation, ExportTimeline takes these parameters:
+        # timeline (Timeline object): The timeline to export.
+        # filePath (string): The full path to the output file (including filename and extension).
+        # exportType (int): self.dvr_script.EXPORT_AAF, self.dvr_script.EXPORT_DRT, etc.
+        # exportSubtype (int): e.g., self.dvr_script.EXPORT_AAF_NEW, self.dvr_script.EXPORT_AAF_EXISTING_WITH_NEW_VERSION
+        # Example settings for a new AAF, more options might be available
+        # For AAF, we might need to specify additional options like embedded audio, video format, etc.
+        # The API might also have specific constants for AAF export. Let's assume a general AAF export for now.
+        # The DaVinciResolveScript documentation for ExportTimeline says:
+        # bool ExportTimeline(timeline, filePath, exportType<, exportSubtype>)        
+        # exportType = dvr_script.EXPORT_AAF, EXPORT_DRT, EXPORT_XML, EXPORT_EDL, EXPORT_TEXT_CSV, EXPORT_TEXT_TAB, EXPORT_IO
+        # For AAF export, exportSubtype may not be strictly necessary or could default.
+        # Let's try with the basic AAF export type.
+
+        # Sanitize timeline name for use in filename
+        safe_timeline_name = "".join(c if c.isalnum() else "_" for c in timeline_name)
+        output_filename = f"{safe_timeline_name}.aaf"
+        output_filepath = os.path.join(output_dir, output_filename)
+
+        logger.info(f"Exporting timeline '{timeline_name}' to '{output_filepath}'")
+
+        try:
+            # EXPORT_AAF = 0 (from typical observations, but should use dvr_script constant)
+            # Let's assume dvr_script.EXPORT_AAF exists. If not, we might need to find the correct value.
+            # Checking common dvr_script structure:
+            # dvr_script.EXPORT_AAF = 0
+            # dvr_script.EXPORT_DRT = 1
+            # dvr_script.EXPORT_XML = 2
+            # dvr_script.EXPORT_EDL = 3
+            # etc.
+            # For now, let's directly use the assumed constant name. The DaVinciResolveScript module
+            # should define these.
+            export_type_aaf = getattr(self.dvr_script, 'EXPORT_AAF', None)
+            if export_type_aaf is None:
+                logger.error("DaVinciResolveScript.EXPORT_AAF constant not found. Cannot export AAF.")
+                logger.warning("Attempting to use integer value 0 for EXPORT_AAF as a fallback. This may not work.")
+                export_type_aaf = 0 # Fallback, highly risky.
+            
+            # Regarding exportSubtype: For AAF, it seems it might not always be needed or has defaults.
+            # Some documentation hints at constants like AAF_EMBEDDED_AUDIO or AAF_LINK_TO_SOURCE_MEDIA
+            # The Resolve 17 scripting API docs mention for ExportTimeline:
+            # exportType = 0 for AAF, 1 for DRT, 2 for XML, 3 for EDL etc.
+            # It doesn't explicitly list subtypes for AAF in the simple ExportTimeline call signature, 
+            # but Project.ExportAAF might have more detailed options.
+            # Let's try without subtype first, as it's optional in the signature.
+            
+            success = timeline.Export(output_filepath, self.resolve.EXPORT_AAF, self.resolve.EXPORT_AAF_NEW)
+
+            if success:
+                logger.info(f"Successfully exported timeline '{timeline_name}' to '{output_filepath}'")
+                return output_filepath # Return the path on success
+            else:
+                logger.error(f"Failed to export timeline '{timeline_name}' as AAF. Resolve API returned failure.")
+                return False
+        except AttributeError as ae:
+            logger.error(f"Error accessing DaVinciResolveScript constants (e.g., EXPORT_AAF): {ae}")
+            logger.error("This might indicate an issue with the DaVinci Resolve scripting environment or an incorrect constant name.")
+            return False
+        except Exception as e:
+            logger.error(f"Error exporting timeline as AAF: {e}", exc_info=True)
+            return False 
