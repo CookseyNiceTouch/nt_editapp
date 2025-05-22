@@ -16,8 +16,9 @@ def main():
             print("2. Create Resolve Project & Timeline")
             print("3. Get Media Pool Item Unique ID")
             print("4. Build Timeline from Edited Output JSON")
-            print("5. Exit")
-            choice = input("Enter your choice (1-5): ")
+            print("5. Export Timeline as AAF")
+            print("6. Exit")
+            choice = input("Enter your choice (1-6): ")
 
             if choice == '1':
                 projects = api.list_projects()
@@ -87,6 +88,19 @@ def main():
                     # Should not happen if API returns bool or the specific string
                     print(f"Unexpected result from API: {result}. Check logs.")
             elif choice == '5':
+                default_timeline_name = "Nice Touch Timeline"
+                timeline_name_input = input(f"Enter timeline name to export (default: {default_timeline_name}): ") or default_timeline_name
+                default_output_dir = os.path.join("data", "exports")
+                output_dir_input = input(f"Enter output directory (default: {default_output_dir}): ") or default_output_dir
+
+                print(f"Attempting to export timeline '{timeline_name_input}' as AAF to '{output_dir_input}'...")
+                export_result = api.export_timeline_as_aaf(timeline_name_input, output_dir_input)
+
+                if export_result and isinstance(export_result, str): # Returns filepath on success
+                    print(f"Successfully exported timeline '{timeline_name_input}' to '{export_result}'")
+                else:
+                    print(f"Failed to export timeline '{timeline_name_input}'. Check logs for details.")
+            elif choice == '6':
                 print("Exiting.")
                 break
             else:
