@@ -1,0 +1,288 @@
+{
+  "file_name": "20250509_MTC_2206.MP4",
+  "fps": 25.0,
+  "target_duration_frames": 3000,
+  "actual_duration_frames": 2903,
+  "segments": [
+    {
+      "segment_id": 1,
+      "speaker": "A",
+      "frame_in": 5199,
+      "frame_out": 5227,
+      "text": "Hi, I'm Cooksey.",
+      "clip_order": 1
+    },
+    {
+      "segment_id": 2,
+      "speaker": "B",
+      "frame_in": 5235,
+      "frame_out": 5257,
+      "text": "And I'm Paul.",
+      "clip_order": 2
+    },
+    {
+      "segment_id": 3,
+      "speaker": "A",
+      "frame_in": 5263,
+      "frame_out": 5379,
+      "text": "We've started something really exciting and we want you to be the first to know about it.",
+      "clip_order": 3
+    },
+    {
+      "segment_id": 4,
+      "speaker": "B",
+      "frame_in": 5385,
+      "frame_out": 5551,
+      "text": "It's all about creativity, helping creators to do their best work faster, better and easier.",
+      "clip_order": 4
+    },
+    {
+      "segment_id": 5,
+      "speaker": "A",
+      "frame_in": 8000,
+      "frame_out": 8038,
+      "text": "But first, a bit of history.",
+      "clip_order": 5
+    },
+    {
+      "segment_id": 6,
+      "speaker": "A",
+      "frame_in": 8042,
+      "frame_out": 8176,
+      "text": "We both cut our teeth in TV and VFX and then found ourselves in the world of E learning.",
+      "clip_order": 6
+    },
+    {
+      "segment_id": 7,
+      "speaker": "A",
+      "frame_in": 8181,
+      "frame_out": 8368,
+      "text": "It's there a company called Circus street that we were able to collaborate, argue, bounce ideas off each other for over a decade.",
+      "clip_order": 7
+    },
+    {
+      "segment_id": 8,
+      "speaker": "B",
+      "frame_in": 8386,
+      "frame_out": 8466,
+      "text": "At Circuit street, our real advantage was creativity.",
+      "clip_order": 8
+    },
+    {
+      "segment_id": 9,
+      "speaker": "B",
+      "frame_in": 8472,
+      "frame_out": 8582,
+      "text": "While our competitors were just ticking boxes, we were building something different.",
+      "clip_order": 9
+    },
+    {
+      "segment_id": 10,
+      "speaker": "B",
+      "frame_in": 8594,
+      "frame_out": 8732,
+      "text": "A product driven by innovation, quality and genuine creativity.",
+      "clip_order": 10
+    },
+    {
+      "segment_id": 11,
+      "speaker": "B",
+      "frame_in": 8740,
+      "frame_out": 8776,
+      "text": "That's what set Us apart.",
+      "clip_order": 11
+    },
+    {
+      "segment_id": 12,
+      "speaker": "A",
+      "frame_in": 8790,
+      "frame_out": 8894,
+      "text": "All of that experience, insight, shared passion led us to Nice Touch.",
+      "clip_order": 12
+    },
+    {
+      "segment_id": 13,
+      "speaker": "A",
+      "frame_in": 8896,
+      "frame_out": 9010,
+      "text": "A new chapter dedicated entirely to empowering creators like never before.",
+      "clip_order": 13
+    },
+    {
+      "segment_id": 14,
+      "speaker": "A",
+      "frame_in": 11628,
+      "frame_out": 11668,
+      "text": "Introducing. Nice touch.",
+      "clip_order": 14
+    },
+    {
+      "segment_id": 15,
+      "speaker": "A",
+      "frame_in": 11673,
+      "frame_out": 11741,
+      "text": "We're calling it the operating system for Creators.",
+      "clip_order": 15
+    },
+    {
+      "segment_id": 16,
+      "speaker": "B",
+      "frame_in": 11751,
+      "frame_out": 11783,
+      "text": "Not an actual os,",
+      "clip_order": 16
+    },
+    {
+      "segment_id": 17,
+      "speaker": "B",
+      "frame_in": 11789,
+      "frame_out": 11857,
+      "text": "but a smart, intuitive set of tools",
+      "clip_order": 17
+    },
+    {
+      "segment_id": 18,
+      "speaker": "B",
+      "frame_in": 12418,
+      "frame_out": 12494,
+      "text": "that streamline your existing creative processes.",
+      "clip_order": 18
+    },
+    {
+      "segment_id": 19,
+      "speaker": "A",
+      "frame_in": 12510,
+      "frame_out": 12554,
+      "text": "This means smoother workflows, fewer disruptions,",
+      "clip_order": 19
+    },
+    {
+      "segment_id": 20,
+      "speaker": "A",
+      "frame_in": 12582,
+      "frame_out": 12634,
+      "text": "more opportunities to create amazing work,",
+      "clip_order": 20
+    },
+    {
+      "segment_id": 21,
+      "speaker": "A",
+      "frame_in": 12634,
+      "frame_out": 12740,
+      "text": "leading to better projects, more gigs, and more income for creators.",
+      "clip_order": 21
+    },
+    {
+      "segment_id": 22,
+      "speaker": "A",
+      "frame_in": 15450,
+      "frame_out": 15580,
+      "text": "We're not trying to automate creativity itself. We want to take away the mundane tasks that hold you back.",
+      "clip_order": 22
+    },
+    {
+      "segment_id": 23,
+      "speaker": "B",
+      "frame_in": 15594,
+      "frame_out": 15768,
+      "text": "Every creator understands the frustration of losing valuable hours to repetitive tasks,",
+      "clip_order": 23
+    },
+    {
+      "segment_id": 24,
+      "speaker": "B",
+      "frame_in": 15772,
+      "frame_out": 15894,
+      "text": "things like checking exports or organizing files, chasing feedback.",
+      "clip_order": 24
+    },
+    {
+      "segment_id": 25,
+      "speaker": "B",
+      "frame_in": 15899,
+      "frame_out": 16068,
+      "text": "We want to remove those barriers, helping you to spend more time doing what you genuinely love creating.",
+      "clip_order": 25
+    },
+    {
+      "segment_id": 26,
+      "speaker": "B",
+      "frame_in": 19965,
+      "frame_out": 20027,
+      "text": "So we're at the start of this journey, and we need you.",
+      "clip_order": 26
+    },
+    {
+      "segment_id": 27,
+      "speaker": "A",
+      "frame_in": 20257,
+      "frame_out": 20385,
+      "text": "We wouldn't be where we are now if we hadn't worked with some of the most talented and amazing people. It's all about collaboration.",
+      "clip_order": 27
+    },
+    {
+      "segment_id": 28,
+      "speaker": "B",
+      "frame_in": 21066,
+      "frame_out": 21150,
+      "text": "So whether it's just a chat or you want to see what we're up to or get involved somehow.",
+      "clip_order": 28
+    },
+    {
+      "segment_id": 29,
+      "speaker": "B",
+      "frame_in": 21424,
+      "frame_out": 21442,
+      "text": "Let's do it.",
+      "clip_order": 29
+    },
+    {
+      "segment_id": 30,
+      "speaker": "A",
+      "frame_in": 22553,
+      "frame_out": 22613,
+      "text": "Go sign up on the site. It's nicetouch app.",
+      "clip_order": 30
+    },
+    {
+      "segment_id": 31,
+      "speaker": "A",
+      "frame_in": 22613,
+      "frame_out": 22680,
+      "text": "Come chat with us on Discord. I'll put the link in the description. We're online most days,",
+      "clip_order": 31
+    },
+    {
+      "segment_id": 32,
+      "speaker": "A",
+      "frame_in": 22717,
+      "frame_out": 22751,
+      "text": "and if you've got our numbers.",
+      "clip_order": 32
+    },
+    {
+      "segment_id": 33,
+      "speaker": "B",
+      "frame_in": 22751,
+      "frame_out": 22809,
+      "text": "Just give us a call or drop us a message.",
+      "clip_order": 33
+    },
+    {
+      "segment_id": 34,
+      "speaker": "A",
+      "frame_in": 24447,
+      "frame_out": 24545,
+      "text": "This is just the beginning. Who knows where we'll end up? But it's going to be big.",
+      "clip_order": 34
+    },
+    {
+      "segment_id": 35,
+      "speaker": "B",
+      "frame_in": 24555,
+      "frame_out": 24595,
+      "text": "Join us for the journey.",
+      "clip_order": 35
+    }
+  ]
+}

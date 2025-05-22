@@ -154,45 +154,6 @@ If processing fails, the JSON will have a different structure:
 
 5. **Transcript Reconstruction**: The complete transcript is provided in `full_transcript`, but you can also reconstruct it from the words array.
 
-## Example Use Cases
-
-1. **Extract utterances by speaker**:
-   ```python
-   def get_speaker_dialogue(data, target_speaker):
-       speaker_words = [word for word in data["words"] if word["speaker"] == target_speaker]
-       return " ".join([word["word"] for word in speaker_words])
-   ```
-
-2. **Find words at a specific frame**:
-   ```python
-   def find_words_at_frame(data, target_frame):
-       return [word for word in data["words"] 
-               if word["frame_in"] <= target_frame <= word["frame_out"]]
-   ```
-
-3. **Get a time-window transcript**:
-   ```python
-   def get_transcript_between_frames(data, start_frame, end_frame):
-       words_in_range = [word for word in data["words"]
-                        if (word["frame_in"] >= start_frame and 
-                            word["frame_out"] <= end_frame)]
-       return " ".join([word["word"] for word in words_in_range])
-   ```
-
-4. **Find speaker turns**:
-   ```python
-   def find_speaker_changes(data):
-       changes = []
-       current_speaker = None
-       for word in data["words"]:
-           if word["speaker"] != current_speaker:
-               current_speaker = word["speaker"]
-               changes.append({
-                   "frame": word["frame_in"],
-                   "new_speaker": current_speaker
-               })
-       return changes
-   ```
 
 ## JSON Schema
 
