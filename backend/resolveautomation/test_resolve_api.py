@@ -15,7 +15,7 @@ def main():
             print("1. List Resolve Projects")
             print("2. Create Resolve Project & Timeline")
             print("3. Get Media Pool Item Unique ID")
-            print("4. Add Clips to Timeline from JSON")
+            print("4. Build Timeline from Edited Output JSON")
             print("5. Exit")
             choice = input("Enter your choice (1-5): ")
 
@@ -57,17 +57,35 @@ def main():
                 else:
                     print(f"Could not retrieve Unique ID for clip '{target_clip_input}'. Clip not found or error occurred. Check logs.")
             elif choice == '4':
-                default_json_filename = "82e06fc0-ebc4-4b67-944c-aefdb6fbb3ee.json"
-                json_file_name_input = input(f"Enter Nice Touch JSON filename (default: {default_json_filename}): ") or default_json_filename
-                nt_json_path = os.path.join("data", json_file_name_input)
+                default_json_path = os.path.join("backend", "editgenerator", "edited_output.json")
+                json_path_input = input(f"Enter path to edited output JSON (default: {default_json_path}): ") or default_json_path
+                
+                if not os.path.isabs(json_path_input):
+                    json_path_input = os.path.abspath(json_path_input)
 
-                print(f"Attempting to add clips to timeline using JSON: {nt_json_path}")
-                success = api.add_clips_to_timeline_from_json(nt_json_path)
+                print(f"Attempting to build timeline using '{json_path_input}' (initial check)...")
+                # First call without confirm_delete_existing to check if timeline exists
+                result = api.build_timeline_from_edited_output(json_path_input, confirm_delete_existing=False)
 
-                if success:
-                    print(f"Successfully processed JSON and added clips to timeline (if any were valid and found). Check Resolve and logs.")
+                if result == "TIMELINE_EXISTS_CONFIRMATION_NEEDED":
+                    print("Timeline 'Nice Touch Timeline' already exists.")
+                    confirm = input("Delete it and proceed with building the new timeline? (y/n): ").lower()
+                    if confirm == 'y':
+                        print(f"Re-attempting to build timeline, confirming deletion...")
+                        final_result = api.build_timeline_from_edited_output(json_path_input, confirm_delete_existing=True)
+                        if final_result is True:
+                            print(f"Successfully built timeline from '{json_path_input}' after deleting existing one. Check Resolve and logs.")
+                        else:
+                            print(f"Failed to build timeline from '{json_path_input}' even after confirming deletion. Check logs.")
+                    else:
+                        print("Operation cancelled by user. Existing timeline was not deleted.")
+                elif result is True:
+                    print(f"Successfully built timeline from '{json_path_input}'. (No existing timeline found or it was handled implicitly). Check Resolve and logs.")
+                elif result is False:
+                    print(f"Failed to build timeline using '{json_path_input}'. Check logs for details.")
                 else:
-                    print(f"Failed to add clips to timeline using {nt_json_path}. Check logs for details.")
+                    # Should not happen if API returns bool or the specific string
+                    print(f"Unexpected result from API: {result}. Check logs.")
             elif choice == '5':
                 print("Exiting.")
                 break

@@ -316,3 +316,145 @@ class ResolveAPI:
             logger.error(f"Error in add_clips_to_timeline_from_json: {e}", exc_info=True)
             logger.error(f"Operation state: Project UUID: {project_uuid_for_log}, Timeline UUID: {timeline_uuid_for_log}")
             return False 
+
+    # Method to find timeline by name, returns timeline object or None
+    def _find_timeline_by_name(self, project, timeline_name):
+        logger.debug(f"Searching for timeline '{timeline_name}' in project '{project.GetName()}'")
+        timeline_count = project.GetTimelineCount()
+        if timeline_count > 0:
+            for i in range(1, timeline_count + 1):
+                timeline_obj = project.GetTimelineByIndex(i)
+                if timeline_obj and timeline_obj.GetName() == timeline_name:
+                    logger.info(f"Found existing timeline '{timeline_name}'")
+                    return timeline_obj
+        logger.info(f"Timeline '{timeline_name}' not found.")
+        return None
+
+    def build_timeline_from_edited_output(self, edited_output_json_path, confirm_delete_existing=False):
+        logger.info(f"Attempting to build timeline from edited output JSON: {edited_output_json_path}, Confirm Delete: {confirm_delete_existing}")
+        project_uuid_for_log = "N/A"
+        timeline_uuid_for_log = "N/A"
+        timeline_name_to_use = "Nice Touch Timeline"
+
+        try:
+            # 1. Get Current Project
+            project = self.project_manager.GetCurrentProject()
+            if not project:
+                logger.error("No project is currently open in DaVinci Resolve.")
+                return False # Indicates an error or inability to proceed
+            project_uuid_for_log = project.GetUniqueId()
+            logger.info(f"Operating on current project: '{project.GetName()}' with UUID: {project_uuid_for_log}")
+
+            media_pool = project.GetMediaPool()
+            if not media_pool:
+                logger.error("Could not get Media Pool for the current project.")
+                return False
+
+            # 2. Handle Timeline
+            existing_timeline_object = self._find_timeline_by_name(project, timeline_name_to_use)
+
+            if existing_timeline_object:
+                if not confirm_delete_existing:
+                    logger.info(f"Timeline '{timeline_name_to_use}' exists and confirmation to delete is not given.")
+                    return "TIMELINE_EXISTS_CONFIRMATION_NEEDED" # Special string to indicate user prompt is needed
+                
+                logger.info(f"Confirmation received. Deleting existing timeline '{timeline_name_to_use}' (UUID: {existing_timeline_object.GetUniqueId()}).")
+                # Note: project.DeleteTimeline() takes the timeline object itself.
+                delete_success = project.DeleteTimelines([existing_timeline_object]) 
+                if not delete_success:
+                    logger.error(f"Failed to delete existing timeline '{timeline_name_to_use}'. Please check Resolve.")
+                    return False # Indicate error
+                logger.info(f"Successfully deleted existing timeline '{timeline_name_to_use}'.")
+            
+            logger.info(f"Creating new timeline: '{timeline_name_to_use}'")
+            timeline = media_pool.CreateEmptyTimeline(timeline_name_to_use)
+            if not timeline:
+                logger.error(f"Failed to create new timeline '{timeline_name_to_use}'.")
+                return False
+            project.SetCurrentTimeline(timeline) 
+            timeline_uuid_for_log = timeline.GetUniqueId()
+            logger.info(f"Successfully created and set current timeline '{timeline.GetName()}' with UUID: {timeline_uuid_for_log}")
+
+            # 3. Read edited_output.json
+            if not os.path.exists(edited_output_json_path):
+                logger.error(f"Edited output JSON file not found: {edited_output_json_path}")
+                return False
+            with open(edited_output_json_path, 'r') as f:
+                edited_data = json.load(f)
+            
+            master_clip_filename = edited_data.get("file_name")
+            segments_from_json = edited_data.get("segments") # Renamed to avoid conflict with python 'segments' module if imported elsewhere by mistake
+
+            if not master_clip_filename:
+                logger.error("'file_name' not found in edited output JSON.")
+                return False
+            if not isinstance(segments_from_json, list):
+                logger.error("'segments' array not found or not a list in edited output JSON.")
+                return False
+
+            # 4. Find the Master MediaPoolItem by name
+            root_folder = media_pool.GetRootFolder()
+            if not root_folder:
+                logger.error("Could not get root folder from Media Pool.")
+                return False
+            media_pool_clips_list = root_folder.GetClipList() # Corrected to GetClipList
+            master_mpi_object = None
+            if media_pool_clips_list:
+                for mpi in media_pool_clips_list:
+                    if mpi.GetName() == master_clip_filename:
+                        master_mpi_object = mpi
+                        logger.info(f"Found master MediaPoolItem: '{master_clip_filename}' (UUID: {master_mpi_object.GetUniqueId()})")
+                        break
+            
+            if not master_mpi_object:
+                logger.error(f"Master clip '{master_clip_filename}' not found in the Media Pool of project '{project.GetName()}'.")
+                return False
+
+            # 5. Prepare clipInfo Dictionaries from Segments
+            clip_infos_for_api = []
+            for seg in segments_from_json:
+                frame_in = seg.get("frame_in")
+                frame_out = seg.get("frame_out")
+                clip_order = seg.get("clip_order") 
+
+                if frame_in is None or frame_out is None or clip_order is None:
+                    logger.warning(f"Skipping segment due to missing frame_in, frame_out, or clip_order: {seg.get('segment_id', '(no id)')}")
+                    continue
+                
+                clip_info = {
+                    "mediaPoolItem": master_mpi_object, 
+                    "startFrame": int(frame_in),
+                    "endFrame": int(frame_out),
+                    "source_clip_order": clip_order 
+                }
+                clip_infos_for_api.append(clip_info)
+            
+            if not clip_infos_for_api:
+                logger.warning("No valid segments found in JSON to add to timeline.")
+                return True 
+
+            # 6. Sort by source_clip_order
+            logger.debug(f"Unsorted clip infos (from segments): {clip_infos_for_api}")
+            try:
+                clip_infos_for_api.sort(key=lambda x: x.get('source_clip_order', float('inf')))
+                logger.info(f"Sorted clip infos for timeline append: {clip_infos_for_api}")
+            except TypeError as sort_e:
+                logger.error(f"Could not sort clips by 'source_clip_order'. Appending in original order. Error: {sort_e}")
+
+            # 7. Append to Timeline
+            logger.info(f"Attempting to append {len(clip_infos_for_api)} segments to timeline '{timeline.GetName()}'")
+            append_success = media_pool.AppendToTimeline(clip_infos_for_api)
+
+            if append_success:
+                logger.info(f"Successfully appended {len(clip_infos_for_api)} segments to timeline.")
+                logger.info(f"Project UUID: {project_uuid_for_log}, Timeline UUID: {timeline_uuid_for_log}")
+                return True
+            else:
+                logger.error(f"Failed to append segments to timeline. Resolve API returned failure.")
+                logger.info(f"Project UUID: {project_uuid_for_log}, Timeline UUID: {timeline_uuid_for_log}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Error in build_timeline_from_edited_output: {e}", exc_info=True)
+            logger.error(f"Operation state: Project UUID: {project_uuid_for_log}, Timeline UUID: {timeline_uuid_for_log}")
+            return False # General error 
