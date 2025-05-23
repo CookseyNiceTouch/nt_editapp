@@ -16,6 +16,7 @@ import time
 import requests
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Union, Tuple
+from pathlib import Path
 
 import ffmpeg
 from dotenv import load_dotenv
@@ -32,18 +33,185 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+class ProjectBriefParser:
+    """Parse project brief files to extract contextual information for transcription accuracy."""
+    
+    def __init__(self, brief_path: Optional[str] = None):
+        """Initialize with optional brief file path."""
+        self.brief_path = brief_path
+        self.brief_content = ""
+        self.parsed_data = {}
+        
+        if brief_path and os.path.exists(brief_path):
+            self.load_brief(brief_path)
+    
+    def load_brief(self, brief_path: str) -> None:
+        """Load and parse the brief file."""
+        try:
+            with open(brief_path, 'r', encoding='utf-8') as f:
+                self.brief_content = f.read()
+            
+            self.parsed_data = self._parse_brief_content(self.brief_content)
+            logger.info(f"Loaded project brief from: {brief_path}")
+            
+        except Exception as e:
+            logger.warning(f"Could not load brief file {brief_path}: {e}")
+            self.parsed_data = {}
+    
+    def _parse_brief_content(self, content: str) -> Dict[str, Any]:
+        """Extract relevant information from brief content."""
+        parsed = {
+            "speakers": [],
+            "custom_vocabulary": [],
+            "custom_spellings": [],
+            "expected_speakers": 0,
+            "project_context": {}
+        }
+        
+        lines = content.split('\n')
+        current_section = None
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # Extract key information patterns
+            if 'talent:' in line.lower() or 'speakers:' in line.lower():
+                # Extract speaker names
+                speakers = self._extract_speakers(line)
+                parsed["speakers"].extend(speakers)
+                
+            elif 'title:' in line.lower():
+                title = self._extract_title(line)
+                if title:
+                    parsed["custom_vocabulary"].extend(title.split())
+                    
+            elif 'objective:' in line.lower():
+                current_section = 'objective'
+                
+            elif 'core message:' in line.lower():
+                current_section = 'core_message'
+                
+            elif current_section and line and not line.endswith(':'):
+                # Extract vocabulary from content sections
+                vocab = self._extract_vocabulary_from_text(line)
+                parsed["custom_vocabulary"].extend(vocab)
+        
+        # Clean and deduplicate
+        parsed["speakers"] = list(set([s.title() for s in parsed["speakers"] if s]))
+        parsed["expected_speakers"] = len(parsed["speakers"]) if parsed["speakers"] else 0
+        parsed["custom_vocabulary"] = list(set([v.lower() for v in parsed["custom_vocabulary"] if len(v) > 2]))
+        
+        # Generate custom spellings from speaker names
+        for speaker in parsed["speakers"]:
+            parsed["custom_spellings"].append({
+                "from": [speaker.lower(), speaker.upper()],
+                "to": speaker
+            })
+        
+        return parsed
+    
+    def _extract_speakers(self, line: str) -> List[str]:
+        """Extract speaker names from talent/speaker line."""
+        # Remove the label part
+        content = re.sub(r'^[^:]*:', '', line).strip()
+        
+        # Split by common separators
+        speakers = re.split(r'[,&+/]|\band\b', content)
+        
+        # Clean up speaker names
+        cleaned_speakers = []
+        for speaker in speakers:
+            speaker = re.sub(r'[^\w\s]', '', speaker).strip()
+            if speaker and len(speaker) > 1:
+                cleaned_speakers.append(speaker)
+        
+        return cleaned_speakers
+    
+    def _extract_title(self, line: str) -> str:
+        """Extract title from title line."""
+        # Remove quotes and title prefix
+        title = re.sub(r'^[^:]*:', '', line).strip()
+        title = re.sub(r'^["\']|["\']$', '', title).strip()
+        return title
+    
+    def _extract_vocabulary_from_text(self, text: str) -> List[str]:
+        """Extract important vocabulary from text content."""
+        # Remove common words and extract meaningful terms
+        common_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those'}
+        
+        # Extract words, prioritize quoted terms and proper nouns
+        words = []
+        
+        # Extract quoted terms (high priority)
+        quoted_terms = re.findall(r'"([^"]+)"', text)
+        for term in quoted_terms:
+            words.extend(term.split())
+        
+        # Extract capitalized terms (likely proper nouns)
+        capitalized = re.findall(r'\b[A-Z][a-z]+\b', text)
+        words.extend(capitalized)
+        
+        # Extract other meaningful words
+        all_words = re.findall(r'\b\w+\b', text.lower())
+        meaningful_words = [w for w in all_words if w not in common_words and len(w) > 3]
+        words.extend(meaningful_words)
+        
+        return words
+    
+    def get_transcription_config(self) -> Dict[str, Any]:
+        """Get configuration for enhanced transcription based on brief."""
+        if not self.parsed_data:
+            return {}
+            
+        config = {}
+        
+        # Speaker configuration
+        if self.parsed_data.get("expected_speakers", 0) > 0:
+            config["speakers_expected"] = self.parsed_data["expected_speakers"]
+        
+        # Word boost vocabulary
+        if self.parsed_data.get("custom_vocabulary"):
+            config["word_boost"] = self.parsed_data["custom_vocabulary"][:50]  # Limit to 50 terms
+        
+        # Custom spellings
+        if self.parsed_data.get("custom_spellings"):
+            config["custom_spelling"] = self.parsed_data["custom_spellings"]
+        
+        return config
+    
+    def get_speaker_mapping(self) -> Dict[str, str]:
+        """Get mapping from detected speakers to expected speakers."""
+        if not self.parsed_data.get("speakers"):
+            return {}
+        
+        # Create mapping from A, B, C... to actual names
+        speaker_names = self.parsed_data["speakers"]
+        mapping = {}
+        
+        for i, name in enumerate(speaker_names):
+            letter = chr(65 + i)  # A, B, C...
+            mapping[letter] = name
+            mapping[f"Speaker {letter}"] = name
+            mapping[f"speaker_{letter}".lower()] = name
+        
+        return mapping
+
+
 class VideoAnalyzer:
     """Process video files to extract frame-accurate transcription data with speaker detection."""
     
     # AssemblyAI API base URL
     BASE_URL = "https://api.assemblyai.com/v2"
     
-    def __init__(self, assemblyai_api_key: Optional[str] = None):
+    def __init__(self, assemblyai_api_key: Optional[str] = None, brief_path: Optional[str] = None):
         """
         Initialize the VideoAnalyzer.
         
         Args:
             assemblyai_api_key: AssemblyAI API key. If None, will use ASSEMBLYAI_API_KEY environment variable.
+            brief_path: Path to project brief file for context enhancement
         """
         # Set AssemblyAI API key from args or environment
         self.api_key = assemblyai_api_key or os.environ.get("ASSEMBLYAI_API_KEY")
@@ -55,7 +223,13 @@ class VideoAnalyzer:
             "Authorization": self.api_key,
             "Content-Type": "application/json"
         }
-    
+        
+        # Initialize brief parser
+        self.brief_parser = ProjectBriefParser(brief_path)
+        
+        if self.brief_parser.parsed_data:
+            logger.info(f"Brief loaded - Expected speakers: {self.brief_parser.parsed_data.get('speakers', 'Unknown')}")
+
     def probe_video_file(self, file_path: str) -> Dict[str, Any]:
         """
         Extract metadata from video file using ffprobe.
@@ -122,40 +296,51 @@ class VideoAnalyzer:
             raise RuntimeError(error_message)
     
     def extract_audio(self, video_path: str) -> str:
-        """
-        Extract audio from video file to a temporary file.
-        
-        Args:
-            video_path: Path to the video file
-            
-        Returns:
-            Path to the extracted audio file
-            
-        Raises:
-            RuntimeError: If audio extraction fails
-        """
+        """Extract audio with optimal settings for transcription accuracy."""
         logger.info(f"Extracting audio from: {video_path}")
         
         try:
-            # Create a temporary file for the audio
-            audio_file = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+            # Create temporary file for high-quality audio
+            audio_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
             audio_path = audio_file.name
             audio_file.close()
             
-            # Extract audio using ffmpeg
-            (
-                ffmpeg.input(video_path)
-                .output(audio_path, acodec='libmp3lame', ac=1, ar='16k')
-                .overwrite_output()
-                .run(quiet=True)
+            # Get source audio properties first
+            probe = ffmpeg.probe(video_path)
+            audio_stream = next((stream for stream in probe['streams'] 
+                               if stream['codec_type'] == 'audio'), None)
+            
+            if not audio_stream:
+                raise RuntimeError("No audio stream found")
+            
+            # Determine optimal sample rate (prefer source rate up to 48kHz)
+            source_rate = int(audio_stream.get('sample_rate', 44100))
+            optimal_rate = min(source_rate, 48000)  # Cap at 48kHz
+            optimal_rate = max(optimal_rate, 22050)  # Minimum 22kHz for quality
+            
+            # Extract with optimal settings
+            stream = ffmpeg.input(video_path)
+            
+            # Apply audio filters for cleanup
+            audio = stream.audio.filter('highpass', f=80)  # Remove low-frequency noise
+            audio = audio.filter('lowpass', f=8000)        # Remove high-frequency noise
+            audio = audio.filter('volume', '1.5')          # Boost volume slightly
+            
+            # Output with optimal codec and settings
+            out = ffmpeg.output(
+                audio, audio_path,
+                acodec='pcm_s16le',    # Uncompressed 16-bit PCM
+                ac=1,                  # Mono for speaker diarization
+                ar=optimal_rate,       # Optimal sample rate
+                audio_bitrate='256k'   # High bitrate
             )
             
-            # Get file size and log it
-            file_size_bytes = os.path.getsize(audio_path)
-            file_size_mb = file_size_bytes / (1024 * 1024)
-            logger.info(f"Extracted audio file size: {file_size_mb:.2f} MB ({file_size_bytes} bytes)")
+            ffmpeg.run(out, overwrite_output=True, quiet=True)
             
-            logger.info(f"Audio extracted to: {audio_path}")
+            # Log quality metrics
+            file_size_mb = os.path.getsize(audio_path) / (1024 * 1024)
+            logger.info(f"Extracted audio: {optimal_rate}Hz, {file_size_mb:.2f}MB")
+            
             return audio_path
             
         except ffmpeg.Error as e:
@@ -195,33 +380,43 @@ class VideoAnalyzer:
         return upload_url
 
     def transcribe_audio(self, audio_url: str, custom_spell: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
-        """
-        Transcribe audio using AssemblyAI with speaker diarization.
+        """Enhanced transcription with project brief integration."""
+        logger.info(f"Submitting enhanced transcription request")
         
-        Args:
-            audio_url: The URL of the uploaded audio file
-            custom_spell: Optional list of custom spellings
-            
-        Returns:
-            Transcription result with word-level timestamps and speaker labels
-        """
-        logger.info(f"Submitting transcription request to AssemblyAI")
-        
-        # Create transcription request
         endpoint = f"{self.BASE_URL}/transcript"
         
+        # Start with base configuration
         json_data = {
             "audio_url": audio_url,
-            "speaker_labels": True,  # Enable speaker diarization
-            "format_text": True,     # Add punctuation and formatting
-            "punctuate": True,       # Add punctuation
-            "word_boost": [],        # No word boost
-            "dual_channel": False    # Single channel audio
+            "speaker_labels": True,
+            "format_text": True,
+            "punctuate": True,
+            "disfluencies": True,           # Keep natural speech patterns
+            "speech_model": "best",         # Use highest accuracy model
+            "language_code": "en_us",       # Specify language (mutually exclusive with language_detection)
+            "boost_param": "high",          # Increase processing power
+            "speech_threshold": 0.3,        # Lower threshold for quiet speech
+            "dual_channel": False
         }
         
-        # Add custom spellings if provided
+        # Integrate brief-based configuration
+        brief_config = self.brief_parser.get_transcription_config()
+        json_data.update(brief_config)
+        
+        # Merge custom spellings
+        all_custom_spellings = []
         if custom_spell:
-            json_data["custom_spelling"] = custom_spell
+            all_custom_spellings.extend(custom_spell)
+        if brief_config.get("custom_spelling"):
+            all_custom_spellings.extend(brief_config["custom_spelling"])
+        
+        if all_custom_spellings:
+            json_data["custom_spelling"] = all_custom_spellings
+        
+        # Log configuration for debugging
+        logger.info(f"Transcription config: speakers_expected={json_data.get('speakers_expected', 'auto')}, "
+                   f"vocabulary_terms={len(json_data.get('word_boost', []))}, "
+                   f"custom_spellings={len(json_data.get('custom_spelling', []))}")
         
         # Submit transcription request
         response = requests.post(endpoint, json=json_data, headers=self.headers)
@@ -232,100 +427,161 @@ class VideoAnalyzer:
             raise RuntimeError(error_message)
             
         transcript_id = response.json()["id"]
-        logger.info(f"Transcription request submitted successfully. ID: {transcript_id}")
+        logger.info(f"Enhanced transcription submitted. ID: {transcript_id}")
         
-        # Poll for transcription completion
-        polling_endpoint = f"{endpoint}/{transcript_id}"
+        # Poll for completion
+        return self._poll_transcription(transcript_id)
+    
+    def _poll_transcription(self, transcript_id: str) -> Dict[str, Any]:
+        """Poll for transcription completion with progress tracking."""
+        polling_endpoint = f"{self.BASE_URL}/transcript/{transcript_id}"
+        start_time = time.time()
         
         while True:
-            polling_response = requests.get(polling_endpoint, headers=self.headers)
-            polling_response_json = polling_response.json()
-            
-            status = polling_response_json["status"]
-            logger.info(f"Transcription status: {status}")
-            
-            if status == "completed":
-                logger.info("Transcription completed successfully!")
-                return polling_response_json
-            elif status == "error":
-                error_message = f"Transcription failed: {polling_response_json.get('error', 'Unknown error')}"
-                logger.error(error_message)
-                raise RuntimeError(error_message)
-            else:
-                # Wait for a few seconds before polling again
-                logger.info("Waiting for transcription to complete...")
-                time.sleep(5)
-    
-    def process_transcript_to_words(self, transcript_data: Dict[str, Any], fps: float) -> Tuple[List[str], str, List[Dict[str, Any]]]:
-        """
-        Process AssemblyAI transcript data to extract speakers, full transcript, and word-level data.
+            try:
+                response = requests.get(polling_endpoint, headers=self.headers, timeout=30)
+                response.raise_for_status()
+                result = response.json()
+                
+                status = result["status"]
+                elapsed = time.time() - start_time
+                
+                logger.info(f"Status: {status} (elapsed: {elapsed:.1f}s)")
+                
+                if status == "completed":
+                    logger.info("Transcription completed successfully!")
+                    return result
+                elif status == "error":
+                    error_msg = result.get('error', 'Unknown error')
+                    raise RuntimeError(f"Transcription failed: {error_msg}")
+                
+                # Progressive backoff
+                wait_time = min(5 + (elapsed // 60), 15)
+                time.sleep(wait_time)
+                
+            except requests.RequestException as e:
+                logger.warning(f"Polling error: {e}, retrying...")
+                time.sleep(10)
+
+    def process_transcript_to_words(self, transcript_data: Dict[str, Any], fps: float, silence_threshold_ms: int = 1000) -> Tuple[List[str], str, List[Dict[str, Any]]]:
+        """Enhanced transcript processing with brief-based speaker mapping and silence detection."""
         
-        Args:
-            transcript_data: The transcription result from AssemblyAI
-            fps: Frames per second of the video
-            
-        Returns:
-            Tuple of (list of unique speakers, full transcript text, list of words with frame data)
-        """
-        # Get the full transcript text
         full_transcript = transcript_data.get("text", "")
-        
-        # Get the words with speaker labels and timestamps
         words_data = transcript_data.get("words", [])
         
-        # Extract unique speakers
+        # Get speaker mapping from brief
+        speaker_mapping = self.brief_parser.get_speaker_mapping()
+        
+        # Track confidence scores
+        confidence_scores = [word.get("confidence", 0) for word in words_data if word.get("confidence")]
+        avg_confidence = sum(confidence_scores) / len(confidence_scores) if confidence_scores else 0
+        
+        logger.info(f"Average word confidence: {avg_confidence:.3f}")
+        if avg_confidence < 0.8:
+            logger.warning(f"Low confidence detected ({avg_confidence:.3f}). Consider audio quality improvements.")
+        
+        # Process speakers and words with silence detection
         speakers_set = set()
-        for word_data in words_data:
-            speaker = word_data.get("speaker", "speaker")
-            # Clean up speaker label to be consistent (e.g., "A" instead of "speaker_A")
-            if speaker.startswith("speaker_"):
-                speaker = speaker.replace("speaker_", "Speaker ")
-            speakers_set.add(speaker)
-        
-        speakers = sorted(list(speakers_set))
-        
-        # Process words with frame data
         processed_words = []
-        for word_data in words_data:
+        
+        for i, word_data in enumerate(words_data):
             word = word_data.get("text", "").strip()
-            if not word:  # Skip empty words
+            if not word:
                 continue
                 
-            # Get timestamps in milliseconds and convert to seconds
-            start_time_ms = word_data.get("start", 0)
-            end_time_ms = word_data.get("end", 0)
-            start_time_sec = start_time_ms / 1000
-            end_time_sec = end_time_ms / 1000
+            # Enhanced speaker processing with mapping
+            raw_speaker = word_data.get("speaker", "Unknown")
+            speaker = self._normalize_speaker_label(raw_speaker, speaker_mapping)
+            speakers_set.add(speaker)
             
-            # Get speaker (clean up speaker label)
-            speaker = word_data.get("speaker", "speaker")
-            if speaker.startswith("speaker_"):
-                speaker = speaker.replace("speaker_", "Speaker ")
+            # Time and frame processing
+            start_ms = word_data.get("start", 0)
+            end_ms = word_data.get("end", 0)
             
-            # Convert time to frames
-            frame_in = round(start_time_sec * fps)
-            frame_out = round(end_time_sec * fps)
+            if end_ms <= start_ms:
+                logger.warning(f"Invalid timestamps for word '{word}': {start_ms}-{end_ms}")
+                end_ms = start_ms + 200  # Default 200ms duration
             
-            # Ensure frame_out is at least one frame after frame_in
+            frame_in = max(0, round((start_ms / 1000) * fps))
+            frame_out = round((end_ms / 1000) * fps)
+            
             if frame_out <= frame_in:
                 frame_out = frame_in + 1
             
+            # Check for silence before this word (except for the first word)
+            if i > 0:
+                prev_word_data = words_data[i - 1]
+                prev_end_ms = prev_word_data.get("end", 0)
+                
+                # Calculate silence gap
+                silence_duration_ms = start_ms - prev_end_ms
+                
+                if silence_duration_ms >= silence_threshold_ms:
+                    # Insert silence marker
+                    silence_frame_in = round((prev_end_ms / 1000) * fps)
+                    silence_frame_out = frame_in
+                    
+                    # Ensure silence has at least 1 frame duration
+                    if silence_frame_out <= silence_frame_in:
+                        silence_frame_out = silence_frame_in + 1
+                    
+                    processed_words.append({
+                        "word": "**SILENCE**",
+                        "speaker": "**SILENCE**",
+                        "frame_in": silence_frame_in,
+                        "frame_out": silence_frame_out,
+                        "confidence": 1.0,  # Silence detection is certain
+                        "duration_ms": silence_duration_ms
+                    })
+                    
+                    logger.debug(f"Detected silence: {silence_duration_ms}ms between frames {silence_frame_in}-{silence_frame_out}")
+                
+            # Add the actual word
             processed_words.append({
                 "word": word,
                 "speaker": speaker,
                 "frame_in": frame_in,
-                "frame_out": frame_out
+                "frame_out": frame_out,
+                "confidence": word_data.get("confidence", 0)
             })
         
+        speakers = sorted(list(speakers_set))
+        
+        # Log speaker mapping and silence detection results
+        if speaker_mapping:
+            logger.info(f"Applied speaker mapping: {speaker_mapping}")
+        
+        silence_count = len([w for w in processed_words if w["word"] == "**SILENCE**"])
+        logger.info(f"Final speakers: {speakers}")
+        logger.info(f"Detected {silence_count} silence periods (>{silence_threshold_ms}ms)")
+        
         return speakers, full_transcript, processed_words
-    
-    def process_video(self, video_path: str, custom_spell: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+
+    def _normalize_speaker_label(self, speaker: str, speaker_mapping: Dict[str, str]) -> str:
+        """Normalize speaker labels with brief-based mapping."""
+        if not speaker or speaker.lower() == "unknown":
+            return "Unknown"
+        
+        # Clean up AssemblyAI format
+        if speaker.startswith("speaker_"):
+            letter = speaker.replace("speaker_", "").upper()
+            clean_speaker = letter if len(letter) == 1 else f"Speaker {letter}"
+        else:
+            clean_speaker = speaker.strip()
+        
+        # Apply mapping from brief if available
+        mapped_speaker = speaker_mapping.get(clean_speaker, clean_speaker)
+        
+        return mapped_speaker
+
+    def process_video(self, video_path: str, custom_spell: Optional[List[Dict[str, Any]]] = None, silence_threshold_ms: int = 1000) -> Dict[str, Any]:
         """
         Process a video file: extract metadata, transcribe, and format results.
         
         Args:
             video_path: Path to the video file
             custom_spell: Optional list of custom spellings
+            silence_threshold_ms: Minimum silence duration in milliseconds to mark as silence (default: 1000ms)
             
         Returns:
             Dict containing the complete transcript data in the required format
@@ -352,9 +608,9 @@ class VideoAnalyzer:
                 # Step 4: Transcribe audio using AssemblyAI
                 transcription_result = self.transcribe_audio(audio_url, custom_spell)
                 
-                # Step 5: Process transcript to extract speakers and word-level data
+                # Step 5: Process transcript to extract speakers, word-level data, and silence detection
                 speakers, full_transcript, processed_words = self.process_transcript_to_words(
-                    transcription_result, fps
+                    transcription_result, fps, silence_threshold_ms
                 )
                 
                 # Build the final result
@@ -364,7 +620,8 @@ class VideoAnalyzer:
                     "duration_frames": duration_frames,
                     "speakers": speakers,
                     "full_transcript": full_transcript,
-                    "words": processed_words
+                    "words": processed_words,
+                    "silence_threshold_ms": silence_threshold_ms  # Record the threshold used
                 }
                 
                 logger.info(f"Successfully processed video: {file_name}")
@@ -388,27 +645,28 @@ class VideoAnalyzer:
             }
     
     def analyze(self, video_path: str, output_path: Optional[str] = None, 
-                custom_spell: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+                custom_spell: Optional[List[Dict[str, Any]]] = None,
+                brief_path: Optional[str] = None, silence_threshold_ms: int = 1000) -> Dict[str, Any]:
         """
-        Analyze a video file and save the results to a JSON file.
+        Enhanced analyze method with optional brief integration and silence detection.
         
         Args:
             video_path: Path to the video file
-            output_path: Path to save the output JSON. If None, uses video_path + '.transcript.json'
-            custom_spell: Optional list of custom spellings to apply
-            
-        Returns:
-            The generated transcript data
-            
-        Raises:
-            FileNotFoundError: If the video file doesn't exist
+            output_path: Path to save the output JSON
+            custom_spell: Optional list of custom spellings
+            brief_path: Path to project brief file for context
+            silence_threshold_ms: Minimum silence duration in milliseconds to mark as silence (default: 1000ms)
         """
+        # Load brief if provided and not already loaded
+        if brief_path and not self.brief_parser.brief_content:
+            self.brief_parser.load_brief(brief_path)
+        
         # Check if the file exists
         if not os.path.isfile(video_path):
             raise FileNotFoundError(f"Video file not found: {video_path}")
         
-        # Process the video
-        result = self.process_video(video_path, custom_spell)
+        # Process the video with silence detection
+        result = self.process_video(video_path, custom_spell, silence_threshold_ms)
         
         # Determine output path if not provided
         if output_path is None:
@@ -428,14 +686,16 @@ class VideoAnalyzer:
 
 
 def main():
-    """Command-line entry point for video analysis."""
+    """Enhanced command-line entry point with brief support and silence detection."""
     import argparse
     
-    parser = argparse.ArgumentParser(description="Video frame-based transcript analyzer using AssemblyAI")
+    parser = argparse.ArgumentParser(description="Enhanced video transcript analyzer with project brief integration and silence detection")
     parser.add_argument("video_path", help="Path to the video file")
     parser.add_argument("--output", "-o", help="Path to save the output JSON")
     parser.add_argument("--api-key", help="AssemblyAI API key (defaults to ASSEMBLYAI_API_KEY env var)")
     parser.add_argument("--custom-spell", help="JSON file containing custom spellings", type=str)
+    parser.add_argument("--brief", help="Path to project brief file for enhanced accuracy", type=str)
+    parser.add_argument("--silence-threshold", help="Minimum silence duration in milliseconds to mark as silence (default: 1000)", type=int, default=1000)
     
     args = parser.parse_args()
     
@@ -446,8 +706,8 @@ def main():
             with open(args.custom_spell, 'r') as f:
                 custom_spell = json.load(f)
         
-        analyzer = VideoAnalyzer(assemblyai_api_key=args.api_key)
-        analyzer.analyze(args.video_path, args.output, custom_spell)
+        analyzer = VideoAnalyzer(assemblyai_api_key=args.api_key, brief_path=args.brief)
+        analyzer.analyze(args.video_path, args.output, custom_spell, args.brief, args.silence_threshold)
     except Exception as e:
         logger.error(f"Fatal error: {str(e)}")
         exit(1)
