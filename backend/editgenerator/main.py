@@ -1,435 +1,272 @@
+#!/usr/bin/env python3
+
+"""
+Interactive wrapper for EditAgent.
+
+This script provides a user-friendly console interface for processing video transcripts
+with the EditAgent tool, including transcript quality analysis and AI-powered editing
+with confidence score integration.
+"""
+
 import os
+import sys
 import json
-import logging
-import asyncio
-import re
-from typing import Dict, List, Any, Optional
 from pathlib import Path
-from dotenv import load_dotenv
-from anthropic import Anthropic
-import jsonschema
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+# Add the current directory to the path so we can import editagent
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Load environment variables
-load_dotenv()
-CLAUDE_API_KEY = os.getenv("claude_api_key")
+from editagent import process_transcript, analyze_transcript_quality, stream_to_console
 
-# Constants
-MODEL = "claude-3-7-sonnet-20250219"
-MAX_TOKENS = 20000
-THINKING_BUDGET = 16000
 
-# Paths
-CURRENT_DIR = Path(__file__).parent
-SYSTEM_PROMPT_PATH = CURRENT_DIR / "systempromptv1.md"
-
-# Input and output schemas
-INPUT_SCHEMA = {
-    "type": "object",
-    "required": ["file_name", "fps", "duration_frames", "speakers", "full_transcript", "words"],
-    "properties": {
-        "file_name": {"type": "string"},
-        "fps": {"type": "number"},
-        "duration_frames": {"type": "integer"},
-        "speakers": {"type": "array", "items": {"type": "string"}},
-        "full_transcript": {"type": "string"},
-        "words": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": ["word", "speaker", "frame_in", "frame_out"],
-                "properties": {
-                    "word": {"type": "string"},
-                    "speaker": {"type": "string"},
-                    "frame_in": {"type": "integer", "minimum": 0},
-                    "frame_out": {"type": "integer", "minimum": 0}
-                }
-            }
-        }
-    }
-}
-
-OUTPUT_SCHEMA = {
-    "type": "object",
-    "required": ["file_name", "fps", "target_duration_frames", "actual_duration_frames", "segments"],
-    "properties": {
-        "file_name": {"type": "string"},
-        "fps": {"type": "number"},
-        "target_duration_frames": {"type": "integer"},
-        "actual_duration_frames": {"type": "integer"},
-        "segments": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "required": ["segment_id", "speaker", "frame_in", "frame_out", "text", "clip_order"],
-                "properties": {
-                    "segment_id": {"type": "integer"},
-                    "speaker": {"type": "string"},
-                    "frame_in": {"type": "integer", "minimum": 0},
-                    "frame_out": {"type": "integer", "minimum": 0},
-                    "text": {"type": "string"},
-                    "clip_order": {"type": "integer", "minimum": 1}
-                }
-            }
-        }
-    }
-}
-
-def validate_json(data: Dict, schema: Dict) -> bool:
-    """Validate JSON data against a schema."""
-    try:
-        jsonschema.validate(instance=data, schema=schema)
-        return True
-    except jsonschema.exceptions.ValidationError as e:
-        logger.error(f"Validation error: {e}")
-        return False
-
-def load_file_content(file_path: Path) -> str:
-    """Load content from a file."""
-    try:
-        with open(file_path, 'r') as f:
-            return f.read()
-    except Exception as e:
-        logger.error(f"Error loading file {file_path}: {e}")
-        raise
-
-def load_system_prompt(prompt_path: Path = SYSTEM_PROMPT_PATH) -> str:
-    """Load system prompt from file."""
-    return load_file_content(prompt_path)
-
-def load_external_context(context_path: Path) -> str:
-    """Load external context document."""
-    return load_file_content(context_path)
-
-def create_system_prompt(transcript_data: Dict, context_files: List[Path] = None) -> str:
-    """Create the system prompt for the AI model by formatting the template and adding context."""
-    try:
-        # Load the system prompt template
-        prompt_template = load_system_prompt()
+def get_user_input():
+    """Get all required inputs from the user via console prompts."""
+    print("=" * 60)
+    print("EditAgent - Interactive Video Transcript Editor")
+    print("=" * 60)
+    print()
+    
+    # Get transcript file path
+    while True:
+        transcript_path = input("📁 Enter the path to your transcript JSON file: ").strip().strip('"')
         
-        # Format the template with transcript data
-        duration_seconds = transcript_data['duration_frames'] / transcript_data['fps']
-        formatted_prompt = prompt_template.format(
-            file_name=transcript_data['file_name'],
-            fps=transcript_data['fps'],
-            duration_frames=transcript_data['duration_frames'],
-            duration_seconds=duration_seconds,
-            speakers=", ".join(transcript_data['speakers'])
-        )
+        if not transcript_path:
+            print("❌ Please provide a transcript file path.")
+            continue
+            
+        # Convert to Path object and resolve
+        transcript_file = Path(transcript_path)
         
-        # Add external context if provided
-        if context_files and len(context_files) > 0:
-            formatted_prompt += "\n\n# ADDITIONAL CONTEXT\n"
-            for i, context_path in enumerate(context_files):
-                try:
-                    context_content = load_external_context(context_path)
-                    context_name = context_path.stem
-                    formatted_prompt += f"\n## {context_name.upper()}\n{context_content}\n"
-                except Exception as e:
-                    logger.warning(f"Could not load context file {context_path}: {e}")
+        if not transcript_file.exists():
+            print(f"❌ File not found: {transcript_file}")
+            continue
+            
+        if not transcript_file.suffix.lower() == '.json':
+            print("❌ Please provide a JSON file.")
+            continue
+            
+        break
+    
+    # Get project brief
+    print("\n📝 Project Brief Options:")
+    print("  1. Use default brief (projectbrieftemp.txt)")
+    print("  2. Enter custom brief text")
+    print("  3. Load brief from file")
+    
+    while True:
+        brief_choice = input("\nSelect brief option (1-3): ").strip()
         
-        return formatted_prompt
-    except Exception as e:
-        logger.error(f"Error creating system prompt: {e}")
-        # Fallback to a basic prompt if there's an error
-        return f"You are an expert video editor. Create a rough cut from the transcript of {transcript_data['file_name']}."
-
-def process_transcript_non_streaming(transcript_data: Dict, user_brief: str, context_files: List[Path] = None) -> Dict:
-    """Process transcript with AI to generate edited segments using non-streaming API."""
-    
-    # Validate input data
-    if not validate_json(transcript_data, INPUT_SCHEMA):
-        return {"error": "Invalid input data format"}
-    
-    # Extract target duration from brief (assuming format like "~60 seconds")
-    target_seconds = 60  # Default
-    duration_match = re.search(r'~?(\d+)\s*seconds', user_brief)
-    if duration_match:
-        target_seconds = int(duration_match.group(1))
-    
-    # Calculate target frames
-    target_frames = round(target_seconds * transcript_data["fps"])
-    
-    # Create system prompt with context
-    system_prompt = create_system_prompt(transcript_data, context_files)
-    
-    # Initialize Anthropic client
-    client = Anthropic(api_key=CLAUDE_API_KEY)
-    
-    try:
-        # Call Claude with extended thinking
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=MAX_TOKENS,
-            thinking={
-                "type": "enabled",
-                "budget_tokens": THINKING_BUDGET
-            },
-            system=system_prompt,
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Here is the transcript data:\n```json\n{json.dumps(transcript_data, indent=2)}\n```\n\nUser brief: {user_brief}\n\nPlease create an edited version based on this brief. Target duration: ~{target_seconds} seconds ({target_frames} frames)."
-                }
-            ]
-        )
-        
-        # Find the text response
-        response_text = None
-        for block in response.content:
-            if block.type == "text":
-                response_text = block.text
+        if brief_choice == "1":
+            # Use default brief
+            brief_path = Path(__file__).parent / "prompts" / "projectbrieftemp.txt"
+            try:
+                with open(brief_path, "r", encoding="utf-8") as f:
+                    user_brief = f.read()
+                print(f"✓ Using default brief from: {brief_path}")
                 break
-        
-        if not response_text:
-            return {"error": "No text content found in the response"}
-        
-        # Find JSON in the response
-        json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
-        if json_match:
-            result = json.loads(json_match.group(1))
-        else:
-            # Try to parse the entire response as JSON
-            try:
-                result = json.loads(response_text)
-            except json.JSONDecodeError:
-                return {"error": "Could not extract valid JSON from AI response", "response": response_text}
-        
-        return validate_and_process_result(result, transcript_data)
-    
-    except Exception as e:
-        logger.error(f"Error processing transcript: {e}")
-        return {"error": str(e)}
-
-def process_transcript_stream(transcript_data: Dict, user_brief: str, context_files: List[Path] = None, show_thinking: bool = True) -> Dict:
-    """Process transcript with AI to generate edited segments using streaming API."""
-    
-    # Validate input data
-    if not validate_json(transcript_data, INPUT_SCHEMA):
-        return {"error": "Invalid input data format"}
-    
-    # Extract target duration from brief (assuming format like "~60 seconds")
-    target_seconds = 60  # Default
-    duration_match = re.search(r'~?(\d+)\s*seconds', user_brief)
-    if duration_match:
-        target_seconds = int(duration_match.group(1))
-    
-    # Calculate target frames
-    target_frames = round(target_seconds * transcript_data["fps"])
-    
-    # Create system prompt with context
-    system_prompt = create_system_prompt(transcript_data, context_files)
-    
-    # Initialize Anthropic client
-    client = Anthropic(api_key=CLAUDE_API_KEY)
-    
-    current_response = ""
-    
-    try:
-        # Call Claude with extended thinking using streaming API
-        if show_thinking:
-            print("\n=== Claude's Thinking Process (streaming) ===")
+            except FileNotFoundError:
+                print(f"❌ Default brief file not found: {brief_path}")
+                continue
+                
+        elif brief_choice == "2":
+            # Custom brief text
+            print("\n📝 Enter your project brief (press Enter twice when done):")
+            brief_lines = []
+            empty_lines = 0
             
-        with client.messages.stream(
-            model=MODEL,
-            max_tokens=MAX_TOKENS,
-            thinking={
-                "type": "enabled",
-                "budget_tokens": THINKING_BUDGET
-            },
-            system=system_prompt,
-            messages=[
-                {
-                    "role": "user",
-                    "content": f"Here is the transcript data:\n```json\n{json.dumps(transcript_data, indent=2)}\n```\n\nUser brief: {user_brief}\n\nPlease create an edited version based on this brief. Target duration: ~{target_seconds} seconds ({target_frames} frames)."
-                }
-            ]
-        ) as stream:
-            # Process the stream
-            in_thinking_block = False
-            in_text_block = False
-            current_block_index = -1
+            while empty_lines < 2:
+                line = input()
+                if line.strip() == "":
+                    empty_lines += 1
+                else:
+                    empty_lines = 0
+                brief_lines.append(line)
             
-            for event in stream:
-                if event.type == "message_start":
-                    if show_thinking:
-                        print("Stream started")
-                    
-                elif event.type == "content_block_start":
-                    current_block_index = event.index
-                    block_type = event.content_block.type
-                    
-                    if block_type == "thinking":
-                        in_thinking_block = True
-                        if show_thinking:
-                            print("\n--- Thinking started ---")
-                    elif block_type == "text":
-                        in_text_block = True
-                        if show_thinking:
-                            print("\n--- Response text ---")
+            user_brief = "\n".join(brief_lines[:-2])  # Remove the two empty lines at the end
+            
+            if user_brief.strip():
+                print("✓ Custom brief entered successfully")
+                break
+            else:
+                print("❌ Brief cannot be empty")
+                continue
                 
-                elif event.type == "content_block_delta":
-                    if event.delta.type == "thinking_delta" and in_thinking_block and show_thinking:
-                        print(event.delta.thinking, end="", flush=True)
-                    elif event.delta.type == "text_delta" and in_text_block:
-                        current_response += event.delta.text
-                        if show_thinking:
-                            print(event.delta.text, end="", flush=True)
+        elif brief_choice == "3":
+            # Load from file
+            brief_file_path = input("📁 Enter path to brief file: ").strip().strip('"')
+            brief_file = Path(brief_file_path)
+            
+            if not brief_file.exists():
+                print(f"❌ Brief file not found: {brief_file}")
+                continue
                 
-                elif event.type == "content_block_stop":
-                    if in_thinking_block and event.index == current_block_index:
-                        in_thinking_block = False
-                        if show_thinking:
-                            print("\n--- Thinking complete ---")
-                    elif in_text_block and event.index == current_block_index:
-                        in_text_block = False
-                        if show_thinking:
-                            print("\n--- Response complete ---")
-                
-                elif event.type == "message_stop":
-                    if show_thinking:
-                        print("\n=== Stream completed ===")
-        
-        # Find JSON in the response
-        json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', current_response, re.DOTALL)
-        if json_match:
-            result = json.loads(json_match.group(1))
-        else:
-            # Try to parse the entire response as JSON
             try:
-                result = json.loads(current_response)
-            except json.JSONDecodeError:
-                return {"error": "Could not extract valid JSON from AI response", "response": current_response}
+                with open(brief_file, "r", encoding="utf-8") as f:
+                    user_brief = f.read()
+                print(f"✓ Brief loaded from: {brief_file}")
+                break
+            except Exception as e:
+                print(f"❌ Error reading brief file: {e}")
+                continue
+        else:
+            print("❌ Please select 1, 2, or 3")
+            continue
+    
+    # Get project name (optional)
+    project_name = input(f"\n🏷️  Project name (default: 'Video Edit'): ").strip()
+    if not project_name:
+        project_name = "Video Edit"
+    
+    # Get output options
+    print(f"\n💾 Output Options:")
+    print(f"  1. Auto-generate filename in edits folder")
+    print(f"  2. Specify custom output path")
+    
+    while True:
+        output_choice = input("Select output option (1-2): ").strip()
         
-        return validate_and_process_result(result, transcript_data)
+        if output_choice == "1":
+            # Auto-generate
+            output_dir = Path(__file__).parent / "edits"
+            output_dir.mkdir(exist_ok=True)
+            output_path = output_dir / f"{project_name.replace(' ', '_')}.edited.json"
+            break
+            
+        elif output_choice == "2":
+            # Custom path
+            custom_output = input("📁 Enter output file path: ").strip().strip('"')
+            output_path = Path(custom_output)
+            
+            # Create directory if it doesn't exist
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            break
+        else:
+            print("❌ Please select 1 or 2")
+            continue
     
-    except Exception as e:
-        logger.error(f"Error processing transcript with streaming: {e}")
-        logger.debug(f"Partial response received: {current_response}")
-        return {"error": f"Streaming error: {str(e)}"}
+    return {
+        "transcript_file": transcript_file,
+        "user_brief": user_brief,
+        "project_name": project_name,
+        "output_path": output_path
+    }
 
-def validate_and_process_result(result, transcript_data):
-    """Validate and process the result returned by Claude."""
-    # Validate output
-    if not validate_json(result, OUTPUT_SCHEMA):
-        return {"error": "AI generated invalid output format", "response": result}
-    
-    # Perform additional validation
-    for segment in result["segments"]:
-        if segment["frame_out"] > transcript_data["duration_frames"]:
-            return {"error": f"Segment {segment['segment_id']} has frame_out beyond video duration"}
-        if segment["frame_in"] >= segment["frame_out"]:
-            return {"error": f"Segment {segment['segment_id']} has invalid frame range"}
-    
-    # Check for overlapping segments when ordered by clip_order
-    ordered_segments = sorted(result["segments"], key=lambda x: x["clip_order"])
-    for i in range(1, len(ordered_segments)):
-        if ordered_segments[i]["frame_in"] < ordered_segments[i-1]["frame_out"]:
-            logger.warning(f"Segments {ordered_segments[i-1]['segment_id']} and {ordered_segments[i]['segment_id']} may overlap")
-    
-    # Check if actual duration is close to target
-    tolerance = 0.1  # 10% tolerance
-    if abs(result["actual_duration_frames"] - result["target_duration_frames"]) > result["target_duration_frames"] * tolerance:
-        logger.warning(f"Actual duration ({result['actual_duration_frames']} frames) differs significantly from target ({result['target_duration_frames']} frames)")
-    
-    return result
 
-def process_transcript(transcript_data: Dict, user_brief: str, context_files: List[Path] = None, show_thinking: bool = True, use_streaming: bool = True) -> Dict:
-    """Process transcript with AI to generate edited segments."""
-    
-    if use_streaming:
-        try:
-            # Use the synchronous streaming function
-            return process_transcript_stream(transcript_data, user_brief, context_files, show_thinking)
-        except Exception as e:
-            logger.error(f"Error in streaming processing: {e}")
-            logger.info("Falling back to non-streaming API")
-            return process_transcript_non_streaming(transcript_data, user_brief, context_files)
-    else:
-        # Use non-streaming API
-        return process_transcript_non_streaming(transcript_data, user_brief, context_files)
+def print_summary(config):
+    """Print a summary of the configuration before processing."""
+    print("\n" + "=" * 60)
+    print("PROCESSING SUMMARY")
+    print("=" * 60)
+    print(f"📁 Transcript file: {config['transcript_file']}")
+    print(f"🏷️  Project name: {config['project_name']}")
+    print(f"💾 Output file: {config['output_path']}")
+    print(f"📝 Brief preview: {config['user_brief'][:150]}...")
+    print("=" * 60)
+
 
 def main():
-    """Main function to demonstrate functionality."""
-    import sys
-    from pathlib import Path
-    import argparse
-    
-    # Create argument parser
-    parser = argparse.ArgumentParser(description='AI-Editor: Generate edited segments from video transcripts')
-    parser.add_argument('transcript_file', type=str, help='Path to the transcript JSON file')
-    parser.add_argument('--brief', '-b', type=str, default="Create a ~30 seconds highlight focusing on key points", 
-                        help='User brief describing the desired edit')
-    parser.add_argument('--context', '-c', type=str, nargs='+', 
-                        help='Additional context files (e.g., project briefs)')
-    parser.add_argument('--no-stream', action='store_true', 
-                        help='Disable streaming (use regular API calls)')
-    parser.add_argument('--output', '-o', type=str,
-                        help='Custom output filename')
-    
-    args = parser.parse_args()
-    
-    print("AI-Editor Module")
-    print("===============")
-    
-    # Check if transcript file exists
-    transcript_path = Path(args.transcript_file)
-    if not transcript_path.exists():
-        print(f"Error: File {transcript_path} not found")
-        return 1
-    
-    print(f"Loading transcript from {transcript_path}")
+    """Main interactive function."""
     try:
-        with open(transcript_path, 'r') as f:
-            transcript_data = json.load(f)
+        # Get user inputs
+        config = get_user_input()
+        
+        # Print summary
+        print_summary(config)
+        
+        # Confirm before processing
+        confirm = input("\n🚀 Ready to process? (y/N): ").strip().lower()
+        if confirm not in ['y', 'yes']:
+            print("❌ Processing cancelled.")
+            return
+        
+        # Load transcript data
+        print(f"\n📖 Loading transcript from: {config['transcript_file']}")
+        try:
+            with open(config['transcript_file'], "r", encoding="utf-8") as f:
+                transcript_data = json.load(f)
+            print("✓ Transcript loaded successfully")
+        except Exception as e:
+            print(f"❌ Error loading transcript: {e}")
+            return
+        
+        # Analyze transcript quality
+        print("\n🔍 Analyzing transcript quality...")
+        quality_report = analyze_transcript_quality(transcript_data)
+        
+        if "error" not in quality_report and "warning" not in quality_report:
+            print(f"✓ Transcript Quality Report:")
+            print(f"  • Total words: {quality_report['total_words']}")
+            print(f"  • Average confidence: {quality_report['avg_confidence']}")
+            print(f"  • Low confidence words: {quality_report['low_confidence_words']} ({quality_report['low_confidence_percentage']}%)")
+            
+            if quality_report['worst_words']:
+                print(f"  • Words needing attention: {len(quality_report['worst_words'])} words with confidence < 0.7")
+                if quality_report['avg_confidence'] < 0.8:
+                    print("  ⚠️ Consider reviewing audio quality or manual transcript verification")
+            
+            print(f"  • Speaker confidence:")
+            for speaker, conf in quality_report['speaker_confidence'].items():
+                status = "✓" if conf >= 0.8 else "⚠️" if conf >= 0.7 else "❌"
+                print(f"    {status} {speaker}: {conf}")
+        
+        # Process with EditAgent
+        print(f"\n🤖 Starting EditAgent processing...")
+        print(f"💭 AI thinking and response will be displayed below:")
+        print("-" * 60)
+        
+        result = process_transcript(
+            transcript_data, 
+            config['user_brief'], 
+            output_filename=str(config['output_path']),
+            streaming_callback=stream_to_console
+        )
+        
+        print("-" * 60)
+        print("🎉 Processing complete!")
+        
+        if "error" in result:
+            print(f"❌ Error: {result['error']}")
+            return
+        
+        # Success summary
+        print(f"✓ Generated {len(result['segments'])} segments")
+        print(f"✓ Target duration: {result['target_duration_frames']} frames")
+        print(f"✓ Actual duration: {result['actual_duration_frames']} frames")
+        print(f"✓ Output saved to: {config['output_path']}")
+        
+        # Analyze confidence in the generated segments
+        if 'segments' in result:
+            segment_confidences = [seg.get('avg_confidence', 0) for seg in result['segments'] if seg.get('avg_confidence')]
+            if segment_confidences:
+                avg_segment_confidence = sum(segment_confidences) / len(segment_confidences)
+                print(f"✓ Average segment confidence: {avg_segment_confidence:.3f}")
+                
+                low_conf_segments = [i for i, seg in enumerate(result['segments']) 
+                                   if seg.get('avg_confidence', 1) < 0.7]
+                if low_conf_segments:
+                    print(f"⚠️ Segments with low confidence: {len(low_conf_segments)} (review recommended)")
+        
+        # Offer to show detailed results
+        show_details = input(f"\n📊 Show detailed segment breakdown? (y/N): ").strip().lower()
+        if show_details in ['y', 'yes']:
+            print(f"\n📋 SEGMENT BREAKDOWN:")
+            print("-" * 80)
+            for i, segment in enumerate(result['segments'][:5], 1):  # Show first 5 segments
+                conf_str = f" (conf: {segment.get('avg_confidence', 'N/A'):.3f})" if segment.get('avg_confidence') else ""
+                print(f"{i}. {segment['speaker']}: \"{segment['text'][:60]}...\" [{segment['frame_in']}-{segment['frame_out']}]{conf_str}")
+            
+            if len(result['segments']) > 5:
+                print(f"... and {len(result['segments']) - 5} more segments")
+        
+        print(f"\n🎬 Edit file ready at: {config['output_path']}")
+        
+    except KeyboardInterrupt:
+        print(f"\n\n❌ Process interrupted by user.")
     except Exception as e:
-        print(f"Error loading transcript file: {e}")
-        return 1
-    
-    # Process context files if provided
-    context_files = []
-    if args.context:
-        for context_path_str in args.context:
-            context_path = Path(context_path_str)
-            if context_path.exists():
-                context_files.append(context_path)
-                print(f"Added context file: {context_path}")
-            else:
-                print(f"Warning: Context file not found: {context_path}")
-    
-    # Get streaming option
-    use_streaming = not args.no_stream
-    if not use_streaming:
-        print("Streaming disabled")
-    
-    # Process the transcript
-    print("\nProcessing transcript...")
-    result = process_transcript(
-        transcript_data, 
-        args.brief, 
-        context_files=context_files,
-        show_thinking=True, 
-        use_streaming=use_streaming
-    )
-    
-    # Print the result
-    print("\nResult:")
-    print(json.dumps(result, indent=2))
-    
-    # Save the result to a file
-    if args.output:
-        output_path = Path(args.output)
-    else:
-        output_path = transcript_path.with_suffix('.edited.json')
-    
-    with open(output_path, 'w') as f:
-        json.dump(result, f, indent=2)
-    
-    print(f"\nOutput saved to {output_path.absolute()}")
-    return 0
+        print(f"\n❌ Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
+
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

@@ -4,7 +4,7 @@ This document describes the structure and format of JSON files produced by the V
 
 ## Overview
 
-The JSON output represents a frame-accurate transcription of a video file with speaker detection. Transcription is performed by AssemblyAI's API with accurate word-level timestamps that are converted to frame numbers for video editing applications.
+The JSON output represents a frame-accurate transcription of a video file with speaker detection and silence marking. Transcription is performed by AssemblyAI's API with accurate word-level timestamps that are converted to frame numbers for video editing applications. The enhanced version includes explicit silence detection to identify gaps, pauses, and potential editing cut points.
 
 ## Top-Level Structure
 
@@ -15,20 +15,38 @@ The JSON output represents a frame-accurate transcription of a video file with s
   "duration_frames": 26616,
   "speakers": ["A", "B"],
   "full_transcript": "I do, because I just. I got too far ahead of myself. Oh, yeah, yeah. Sometimes you're like, oh, what am I saying? Next...",
+  "silence_threshold_ms": 1000,
   "words": [
     {
       "word": "I",
       "speaker": "A",
       "frame_in": 2,
-      "frame_out": 5
+      "frame_out": 5,
+      "confidence": 0.99
     },
     {
       "word": "do,",
       "speaker": "A",
       "frame_in": 5,
-      "frame_out": 10
+      "frame_out": 10,
+      "confidence": 0.95
+    },
+    {
+      "word": "**SILENCE**",
+      "speaker": "**SILENCE**",
+      "frame_in": 45,
+      "frame_out": 70,
+      "confidence": 1.0,
+      "duration_ms": 1000
+    },
+    {
+      "word": "because",
+      "speaker": "A",
+      "frame_in": 70,
+      "frame_out": 85,
+      "confidence": 0.98
     }
-    // Additional words...
+    // Additional words and silence markers...
   ]
 }
 ```
@@ -44,17 +62,20 @@ The JSON output represents a frame-accurate transcription of a video file with s
 | `duration_frames` | number (integer) | Total number of frames in the video |
 | `speakers` | array of strings | List of unique speaker identifiers found in the transcript (typically "A", "B", etc.) |
 | `full_transcript` | string | Complete text transcript of the entire video |
+| `silence_threshold_ms` | number (integer) | Threshold in milliseconds for silence detection |
 
 ### Words Array
 
-The `words` array contains objects representing individual words detected in the transcript, with the following properties:
+The `words` array contains objects representing individual words detected in the transcript, as well as silence markers. Each entry has the following properties:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `word` | string | The transcribed word |
-| `speaker` | string | Speaker identifier associated with this word (e.g., "A", "B") |
-| `frame_in` | number (integer) | Starting frame where the word begins |
-| `frame_out` | number (integer) | Ending frame where the word ends |
+| `word` | string | The transcribed word or "**SILENCE**" for silence markers |
+| `speaker` | string | Speaker identifier (e.g., "A", "B") or "**SILENCE**" for silence markers |
+| `frame_in` | number (integer) | Starting frame where the word/silence begins |
+| `frame_out` | number (integer) | Ending frame where the word/silence ends |
+| `confidence` | number (float) | Confidence score of the word detection (1.0 for silence markers) |
+| `duration_ms` | number (integer) | Duration in milliseconds (only present for silence markers) |
 
 ## Frame Calculation
 
@@ -144,55 +165,23 @@ If processing fails, the JSON will have a different structure:
 
 ## Parsing Guidelines for AI
 
-1. **Speaker Consistency**: All entries in the `words` array have speaker values that match entries in the `speakers` array.
+1. **Speaker Consistency**: All entries in the `words` array have speaker values that match entries in the `speakers` array or are "**SILENCE**".
 
 2. **Frame Range Validation**: All frame numbers are non-negative and less than `duration_frames`.
 
-3. **Sequential Word Timing**: Words appear in chronological order, with `frame_in` values generally increasing.
+3. **Sequential Word Timing**: Words and silence markers appear in chronological order, with `frame_in` values generally increasing.
 
 4. **Speaker Groups**: Words from the same speaker are often grouped together in the `words` array.
 
-5. **Transcript Reconstruction**: The complete transcript is provided in `full_transcript`, but you can also reconstruct it from the words array.
+5. **Transcript Reconstruction**: The complete transcript is provided in `full_transcript`, but you can also reconstruct it from the words array (excluding silence markers).
 
-## Example Use Cases
+6. **Silence Handling**: 
+   - **Exclude from segments**: Do not include `**SILENCE**` entries in final speech segments
+   - **Use for boundaries**: Silence markers indicate natural break points for editing
+   - **Large gaps**: Silence longer than 2-3 seconds often indicates separate takes or retakes
+   - **Cut point identification**: Silence markers help identify optimal places for video cuts
 
-1. **Extract utterances by speaker**:
-   ```python
-   def get_speaker_dialogue(data, target_speaker):
-       speaker_words = [word for word in data["words"] if word["speaker"] == target_speaker]
-       return " ".join([word["word"] for word in speaker_words])
-   ```
-
-2. **Find words at a specific frame**:
-   ```python
-   def find_words_at_frame(data, target_frame):
-       return [word for word in data["words"] 
-               if word["frame_in"] <= target_frame <= word["frame_out"]]
-   ```
-
-3. **Get a time-window transcript**:
-   ```python
-   def get_transcript_between_frames(data, start_frame, end_frame):
-       words_in_range = [word for word in data["words"]
-                        if (word["frame_in"] >= start_frame and 
-                            word["frame_out"] <= end_frame)]
-       return " ".join([word["word"] for word in words_in_range])
-   ```
-
-4. **Find speaker turns**:
-   ```python
-   def find_speaker_changes(data):
-       changes = []
-       current_speaker = None
-       for word in data["words"]:
-           if word["speaker"] != current_speaker:
-               current_speaker = word["speaker"]
-               changes.append({
-                   "frame": word["frame_in"],
-                   "new_speaker": current_speaker
-               })
-       return changes
-   ```
+7. **Confidence Scores**: Use confidence values to identify potentially misrecognized words (silence markers always have confidence 1.0).
 
 ## JSON Schema
 
@@ -227,6 +216,12 @@ For validation purposes, the following JSON Schema can be used:
       "type": "string",
       "description": "Complete transcript text"
     },
+    "silence_threshold_ms": {
+      "type": "integer",
+      "description": "Threshold in milliseconds for silence detection",
+      "minimum": 100,
+      "default": 1000
+    },
     "words": {
       "type": "array",
       "items": {
@@ -234,10 +229,12 @@ For validation purposes, the following JSON Schema can be used:
         "required": ["word", "speaker", "frame_in", "frame_out"],
         "properties": {
           "word": {
-            "type": "string"
+            "type": "string",
+            "description": "The transcribed word or **SILENCE** for silence markers"
           },
           "speaker": {
-            "type": "string"
+            "type": "string",
+            "description": "Speaker identifier or **SILENCE** for silence markers"
           },
           "frame_in": {
             "type": "integer",
@@ -246,6 +243,17 @@ For validation purposes, the following JSON Schema can be used:
           "frame_out": {
             "type": "integer",
             "minimum": 0
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Confidence score of word detection"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Duration in milliseconds (only for silence markers)"
           }
         }
       }
@@ -254,4 +262,35 @@ For validation purposes, the following JSON Schema can be used:
   "additionalProperties": false
 }
 ```
+
+## Silence Detection
+
+The VideoAnalyzer automatically detects and marks periods of silence longer than the specified threshold. This feature helps identify:
+
+- **Natural pauses** and breath breaks in speech
+- **Editing cut points** where content was removed
+- **Separate takes** or recording sessions
+- **Background noise periods** with no speech
+
+### Silence Markers
+
+Silence periods are represented as special entries in the words array:
+
+```json
+{
+  "word": "**SILENCE**",
+  "speaker": "**SILENCE**",
+  "frame_in": 45,
+  "frame_out": 70,
+  "confidence": 1.0,
+  "duration_ms": 1000
+}
+```
+
+### Configuration
+
+- **silence_threshold_ms**: Configurable threshold (default: 1000ms)
+- **Detection Logic**: Gaps between words longer than the threshold are marked
+- **Frame Accuracy**: Silence markers use precise frame boundaries
+- **Exclusion from Speech**: Silence markers should be excluded when processing speech content
 

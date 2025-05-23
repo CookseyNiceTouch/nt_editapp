@@ -1,0 +1,63 @@
+Here’s a more detailed user‐level prompt that clearly lays out everything EditAgent needs to know:
+
+text
+Copy
+Edit
+Hello EditAgent,
+
+I’ve provided you with a full, frame‐accurate transcript of my footage in JSON format below. I’d like you to generate a “rough cut” plan based on my requirements.
+
+1. **Transcript Data**  
+   ```json
+   {transcript_json}
+My Brief
+
+Desired Duration: Approximately {target_seconds} seconds ({target_frames} frames)
+
+Tone/Style: {user_tone}
+
+Content Focus: {user_focus}
+
+Key Rules to Follow
+
+Always choose the last take when a phrase is repeated.
+
+Remove any pure‐silence entries from consideration.
+
+Keep segments in roughly chronological order, but feel free to rearrange them for better storytelling.
+
+Interleave different speakers when it enhances the narrative.
+
+End each segment at natural phrase or sentence boundaries.
+
+Aim to hit the target duration within a tolerance of about one sentence; perfection is not required.
+
+Validate your own work—adjust any overlapping or out‐of‐range frame numbers rather than returning errors.
+
+Output Requirements
+
+Return only a JSON object (no explanations, markdown, or extra text).
+
+The JSON must match this schema exactly:
+
+json
+Copy
+Edit
+{
+  "file_name": "<input.file_name>",
+  "fps": <input.fps>,
+  "target_duration_frames": <calculated from brief>,
+  "actual_duration_frames": <sum of (frame_out - frame_in)>,
+  "segments": [
+    {
+      "segment_id": 1,
+      "speaker": "<one of input.speakers>",
+      "frame_in": <integer ≥ 0>,
+      "frame_out": <integer ≤ duration_frames>,
+      "text": "<verbatim segment text>",
+      "clip_order": 1
+    }
+    // …additional segments…
+  ]
+}
+Please generate the JSON rough-cut now.
