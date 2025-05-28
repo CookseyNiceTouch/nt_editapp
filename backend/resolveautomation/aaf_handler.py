@@ -338,6 +338,112 @@ def process_aaf_file(file_path):
         traceback.print_exc()
         return None
 
+def print_mob_overview(mob, indent_str="", aaf_content_mobs=None):
+    """Helper function to print details of a mob and its referenced source mobs if any."""
+    mob_name = mob.name if hasattr(mob, 'name') and mob.name else "(Unnamed Mob)"
+    print(f"{indent_str}MOB: {mob_name} (Class: {mob.class_id_name if hasattr(mob, 'class_id_name') else type(mob).__name__}, ID: {mob.mob_id})")
+    
+    if not hasattr(mob, 'slots'):
+        return
+
+    for slot_index, slot in enumerate(mob.slots):
+        slot_name = slot.name if hasattr(slot, 'name') and slot.name else "(Unnamed Slot)"
+        print(f"{indent_str}  SLOT {slot.slot_id if hasattr(slot, 'slot_id') else slot_index +1}: {slot_name} (EditRate: {slot.edit_rate if hasattr(slot, 'edit_rate') else 'N/A'})")
+        
+        segment = slot.segment
+        if not segment:
+            print(f"{indent_str}    SEGMENT: (None)")
+            continue
+
+        seg_name = segment.name if hasattr(segment, 'name') and segment.name else "(Unnamed Segment)"
+        print(f"{indent_str}    SEGMENT: {seg_name} (Class: {segment.class_id_name if hasattr(segment, 'class_id_name') else type(segment).__name__}, Length: {segment.length if hasattr(segment, 'length') else 'N/A'})")
+
+        if isinstance(segment, aaf2.components.Sequence):
+            print(f"{indent_str}      COMPONENTS in Sequence:")
+            for comp_index, component in enumerate(segment.components):
+                comp_name = component.name if hasattr(component, 'name') and component.name else "(Unnamed Component)"
+                print(f"{indent_str}        COMPONENT {comp_index + 1}: {comp_name} (Class: {component.class_id_name if hasattr(component, 'class_id_name') else type(component).__name__}, Length: {component.length if hasattr(component, 'length') else 'N/A'})")
+                if isinstance(component, aaf2.components.SourceClip):
+                    sc_mob_id = component.mob_id if hasattr(component, 'mob_id') else None
+                    if sc_mob_id and aaf_content_mobs and sc_mob_id in aaf_content_mobs:
+                        referenced_mob = aaf_content_mobs[sc_mob_id]
+                        ref_mob_name = referenced_mob.name if hasattr(referenced_mob, 'name') and referenced_mob.name else "(Unnamed SourceMob)"
+                        print(f"{indent_str}          -> REFERENCES SourceMob: {ref_mob_name} (ID: {sc_mob_id})")
+                    elif sc_mob_id:
+                        print(f"{indent_str}          -> REFERENCES SourceMob ID: {sc_mob_id} (Mob not found in content.mobs cache)")
+                    else:
+                        print(f"{indent_str}          -> (SourceClip has no mob_id)")
+        elif isinstance(segment, aaf2.components.SourceClip):
+            sc_mob_id = segment.mob_id if hasattr(segment, 'mob_id') else None
+            if sc_mob_id and aaf_content_mobs and sc_mob_id in aaf_content_mobs:
+                referenced_mob = aaf_content_mobs[sc_mob_id]
+                ref_mob_name = referenced_mob.name if hasattr(referenced_mob, 'name') and referenced_mob.name else "(Unnamed SourceMob)"
+                print(f"{indent_str}      -> REFERENCES SourceMob: {ref_mob_name} (ID: {sc_mob_id})")
+            elif sc_mob_id:
+                print(f"{indent_str}      -> REFERENCES SourceMob ID: {sc_mob_id} (Mob not found in content.mobs cache)")
+            else:
+                print(f"{indent_str}      -> (SourceClip has no mob_id)")
+
+def inspect_aaf_structure(aaf_file_object):
+    """Prints a textual overview of the AAF file's main structural elements."""
+    print("\n--- AAF Structural Overview ---")
+    if not aaf_file_object or not hasattr(aaf_file_object, 'content'):
+        print("Invalid AAF file object.")
+        return
+
+    # Cache all mobs for quick lookups by SourceClips
+    all_mobs_cache = {mob.mob_id: mob for mob in aaf_file_object.content.mobs}
+
+    print("\nComposition Mobs (Timelines/Sequences):")
+    comp_mobs = list(aaf_file_object.content.compositionmobs())
+    if not comp_mobs:
+        print("  No CompositionMobs found.")
+    for mob in comp_mobs:
+        print_mob_overview(mob, "  ", all_mobs_cache)
+
+    # Optionally, list other types of mobs if desired for a fuller picture
+    # For example, MasterMobs or FileSourceMobs that weren't directly part of a CompositionMob's immediate structure
+    # but were referenced.
+    
+    # To keep it focused on the requested elements (mobs, slots, segments, source mobs from compositions):
+    # We can list all SourceMobs found in the file to see what's available.
+    print("\nAll SourceMobs in file (includes MasterMobs, FileMobs, etc. that are types of SourceMob):")
+    source_mobs_in_file = list(aaf_file_object.content.sourcemobs())
+    if not source_mobs_in_file:
+        print("  No SourceMobs found directly via content.sourcemobs().")
+    else:
+        for i, mob in enumerate(source_mobs_in_file):
+            mob_name = mob.name if hasattr(mob, 'name') and mob.name else "(Unnamed SourceMob)"
+            # We can optionally print more details like descriptor locators here if needed
+            # For now, just basic info to see what source material is cataloged.
+            print(f"  SourceMob {i+1}: {mob_name} (Class: {mob.class_id_name if hasattr(mob, 'class_id_name') else type(mob).__name__}, ID: {mob.mob_id})")
+            # To see if it has a descriptor and locators (like our main parsing logic):
+            descriptor = None
+            if hasattr(mob, 'descriptor') and mob.descriptor:
+                descriptor = mob.descriptor
+            elif hasattr(mob, 'get') and mob.get("EssenceDescription"):
+                 descriptor = mob.get("EssenceDescription")
+            
+            if descriptor:
+                print(f"    Descriptor: {type(descriptor).__name__}")
+                locators_prop = descriptor.get('Locator')
+                if locators_prop and hasattr(locators_prop, 'value') and locators_prop.value:
+                    loc_list = locators_prop.value
+                    if not isinstance(loc_list, list): loc_list = [loc_list]
+                    for loc_idx, loc_item in enumerate(loc_list):
+                        path_val = "N/A"
+                        if hasattr(loc_item, 'get') and loc_item.get('Path') and loc_item.get('Path').value:
+                            path_val = loc_item.get('Path').value
+                        elif hasattr(loc_item, 'get') and loc_item.get('URLString') and loc_item.get('URLString').value:
+                            path_val = loc_item.get('URLString').value
+                        print(f"      Locator {loc_idx+1} ({type(loc_item).__name__}): Path/URL = {path_val}")
+                else:
+                    print("      (No 'Locator' property found on descriptor or it's empty)")
+            else:
+                print("    (No descriptor found via .descriptor or .get('EssenceDescription'))")
+
+    print("\n--- End of AAF Structural Overview ---")
+
 if __name__ == '__main__':
     # --- Simple Tester for AAF Processing ---
 
@@ -367,6 +473,16 @@ if __name__ == '__main__':
         print(f"Error: Default AAF file not found at {os.path.abspath(default_aaf_path)}")
         print("Please ensure the file exists or modify the 'default_aaf_path' in the script.")
     else:
+        # First, run the new inspection function
+        try:
+            with aaf2.open(default_aaf_path, "r") as f_inspect:
+                inspect_aaf_structure(f_inspect)
+        except Exception as e_inspect:
+            print(f"\nError during AAF structure inspection: {e_inspect}")
+            import traceback
+            traceback.print_exc()
+
+        # Then, run the main JSON processing
         json_output = process_aaf_file(default_aaf_path)
         if json_output:
             print("\nAAF file processed successfully. JSON output:")
