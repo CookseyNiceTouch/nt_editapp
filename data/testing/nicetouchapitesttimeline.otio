@@ -5028,7 +5028,202 @@
                                 "value": 186556.0
                             }
                         },
-                        "effects": [],
+                        "effects": [
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Clip Volume and Fades",
+                                        "Enabled": true,
+                                        "Name": "Volume",
+                                        "Parameters": [],
+                                        "Type": 62
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Clip Pan",
+                                        "Enabled": true,
+                                        "Name": "Pan",
+                                        "Parameters": [],
+                                        "Type": 72
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Clip Pitch",
+                                        "Enabled": true,
+                                        "Name": "Pitch",
+                                        "Parameters": [],
+                                        "Type": 67
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Clip Equaliser",
+                                        "Enabled": false,
+                                        "Name": "Equalizer",
+                                        "Parameters": [],
+                                        "Type": 64
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 0,
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 0,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 1,
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 1,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 2,
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 2,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 3,
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 3,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 4,
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 4,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 5,
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 5,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            }
+                        ],
                         "markers": [],
                         "enabled": true,
                         "media_references": {
@@ -5211,10 +5406,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 0,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 0,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5234,10 +5430,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 1,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 1,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5260,7 +5457,7 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 2,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5283,7 +5480,55 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 3,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 4,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 4,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 5,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 5,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5418,10 +5663,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 0,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 0,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5441,10 +5687,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 1,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 1,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5467,7 +5714,7 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 2,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5490,7 +5737,55 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 3,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 4,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 4,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 5,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 5,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5625,10 +5920,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 0,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 0,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5648,10 +5944,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 1,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 1,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5674,7 +5971,7 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 2,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5697,7 +5994,55 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 3,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 4,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 4,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 5,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 5,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5832,10 +6177,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 0,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 0,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5855,10 +6201,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 1,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 1,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5881,7 +6228,7 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 2,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -5904,7 +6251,55 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 3,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 4,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 4,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 5,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 5,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6039,10 +6434,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 0,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 0,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6062,10 +6458,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 1,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 1,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6088,7 +6485,7 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 2,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6111,7 +6508,55 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 3,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 4,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 4,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 5,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 5,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6304,10 +6749,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 0,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 0,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6327,10 +6773,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 1,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 1,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6353,7 +6800,7 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 2,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6376,7 +6823,55 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 3,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 4,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 4,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 5,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 5,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6511,10 +7006,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 0,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 0,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6534,10 +7030,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 1,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 1,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6560,7 +7057,7 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 2,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6583,7 +7080,55 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 3,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 4,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 4,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 5,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 5,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6718,10 +7263,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 0,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 0,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6741,10 +7287,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 1,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 1,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6767,7 +7314,7 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 2,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6790,7 +7337,55 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 3,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 4,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 4,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 5,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 5,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6925,10 +7520,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 0,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 0,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6948,10 +7544,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 1,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 1,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6974,7 +7571,7 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 2,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -6997,7 +7594,55 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 3,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 4,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 4,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 5,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 5,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -7132,10 +7777,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 0,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 0,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -7155,10 +7801,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 1,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 1,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -7181,7 +7828,7 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 2,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -7204,7 +7851,55 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 3,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 4,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 4,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 5,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 5,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -7339,10 +8034,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 0,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 0,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -7362,10 +8058,11 @@
                                         "Parameters": [
                                             {
                                                 "Default Parameter Value": 1,
+                                                "Key Frames": {},
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 1,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -7388,7 +8085,7 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 2,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
@@ -7411,7 +8108,55 @@
                                                 "Parameter ID": "eq band index",
                                                 "Parameter Value": 3,
                                                 "Variant Type": "Int",
-                                                "maxValue": 3.0,
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": true,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 4,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 4,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
+                                                "minValue": -1.0
+                                            }
+                                        ],
+                                        "Type": 63
+                                    }
+                                },
+                                "name": "",
+                                "effect_name": "Resolve Effect"
+                            },
+                            {
+                                "OTIO_SCHEMA": "Effect.1",
+                                "metadata": {
+                                    "Resolve_OTIO": {
+                                        "Effect Name": "Fairlight Equaliser Band",
+                                        "Enabled": false,
+                                        "Name": "Equalizer Band",
+                                        "Parameters": [
+                                            {
+                                                "Default Parameter Value": 5,
+                                                "Key Frames": {},
+                                                "Parameter ID": "eq band index",
+                                                "Parameter Value": 5,
+                                                "Variant Type": "Int",
+                                                "maxValue": 5.0,
                                                 "minValue": -1.0
                                             }
                                         ],
