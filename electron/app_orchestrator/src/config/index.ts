@@ -10,6 +10,7 @@ interface Config {
   services: {
     chatbot: string;
     transcribe: string;
+    transcriptionAPI: string;
   };
   security: {
     corsOrigin: string;
@@ -54,6 +55,7 @@ export const config: Config = {
   services: {
     chatbot: getEnvVar('CHATBOT_SERVICE_URL', 'http://localhost:5001'),
     transcribe: getEnvVar('TRANSCRIBE_SERVICE_URL', 'http://localhost:5002'),
+    transcriptionAPI: getEnvVar('TRANSCRIPTION_API_URL', 'http://127.0.0.1:8000'),
   },
   security: {
     corsOrigin: getEnvVar('CORS_ORIGIN', 'http://localhost:5173'),

@@ -4,6 +4,7 @@ import logging
 import asyncio
 from pathlib import Path
 import time
+from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
 from dotenv import load_dotenv
 import anthropic
@@ -21,9 +22,14 @@ logger = logging.getLogger(__name__)
 # Load environment variables from .env file
 load_dotenv()
 
-#variables
-project_name = "Nice Touch Launch videos"
+# File paths (hardcoded for standalone operation)
+TRANSCRIPT_PATH = Path("D:/Git/nt_editapp/data/20250509_MTC_2206.MP4.transcript.json")
+PROJECT_DATA_PATH = Path("D:/Git/nt_editapp/data/projectdata.json")
+OUTPUT_DIR = Path("D:/Git/nt_editapp/data/edits")
 
+# Will be loaded from project data
+project_name = None
+project_brief = None
 
 # Constants
 CLAUDE_MODEL = "claude-sonnet-4-20250514"
@@ -56,11 +62,81 @@ TARGET_SCHEMA = {
     }
 }
 
-def load_prompts(transcript_data: Dict[str, Any], user_brief: str) -> Tuple[str, str]:
+def load_project_data() -> Dict[str, str]:
+    """Load project data from the standard project data file."""
+    global project_name, project_brief
+    
+    if not PROJECT_DATA_PATH.exists():
+        raise FileNotFoundError(f"Project data file not found at: {PROJECT_DATA_PATH}")
+    
+    try:
+        with open(PROJECT_DATA_PATH, "r", encoding="utf-8") as f:
+            project_data = json.load(f)
+        
+        # Extract required fields
+        project_name = project_data.get("projectTitle", "Unknown Project")
+        project_brief = project_data.get("projectBrief", "")
+        
+        if not project_brief:
+            raise ValueError("Project brief is empty in project data file")
+        
+        logger.info(f"Loaded project: {project_name}")
+        logger.info(f"Brief length: {len(project_brief)} characters")
+        
+        return {"title": project_name, "brief": project_brief}
+    
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in project data file: {e}")
+    except Exception as e:
+        raise ValueError(f"Error loading project data: {e}")
+
+def generate_output_filename(project_title: str) -> Path:
+    """Generate timestamped output filename."""
+    # Clean project title for filename (remove invalid characters)
+    clean_title = "".join(c for c in project_title if c.isalnum() or c in (' ', '-', '_')).rstrip()
+    clean_title = clean_title.replace(' ', '_')
+    
+    # Generate timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Create filename
+    filename = f"{clean_title}_edit_{timestamp}.json"
+    
+    # Ensure output directory exists
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    
+    return OUTPUT_DIR / filename
+
+def load_transcript_data() -> Dict[str, Any]:
+    """Load transcript data from the standard transcript file."""
+    if not TRANSCRIPT_PATH.exists():
+        raise FileNotFoundError(f"Transcript file not found at: {TRANSCRIPT_PATH}")
+    
+    try:
+        with open(TRANSCRIPT_PATH, "r", encoding="utf-8") as f:
+            transcript_data = json.load(f)
+        
+        logger.info(f"Loaded transcript from: {TRANSCRIPT_PATH}")
+        
+        # Basic validation
+        if "words" not in transcript_data:
+            raise ValueError("Invalid transcript format: missing 'words' field")
+        
+        word_count = len([w for w in transcript_data["words"] if w.get("word") != "**SILENCE**"])
+        logger.info(f"Transcript contains {word_count} words")
+        
+        return transcript_data
+    
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in transcript file: {e}")
+    except Exception as e:
+        raise ValueError(f"Error loading transcript: {e}")
+
+def load_prompts(transcript_data: Dict[str, Any], user_brief: str, proj_name: str) -> Tuple[str, str]:
     """Load system prompt and format user prompt with transcript data and brief."""
     system = system_prompt()
     transcript_json = json.dumps(transcript_data, indent=2)
-    user = user_prompt(transcript_json=transcript_json, brief=user_brief, project_name=project_name)
+    user = user_prompt(transcript_json=transcript_json, brief=user_brief, project_name=proj_name)
     return system, user
 
 def analyze_transcript_quality(transcript_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -154,7 +230,7 @@ async def process_transcript_async(
         client = Anthropic(api_key=api_key)
         
         # Get prompts
-        system_prompt, user_prompt = load_prompts(transcript_data, user_brief)
+        system_prompt, user_prompt = load_prompts(transcript_data, user_brief, project_name)
         
         # Create a message with streaming
         logger.info("Sending request to Claude API with thinking enabled")
@@ -266,85 +342,87 @@ def stream_to_console(stream_type: str, content: str):
 
 # Main execution when script is run directly
 if __name__ == "__main__":
-    import sys
-    
-    # Check if transcript file path is provided as argument
-    if len(sys.argv) < 2:
-        print("Usage: python main.py <transcript_file.json> [brief]")
-        sys.exit(1)
-    
-    # Get transcript path from command line
-    transcript_path = sys.argv[1]
-    
-    # Use default brief or get from command line
-    if len(sys.argv) > 2:
-        user_brief = sys.argv[2]
-    else:
-        # Use the content of projectbrieftemp.txt as default brief
-        brief_path = Path(__file__).parent / "prompts" / "projectbrieftemp.txt"
-        with open(brief_path, "r", encoding="utf-8") as f:
-            user_brief = f.read()
-    
-    # Load transcript data
-    with open(transcript_path, "r") as f:
-        transcript_data = json.load(f)
-    
-    # Analyze transcript quality first
-    print("Analyzing transcript quality...")
-    quality_report = analyze_transcript_quality(transcript_data)
-    
-    if "error" not in quality_report and "warning" not in quality_report:
-        print(f"✓ Transcript Quality Report:")
-        print(f"  • Total words: {quality_report['total_words']}")
-        print(f"  • Average confidence: {quality_report['avg_confidence']}")
-        print(f"  • Low confidence words: {quality_report['low_confidence_words']} ({quality_report['low_confidence_percentage']}%)")
+    try:
+        # Load project data first
+        print("Loading project data...")
+        project_data = load_project_data()
+        project_title = project_data["title"]
+        user_brief = project_data["brief"]
         
-        if quality_report['worst_words']:
-            print(f"  • Words needing attention: {len(quality_report['worst_words'])} words with confidence < 0.7")
-            if quality_report['avg_confidence'] < 0.8:
-                print("  ⚠ Consider reviewing audio quality or manual transcript verification")
+        print(f"✓ Project: {project_title}")
+        print(f"✓ Brief loaded ({len(user_brief)} characters)")
         
-        print(f"  • Speaker confidence:")
-        for speaker, conf in quality_report['speaker_confidence'].items():
-            status = "✓" if conf >= 0.8 else "⚠" if conf >= 0.7 else "✗"
-            print(f"    {status} {speaker}: {conf}")
-    
-    # Set output path to edits folder
-    output_dir = Path(__file__).parent / "edits"
-    output_dir.mkdir(exist_ok=True)
-    
-    output_filename = output_dir / f"{project_name}.edited.json"
-    
-    print(f"\nProcessing transcript: {transcript_path}")
-    print(f"Using brief: {user_brief[:100]}...")  # Show first 100 chars
-    print(f"Output will be saved to: {output_filename}")
-    print("\nStarting Claude processing with thinking enabled...\n")
-    
-    # Process with streaming to console
-    result = process_transcript(
-        transcript_data, 
-        user_brief, 
-        output_filename=str(output_filename),
-        streaming_callback=stream_to_console
-    )
-    
-    print("\n\nProcessing complete.")
-    
-    if "error" in result:
-        print(f"Error: {result['error']}")
-    else:
-        print(f"✓ Generated {len(result['segments'])} segments")
-        print(f"✓ Target duration: {result['target_duration_frames']} frames")
-        print(f"✓ Actual duration: {result['actual_duration_frames']} frames")
+        # Load transcript data
+        print("\nLoading transcript...")
+        transcript_data = load_transcript_data()
+        print(f"✓ Transcript loaded from: {TRANSCRIPT_PATH}")
         
-        # Analyze confidence in the generated segments
-        if 'segments' in result:
-            segment_confidences = [seg.get('avg_confidence', 0) for seg in result['segments'] if seg.get('avg_confidence')]
-            if segment_confidences:
-                avg_segment_confidence = sum(segment_confidences) / len(segment_confidences)
-                print(f"✓ Average segment confidence: {avg_segment_confidence:.3f}")
-                
-                low_conf_segments = [i for i, seg in enumerate(result['segments']) 
-                                   if seg.get('avg_confidence', 1) < 0.7]
-                if low_conf_segments:
-                    print(f"⚠ Segments with low confidence: {len(low_conf_segments)} (review recommended)")
+        # Analyze transcript quality first
+        print("\nAnalyzing transcript quality...")
+        quality_report = analyze_transcript_quality(transcript_data)
+        
+        if "error" not in quality_report and "warning" not in quality_report:
+            print(f"✓ Transcript Quality Report:")
+            print(f"  • Total words: {quality_report['total_words']}")
+            print(f"  • Average confidence: {quality_report['avg_confidence']}")
+            print(f"  • Low confidence words: {quality_report['low_confidence_words']} ({quality_report['low_confidence_percentage']}%)")
+            
+            if quality_report['worst_words']:
+                print(f"  • Words needing attention: {len(quality_report['worst_words'])} words with confidence < 0.7")
+                if quality_report['avg_confidence'] < 0.8:
+                    print("  ⚠ Consider reviewing audio quality or manual transcript verification")
+            
+            print(f"  • Speaker confidence:")
+            for speaker, conf in quality_report['speaker_confidence'].items():
+                status = "✓" if conf >= 0.8 else "⚠" if conf >= 0.7 else "✗"
+                print(f"    {status} {speaker}: {conf}")
+        
+        # Generate output filename with timestamp
+        output_filename = generate_output_filename(project_title)
+        
+        print(f"\nProcessing setup:")
+        print(f"  • Project: {project_title}")
+        print(f"  • Brief preview: {user_brief[:100]}...")
+        print(f"  • Output will be saved to: {output_filename}")
+        print("\nStarting Claude processing with thinking enabled...\n")
+        
+        # Process with streaming to console
+        result = process_transcript(
+            transcript_data, 
+            user_brief, 
+            output_filename=str(output_filename),
+            streaming_callback=stream_to_console
+        )
+        
+        print("\n\nProcessing complete.")
+        
+        if "error" in result:
+            print(f"❌ Error: {result['error']}")
+        else:
+            print(f"✓ Generated {len(result['segments'])} segments")
+            print(f"✓ Target duration: {result['target_duration_frames']} frames")
+            print(f"✓ Actual duration: {result['actual_duration_frames']} frames")
+            print(f"✓ Output saved to: {output_filename}")
+            
+            # Analyze confidence in the generated segments
+            if 'segments' in result:
+                segment_confidences = [seg.get('avg_confidence', 0) for seg in result['segments'] if seg.get('avg_confidence')]
+                if segment_confidences:
+                    avg_segment_confidence = sum(segment_confidences) / len(segment_confidences)
+                    print(f"✓ Average segment confidence: {avg_segment_confidence:.3f}")
+                    
+                    low_conf_segments = [i for i, seg in enumerate(result['segments']) 
+                                       if seg.get('avg_confidence', 1) < 0.7]
+                    if low_conf_segments:
+                        print(f"⚠ Segments with low confidence: {len(low_conf_segments)} (review recommended)")
+    
+    except FileNotFoundError as e:
+        print(f"❌ File Error: {e}")
+        print("\nRequired files:")
+        print(f"  • Transcript: {TRANSCRIPT_PATH}")
+        print(f"  • Project data: {PROJECT_DATA_PATH}")
+    except ValueError as e:
+        print(f"❌ Data Error: {e}")
+    except Exception as e:
+        print(f"❌ Unexpected Error: {e}")
+        logger.exception("Unexpected error in main execution")

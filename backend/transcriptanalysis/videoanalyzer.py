@@ -652,7 +652,7 @@ class VideoAnalyzer:
         
         Args:
             video_path: Path to the video file
-            output_path: Path to save the output JSON
+            output_path: Path to save the output JSON (if None, saves to project's data/analyzed directory)
             custom_spell: Optional list of custom spellings
             brief_path: Path to project brief file for context
             silence_threshold_ms: Minimum silence duration in milliseconds to mark as silence (default: 1000ms)
@@ -668,9 +668,23 @@ class VideoAnalyzer:
         # Process the video with silence detection
         result = self.process_video(video_path, custom_spell, silence_threshold_ms)
         
-        # Determine output path if not provided
+        # Determine output path if not provided - always use analyzed directory
         if output_path is None:
-            output_path = f"{video_path}.transcript.json"
+            # Get the directory of this script
+            script_dir = Path(__file__).parent
+            
+            # Navigate to project root (up 2 levels from backend/transcriptanalysis) and then to data/analyzed
+            analyzed_dir = script_dir.parent.parent / "data" / "analyzed"
+            
+            # Ensure the directory exists
+            analyzed_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Create filename from video filename
+            video_filename = Path(video_path).stem  # Gets filename without extension
+            output_filename = f"{video_filename}.transcript.json"
+            output_path = analyzed_dir / output_filename
+            
+            logger.info(f"Auto-generated output path: {output_path}")
         
         # Write results to file
         with open(output_path, 'w', encoding='utf-8') as f:
