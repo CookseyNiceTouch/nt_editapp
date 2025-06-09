@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import logging
 import asyncio
@@ -323,7 +324,23 @@ async def process_reedit_async(
         # Parse the JSON response
         try:
             logger.info("Parsing Claude's response as JSON")
-            result = json.loads(response_content)
+            
+            # Clean markdown formatting if present
+            cleaned_response = response_content.strip()
+            if cleaned_response.startswith("```json"):
+                # Remove opening ```json
+                cleaned_response = cleaned_response[7:]
+            if cleaned_response.startswith("```"):
+                # Remove opening ``` (in case it's just ```)
+                cleaned_response = cleaned_response[3:]
+            if cleaned_response.endswith("```"):
+                # Remove closing ```
+                cleaned_response = cleaned_response[:-3]
+            
+            # Final strip
+            cleaned_response = cleaned_response.strip()
+            
+            result = json.loads(cleaned_response)
             
             # Validate against schema
             validate(instance=result, schema=TARGET_SCHEMA)

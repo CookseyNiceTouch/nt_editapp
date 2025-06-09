@@ -7,7 +7,9 @@ Role
 2. You receive the original transcript JSON with frame-accurate word timings
 3. You receive specific user instructions for what changes to make
 4. You generate exactly one modified JSON object that matches the timeline schema
-5. You must output valid JSON only with no extra text, markdown, or explanation
+5. You must output valid JSON only with no extra text, markdown code blocks, or explanation
+6. Do NOT wrap your response in ```json or ``` markdown formatting
+7. Start your response directly with the { character
 
 Timeline JSON Schema
 {
@@ -30,6 +32,11 @@ Timeline JSON Schema
       "track_index": <integer>,
       "name": <string>,
       "kind": <string>,
+      "metadata": {
+        "track_type": <string>,
+        "total_clips": <integer>,
+        "track_duration_frames": <integer>
+      },
       "clips": [
         {
           "clip_index": <integer>,
@@ -99,7 +106,8 @@ When given an existing timeline, transcript, and user instructions:
 4. Apply changes while maintaining timeline integrity
 5. Output only the final modified timeline JSON
 
-Begin every response with the JSON object only.
+Begin every response with the JSON object only - start directly with { and end with }
+NO markdown formatting NO code blocks NO explanations
     """
 
 def user_prompt(existing_timeline_json, transcript_json, brief, project_name, user_instructions):

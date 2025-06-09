@@ -158,9 +158,146 @@ def create_track_from_json(json_track: Dict[str, Any]) -> otio.schema.Track:
     return track
 
 
+def create_audio_clip_from_video_clip(video_clip_json: Dict[str, Any], link_group_id: int) -> Dict[str, Any]:
+    """
+    Create an audio clip JSON from a video clip JSON.
+    
+    Args:
+        video_clip_json: Video clip JSON data
+        link_group_id: Link group ID for linking video and audio
+        
+    Returns:
+        Audio clip JSON data
+    """
+    # Copy the video clip data
+    audio_clip = video_clip_json.copy()
+    
+    # Add audio-specific metadata
+    if "metadata" not in audio_clip:
+        audio_clip["metadata"] = {}
+    
+    # Add audio channel information (stereo by default)
+    audio_clip["metadata"]["Resolve_OTIO_Channels"] = "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
+    audio_clip["metadata"]["Resolve_OTIO_Link Group ID"] = link_group_id
+    
+    return audio_clip
+
+
+def create_matching_audio_track(video_track_json: Dict[str, Any], track_index: int) -> Dict[str, Any]:
+    """
+    Create a matching audio track from a video track.
+    
+    Args:
+        video_track_json: Video track JSON data
+        track_index: Index for the new audio track
+        
+    Returns:
+        Audio track JSON data
+    """
+    # Create audio track structure
+    audio_track = {
+        "track_index": track_index,
+        "name": "Audio 1",  # Standard audio track name
+        "kind": "Audio",
+        "clips": [],
+        "metadata": {
+            "Resolve_OTIO": {
+                "Audio Type": "Stereo",
+                "Locked": False,
+                "SoloOn": False
+            }
+        }
+    }
+    
+    # Create matching audio clips for each video clip
+    for i, video_clip in enumerate(video_track_json.get("clips", [])):
+        # Only create audio clips for video clips that reference actual media files
+        if video_clip.get("type") != "gap" and "media_reference" in video_clip:
+            media_ref = video_clip["media_reference"]
+            target_url = media_ref.get("target_url", "")
+            
+            # Check if this looks like a video file that would have audio
+            video_extensions = ['.mp4', '.mov', '.avi', '.mkv', '.mxf', '.mts', '.m2ts']
+            has_audio = any(target_url.lower().endswith(ext) for ext in video_extensions)
+            
+            if has_audio:
+                # Create audio clip with link group ID
+                link_group_id = video_clip.get("metadata", {}).get("Resolve_OTIO_Link Group ID", i + 1)
+                audio_clip = create_audio_clip_from_video_clip(video_clip, link_group_id)
+                audio_track["clips"].append(audio_clip)
+    
+    return audio_track
+
+
+def auto_generate_audio_tracks(json_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Automatically generate matching audio tracks for video tracks if none exist.
+    
+    Args:
+        json_data: Original JSON data
+        
+    Returns:
+        Enhanced JSON data with audio tracks
+    """
+    tracks = json_data.get("tracks", [])
+    
+    # Check if we have any audio tracks
+    has_audio_tracks = any(track.get("kind", "").lower() == "audio" for track in tracks)
+    
+    if has_audio_tracks:
+        # Audio tracks already exist, return as-is
+        return json_data
+    
+    # Find video tracks that should have matching audio
+    video_tracks = [track for track in tracks if track.get("kind", "").lower() == "video"]
+    
+    if not video_tracks:
+        # No video tracks found, return as-is
+        return json_data
+    
+    print("✓ No audio tracks detected - automatically generating matching audio tracks")
+    
+    # Create enhanced JSON data
+    enhanced_data = json_data.copy()
+    enhanced_tracks = tracks.copy()
+    
+    # Generate audio tracks for each video track
+    next_track_index = max([track.get("track_index", 0) for track in tracks]) + 1
+    
+    for video_track in video_tracks:
+        # Check if this video track has clips with media files
+        has_media_clips = any(
+            clip.get("type") != "gap" and "media_reference" in clip 
+            for clip in video_track.get("clips", [])
+        )
+        
+        if has_media_clips:
+            audio_track = create_matching_audio_track(video_track, next_track_index)
+            enhanced_tracks.append(audio_track)
+            
+            print(f"  - Created audio track '{audio_track['name']}' matching video track '{video_track.get('name', 'Unknown')}'")
+            print(f"    • {len(audio_track['clips'])} audio clips generated")
+            
+            next_track_index += 1
+    
+    # Update the tracks and summary
+    enhanced_data["tracks"] = enhanced_tracks
+    
+    # Update summary if it exists
+    if "summary" in enhanced_data:
+        original_tracks = enhanced_data["summary"].get("total_tracks", len(tracks))
+        total_audio_clips = sum(len(track["clips"]) for track in enhanced_tracks if track.get("kind", "").lower() == "audio")
+        
+        enhanced_data["summary"]["total_tracks"] = len(enhanced_tracks)
+        enhanced_data["summary"]["total_clips"] = enhanced_data["summary"].get("total_clips", 0) + total_audio_clips
+    
+    return enhanced_data
+
+
 def create_timeline_from_json(json_data: Dict[str, Any]) -> otio.schema.Timeline:
     """
     Create an OTIO timeline from JSON data.
+    Automatically generates matching audio tracks if only video tracks are present.
     
     Args:
         json_data: JSON data from otio2json format
@@ -168,8 +305,11 @@ def create_timeline_from_json(json_data: Dict[str, Any]) -> otio.schema.Timeline
     Returns:
         OTIO Timeline object
     """
+    # Auto-generate audio tracks if needed
+    enhanced_data = auto_generate_audio_tracks(json_data)
+    
     # Extract timeline info
-    timeline_info = json_data.get("timeline", {})
+    timeline_info = enhanced_data.get("timeline", {})
     timeline_name = timeline_info.get("name", "Timeline")
     timeline_fps = timeline_info.get("fps", 25.0)
     
@@ -182,7 +322,7 @@ def create_timeline_from_json(json_data: Dict[str, Any]) -> otio.schema.Timeline
             timeline.metadata[key] = value
     
     # Add tracks to timeline
-    for json_track in json_data.get("tracks", []):
+    for json_track in enhanced_data.get("tracks", []):
         track = create_track_from_json(json_track)
         timeline.tracks.append(track)
     
