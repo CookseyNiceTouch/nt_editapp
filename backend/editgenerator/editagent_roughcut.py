@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import logging
 import asyncio
@@ -6,11 +7,12 @@ from pathlib import Path
 import time
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
+import glob
 from dotenv import load_dotenv
 import anthropic
 from anthropic import Anthropic
 from jsonschema import validate
-from prompts.prompts import system_prompt, user_prompt
+from prompts.prompts_roughcut import system_prompt, user_prompt
 
 # Set up logging
 logging.basicConfig(
@@ -22,10 +24,15 @@ logger = logging.getLogger(__name__)
 # Load environment variables from .env file
 load_dotenv()
 
-# File paths (hardcoded for standalone operation)
-TRANSCRIPT_PATH = Path("D:/Git/nt_editapp/data/20250509_MTC_2206.MP4.transcript.json")
-PROJECT_DATA_PATH = Path("D:/Git/nt_editapp/data/projectdata.json")
-OUTPUT_DIR = Path("D:/Git/nt_editapp/data/edits")
+# Get paths relative to script location (backend/editgenerator)
+SCRIPT_DIR = Path(__file__).parent.resolve()
+PROJECT_ROOT = SCRIPT_DIR.parent.parent  # Go up from backend/editgenerator to project root
+
+# File paths (relative to project root)
+ANALYZED_DIR = PROJECT_ROOT / "data" / "analyzed"
+PROJECT_DATA_PATH = PROJECT_ROOT / "data" / "projectdata.json"
+TIMELINE_EDITED_DIR = PROJECT_ROOT / "data" / "timelineprocessing" / "timeline_edited"
+TIMELINE_REF_DIR = PROJECT_ROOT / "data" / "timelineprocessing" / "timeline_ref"
 
 # Will be loaded from project data
 project_name = None
@@ -37,30 +44,112 @@ MAX_TOKENS = 20000
 THINKING_BUDGET = 16000  # Maximum tokens for Claude's extended thinking process
 TARGET_SCHEMA = {
     "type": "object",
-    "required": ["file_name", "fps", "target_duration_frames", "actual_duration_frames", "segments"],
+    "required": ["schema_version", "otio_schema_version", "timeline", "tracks", "summary"],
     "properties": {
-        "file_name": {"type": "string"},
-        "fps": {"type": "number"},
-        "target_duration_frames": {"type": "integer"},
-        "actual_duration_frames": {"type": "integer"},
-        "segments": {
+        "schema_version": {"type": "string"},
+        "otio_schema_version": {"type": "string"},
+        "timeline": {
+            "type": "object",
+            "required": ["name", "fps", "metadata"],
+            "properties": {
+                "name": {"type": "string"},
+                "fps": {"type": "number"},
+                "metadata": {"type": "object"}
+            }
+        },
+        "tracks": {
             "type": "array",
             "items": {
                 "type": "object",
-                "required": ["segment_id", "speaker", "frame_in", "frame_out", "text", "clip_order"],
+                "required": ["track_index", "name", "kind", "clips", "metadata"],
                 "properties": {
-                    "segment_id": {"type": "integer"},
-                    "speaker": {"type": "string"},
-                    "frame_in": {"type": "integer"},
-                    "frame_out": {"type": "integer"},
-                    "text": {"type": "string"},
-                    "clip_order": {"type": "integer"},
-                    "avg_confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0}
+                    "track_index": {"type": "integer"},
+                    "name": {"type": "string"},
+                    "kind": {"type": "string"},
+                    "clips": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "required": ["clip_index", "name", "metadata", "source_range", "media_reference"],
+                            "properties": {
+                                "clip_index": {"type": "integer"},
+                                "name": {"type": "string"},
+                                "metadata": {"type": "object"},
+                                "source_range": {"type": "object"},
+                                "media_reference": {"type": "object"}
+                            }
+                        }
+                    },
+                    "metadata": {"type": "object"}
                 }
+            }
+        },
+        "summary": {
+            "type": "object",
+            "required": ["total_tracks", "total_clips", "timeline_duration_frames"],
+            "properties": {
+                "total_tracks": {"type": "integer"},
+                "total_clips": {"type": "integer"},
+                "timeline_duration_frames": {"type": "integer"}
             }
         }
     }
 }
+
+def find_existing_timeline_json() -> Optional[Path]:
+    """Find existing JSON file in timeline_ref directory to match the name."""
+    try:
+        # Look for JSON files in timeline_ref directory
+        json_files = list(TIMELINE_REF_DIR.glob("*.json"))
+        
+        if json_files:
+            if len(json_files) > 1:
+                logger.warning(f"Multiple JSON files found in {TIMELINE_REF_DIR}:")
+                for f in json_files:
+                    logger.warning(f"  - {f.name}")
+                logger.warning("Using the first one found...")
+            
+            existing_json = json_files[0]
+            logger.info(f"Found existing timeline JSON: {existing_json.name}")
+            return existing_json
+        else:
+            logger.info(f"No existing JSON files found in {TIMELINE_REF_DIR}")
+            return None
+            
+    except Exception as e:
+        logger.warning(f"Error checking for existing JSON files: {e}")
+        return None
+
+def generate_output_filename(project_title: str, match_existing: bool = True) -> Path:
+    """Generate output filename, optionally matching existing timeline JSON names."""
+    
+    # Ensure output directory exists
+    TIMELINE_EDITED_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # Try to match existing timeline JSON filename
+    if match_existing:
+        existing_json = find_existing_timeline_json()
+        if existing_json:
+            # Use the same filename as the existing JSON in timeline_ref
+            filename = existing_json.name
+            output_path = TIMELINE_EDITED_DIR / filename
+            logger.info(f"Matching existing timeline name: {filename}")
+            return output_path
+    
+    # Fallback: Generate new timestamped filename
+    # Clean project title for filename (remove invalid characters)
+    clean_title = "".join(c for c in project_title if c.isalnum() or c in (' ', '-', '_')).rstrip()
+    clean_title = clean_title.replace(' ', '_')
+    
+    # Generate timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Create filename
+    filename = f"{clean_title}_edit_{timestamp}.json"
+    output_path = TIMELINE_EDITED_DIR / filename
+    
+    logger.info(f"Generated new filename: {filename}")
+    return output_path
 
 def load_project_data() -> Dict[str, str]:
     """Load project data from the standard project data file."""
@@ -90,40 +179,40 @@ def load_project_data() -> Dict[str, str]:
     except Exception as e:
         raise ValueError(f"Error loading project data: {e}")
 
-def generate_output_filename(project_title: str) -> Path:
-    """Generate timestamped output filename."""
-    # Clean project title for filename (remove invalid characters)
-    clean_title = "".join(c for c in project_title if c.isalnum() or c in (' ', '-', '_')).rstrip()
-    clean_title = clean_title.replace(' ', '_')
-    
-    # Generate timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    # Create filename
-    filename = f"{clean_title}_edit_{timestamp}.json"
-    
-    # Ensure output directory exists
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    
-    return OUTPUT_DIR / filename
-
 def load_transcript_data() -> Dict[str, Any]:
-    """Load transcript data from the standard transcript file."""
-    if not TRANSCRIPT_PATH.exists():
-        raise FileNotFoundError(f"Transcript file not found at: {TRANSCRIPT_PATH}")
+    """Load transcript data from the analyzed directory."""
+    if not ANALYZED_DIR.exists():
+        raise FileNotFoundError(f"Analyzed directory not found at: {ANALYZED_DIR}")
+    
+    # Find transcript JSON files in the analyzed directory
+    transcript_files = list(ANALYZED_DIR.glob("*.transcript.json"))
+    
+    if not transcript_files:
+        raise FileNotFoundError(f"No transcript files (*.transcript.json) found in: {ANALYZED_DIR}")
+    
+    if len(transcript_files) > 1:
+        logger.warning(f"Multiple transcript files found in {ANALYZED_DIR}:")
+        for f in transcript_files:
+            logger.warning(f"  - {f.name}")
+        logger.warning("Using the first one found...")
+    
+    transcript_path = transcript_files[0]
     
     try:
-        with open(TRANSCRIPT_PATH, "r", encoding="utf-8") as f:
+        with open(transcript_path, "r", encoding="utf-8") as f:
             transcript_data = json.load(f)
         
-        logger.info(f"Loaded transcript from: {TRANSCRIPT_PATH}")
+        logger.info(f"Loaded transcript from: {transcript_path}")
         
         # Basic validation
         if "words" not in transcript_data:
             raise ValueError("Invalid transcript format: missing 'words' field")
         
         word_count = len([w for w in transcript_data["words"] if w.get("word") != "**SILENCE**"])
+        timecode_offset = transcript_data.get("timecode_offset_frames", 0)
+        
         logger.info(f"Transcript contains {word_count} words")
+        logger.info(f"Timecode offset: {timecode_offset} frames")
         
         return transcript_data
     
@@ -269,7 +358,23 @@ async def process_transcript_async(
         # Parse the JSON response
         try:
             logger.info("Parsing Claude's response as JSON")
-            result = json.loads(response_content)
+            
+            # Clean markdown formatting if present
+            cleaned_response = response_content.strip()
+            if cleaned_response.startswith("```json"):
+                # Remove opening ```json
+                cleaned_response = cleaned_response[7:]
+            if cleaned_response.startswith("```"):
+                # Remove opening ``` (in case it's just ```)
+                cleaned_response = cleaned_response[3:]
+            if cleaned_response.endswith("```"):
+                # Remove closing ```
+                cleaned_response = cleaned_response[:-3]
+            
+            # Final strip
+            cleaned_response = cleaned_response.strip()
+            
+            result = json.loads(cleaned_response)
             
             # Validate against schema
             validate(instance=result, schema=TARGET_SCHEMA)
@@ -318,6 +423,33 @@ def process_transcript(
         )
     )
 
+def run_import_otio():
+    """Run the importotio.py script to import generated timeline to DaVinci Resolve."""
+    try:
+        # Import the importotio module
+        resolveautomation_dir = SCRIPT_DIR.parent / "resolveautomation"
+        sys.path.insert(0, str(resolveautomation_dir))
+        
+        # Import and run the main function from importotio
+        from importotio import main as import_main
+        
+        print("Importing timeline to DaVinci Resolve...")
+        success = import_main()
+        
+        if success:
+            print("✓ Timeline import completed successfully!")
+            return True
+        else:
+            print("✗ Timeline import failed!")
+            return False
+            
+    except ImportError as e:
+        print(f"Error importing importotio module: {e}")
+        return False
+    except Exception as e:
+        print(f"Error during timeline import: {e}")
+        return False
+
 def stream_to_console(stream_type: str, content: str):
     """
     Improved streaming callback that prints to console in a more readable format.
@@ -343,6 +475,13 @@ def stream_to_console(stream_type: str, content: str):
 # Main execution when script is run directly
 if __name__ == "__main__":
     try:
+        print("=== AI Rough Cut Generator and Import Workflow ===")
+        print("This will generate a rough cut from transcript and import to DaVinci Resolve")
+        print()
+        
+        print("STEP 1: Loading project data and transcript")
+        print("="*60)
+        
         # Load project data first
         print("Loading project data...")
         project_data = load_project_data()
@@ -355,10 +494,12 @@ if __name__ == "__main__":
         # Load transcript data
         print("\nLoading transcript...")
         transcript_data = load_transcript_data()
-        print(f"✓ Transcript loaded from: {TRANSCRIPT_PATH}")
+        timecode_offset = transcript_data.get("timecode_offset_frames", 0)
+        print(f"✓ Transcript loaded from: {ANALYZED_DIR}")
+        print(f"✓ Timecode offset: {timecode_offset} frames")
         
-        # Analyze transcript quality first
-        print("\nAnalyzing transcript quality...")
+        print("\nSTEP 2: Analyzing transcript quality")
+        print("="*60)
         quality_report = analyze_transcript_quality(transcript_data)
         
         if "error" not in quality_report and "warning" not in quality_report:
@@ -377,13 +518,26 @@ if __name__ == "__main__":
                 status = "✓" if conf >= 0.8 else "⚠" if conf >= 0.7 else "✗"
                 print(f"    {status} {speaker}: {conf}")
         
-        # Generate output filename with timestamp
-        output_filename = generate_output_filename(project_title)
+        # Generate output filename (matching existing timeline if available)
+        output_filename = generate_output_filename(project_title, match_existing=True)
         
-        print(f"\nProcessing setup:")
+        print(f"\nSTEP 3: Generating rough cut timeline")
+        print("="*60)
+        
+        print(f"Processing setup:")
         print(f"  • Project: {project_title}")
         print(f"  • Brief preview: {user_brief[:100]}...")
-        print(f"  • Output will be saved to: {output_filename}")
+        print(f"  • Output directory: {TIMELINE_EDITED_DIR}")
+        print(f"  • Output filename: {output_filename.name}")
+        
+        # Show timeline integration info
+        existing_json = find_existing_timeline_json()
+        if existing_json:
+            print(f"  • Matching existing timeline: {existing_json.name}")
+            print(f"  • Integration: This edit will replace the existing JSON in timeline_edited/")
+        else:
+            print(f"  • Creating new edit sequence")
+        
         print("\nStarting Claude processing with thinking enabled...\n")
         
         # Process with streaming to console
@@ -394,32 +548,69 @@ if __name__ == "__main__":
             streaming_callback=stream_to_console
         )
         
-        print("\n\nProcessing complete.")
+        print("\n\nRough cut generation complete.")
         
         if "error" in result:
             print(f"❌ Error: {result['error']}")
         else:
-            print(f"✓ Generated {len(result['segments'])} segments")
-            print(f"✓ Target duration: {result['target_duration_frames']} frames")
-            print(f"✓ Actual duration: {result['actual_duration_frames']} frames")
+            # Extract timeline information
+            timeline_info = result.get("timeline", {})
+            tracks = result.get("tracks", [])
+            summary = result.get("summary", {})
+            
+            print(f"✓ Generated timeline: {timeline_info.get('name', 'Unknown')}")
+            print(f"✓ Total tracks: {summary.get('total_tracks', 0)}")
+            print(f"✓ Total clips: {summary.get('total_clips', 0)}")
+            print(f"✓ Timeline duration: {summary.get('timeline_duration_frames', 0)} frames")
             print(f"✓ Output saved to: {output_filename}")
             
-            # Analyze confidence in the generated segments
-            if 'segments' in result:
-                segment_confidences = [seg.get('avg_confidence', 0) for seg in result['segments'] if seg.get('avg_confidence')]
-                if segment_confidences:
-                    avg_segment_confidence = sum(segment_confidences) / len(segment_confidences)
-                    print(f"✓ Average segment confidence: {avg_segment_confidence:.3f}")
+            # Show track breakdown
+            for track in tracks:
+                track_name = track.get("name", "Unknown Track")
+                track_kind = track.get("kind", "Unknown")
+                clip_count = len(track.get("clips", []))
+                print(f"  - {track_name} ({track_kind}): {clip_count} clips")
+            
+            # Analyze confidence in the generated clips
+            all_clips = []
+            for track in tracks:
+                all_clips.extend(track.get("clips", []))
+            
+            if all_clips:
+                clip_confidences = []
+                for clip in all_clips:
+                    metadata = clip.get("metadata", {})
+                    if "avg_confidence" in metadata:
+                        clip_confidences.append(metadata["avg_confidence"])
+                
+                if clip_confidences:
+                    avg_clip_confidence = sum(clip_confidences) / len(clip_confidences)
+                    print(f"\n✓ Average clip confidence: {avg_clip_confidence:.3f}")
                     
-                    low_conf_segments = [i for i, seg in enumerate(result['segments']) 
-                                       if seg.get('avg_confidence', 1) < 0.7]
-                    if low_conf_segments:
-                        print(f"⚠ Segments with low confidence: {len(low_conf_segments)} (review recommended)")
+                    low_conf_clips = [i for i, conf in enumerate(clip_confidences) if conf < 0.7]
+                    if low_conf_clips:
+                        print(f"⚠ Clips with low confidence: {len(low_conf_clips)} (review recommended)")
+            
+            # Step 4: Import timeline to DaVinci Resolve
+            print(f"\nSTEP 4: Importing timeline to DaVinci Resolve")
+            print("="*60)
+            
+            import_success = run_import_otio()
+            
+            if import_success:
+                print("\n🎉 ROUGH CUT WORKFLOW COMPLETED SUCCESSFULLY! 🎉")
+                print("Timeline is now available in DaVinci Resolve")
+                print("You can run editagent_reedit.py to make further modifications")
+            else:
+                print("\n⚠️  Rough cut generated but import failed")
+                print("Timeline JSON is available in timeline_edited/ directory")
+                print("You can manually run importotio.py to import the timeline")
+                print("Or check DaVinci Resolve connection and try again")
     
     except FileNotFoundError as e:
         print(f"❌ File Error: {e}")
         print("\nRequired files:")
-        print(f"  • Transcript: {TRANSCRIPT_PATH}")
+        print(f"  • Transcript files: {ANALYZED_DIR}/*.transcript.json")
         print(f"  • Project data: {PROJECT_DATA_PATH}")
     except ValueError as e:
         print(f"❌ Data Error: {e}")

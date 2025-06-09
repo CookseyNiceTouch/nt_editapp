@@ -309,49 +309,81 @@ __author__ = "NiceTouch"
 __description__ = "OTIO to JSON adapter for extracting clip data"
 
 
-if __name__ == "__main__":
-    # Basic CLI functionality for testing
-    import argparse
+def convert_timeline_ref_to_json() -> bool:
+    """
+    Hands-off conversion: automatically find OTIO in timeline_ref and convert to JSON in timeline_edited.
     
-    parser = argparse.ArgumentParser(description="Convert OTIO timeline to JSON with clip data")
-    parser.add_argument("input_file", help="Input OTIO file path")
-    parser.add_argument("-o", "--output", help="Output JSON file path (optional)")
-    parser.add_argument("--pretty", action="store_true", help="Pretty print JSON to console")
-    
-    args = parser.parse_args()
-    
+    Returns:
+        True if successful
+    """
     try:
-        # Read OTIO file
-        timeline = otio.adapters.read_from_file(args.input_file)
+        # Define paths relative to script location
+        script_dir = Path(__file__).parent.resolve()
+        project_root = script_dir.parent.parent  # Go up from backend/resolveautomation to project root
+        timeline_ref_dir = project_root / "data" / "timelineprocessing" / "timeline_ref"
+        timeline_edited_dir = project_root / "data" / "timelineprocessing" / "timeline_edited"
         
-        if args.pretty:
-            # Print to console
-            json_output = write_to_string(timeline)
-            print(json_output)
-        else:
-            # Determine output path
-            if args.output:
-                output_path = args.output
-            else:
-                # Default output directory (relative path)
-                output_dir = Path("../../data/edits/fromNLE")
-                output_dir.mkdir(parents=True, exist_ok=True)
-                
-                # Use same filename as input but with .json extension
-                input_filename = Path(args.input_file).stem  # Gets filename without extension
-                output_path = output_dir / f"{input_filename}.json"
-            
-            # Write to file
-            write_to_file(timeline, str(output_path))
-            print(f"✓ Converted {args.input_file} to {output_path}")
-            
-            # Print summary
-            json_data = json.loads(write_to_string(timeline))
-            summary = json_data["summary"]
-            print(f"  - Tracks: {summary['total_tracks']}")
-            print(f"  - Clips: {summary['total_clips']}")
-            print(f"  - Duration: {summary.get('timeline_duration_frames', 0)} frames")
-            
+        # Find any OTIO file in the reference directory
+        otio_files = list(timeline_ref_dir.glob("*.otio"))
+        
+        if not otio_files:
+            print(f"ERROR: No OTIO files found in {timeline_ref_dir}")
+            print(f"  (Resolved path: {timeline_ref_dir.resolve()})")
+            print(f"  Timeline ref directory exists: {timeline_ref_dir.exists()}")
+            print("Please export a timeline from DaVinci Resolve first using exportotio.py")
+            return False
+        
+        if len(otio_files) > 1:
+            print(f"WARNING: Multiple OTIO files found in {timeline_ref_dir}:")
+            for f in otio_files:
+                print(f"  - {f.name}")
+            print("Using the first one found...")
+        
+        otio_file = otio_files[0]
+        print(f"✓ Found reference OTIO: {otio_file.name}")
+        print(f"  (Full path: {otio_file.resolve()})")
+        
+        # Read OTIO file
+        timeline = otio.adapters.read_from_file(str(otio_file))
+        print(f"✓ Loaded timeline: {timeline.name}")
+        
+        # Output path - same location and name as OTIO file, but with .json extension
+        output_path = otio_file.with_suffix('.json')
+        
+        # Check if output exists
+        if output_path.exists():
+            print(f"Overwriting existing file: {output_path}")
+        
+        # Write to file
+        write_to_file(timeline, str(output_path))
+        print(f"✓ Converted to JSON: {output_path}")
+        
+        # Print summary
+        json_data = json.loads(write_to_string(timeline))
+        summary = json_data["summary"]
+        print(f"  - Tracks: {summary['total_tracks']}")
+        print(f"  - Clips: {summary['total_clips']}")
+        print(f"  - Duration: {summary.get('timeline_duration_frames', 0)} frames")
+        
+        return True
+        
     except Exception as e:
         print(f"Error: {e}")
+        return False
+
+
+if __name__ == "__main__":
+    print("=== OTIO to JSON Converter (Hands-off) ===")
+    print("Converting OTIO file to JSON in the same directory")
+    print()
+    
+    success = convert_timeline_ref_to_json()
+    
+    if success:
+        print("\n=== Conversion completed successfully! ===")
+        print("JSON file created in the same directory as the OTIO file.")
+        print("You can now edit the JSON file and use json2otio.py to apply changes.")
+        sys.exit(0)
+    else:
+        print("\n=== Conversion failed! ===")
         sys.exit(1)

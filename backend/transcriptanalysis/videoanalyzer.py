@@ -76,39 +76,44 @@ class ProjectBriefParser:
             if not line:
                 continue
                 
-            # Extract key information patterns
-            if 'talent:' in line.lower() or 'speakers:' in line.lower():
-                # Extract speaker names
+            # Extract key information patterns - be more specific about format
+            if line.lower().startswith('talent:') or line.lower().startswith('speakers:'):
+                # Extract speaker names only from lines that actually start with these labels
                 speakers = self._extract_speakers(line)
                 parsed["speakers"].extend(speakers)
                 
-            elif 'title:' in line.lower():
+            elif line.lower().startswith('title:'):
                 title = self._extract_title(line)
                 if title:
-                    parsed["custom_vocabulary"].extend(title.split())
+                    # Only add reasonable title words (not entire sentences)
+                    title_words = [w for w in title.split() if len(w) > 2 and w.isalpha()]
+                    parsed["custom_vocabulary"].extend(title_words[:5])  # Limit to 5 words
                     
-            elif 'objective:' in line.lower():
+            elif line.lower().startswith('objective:'):
                 current_section = 'objective'
                 
-            elif 'core message:' in line.lower():
+            elif line.lower().startswith('core message:'):
                 current_section = 'core_message'
                 
-            elif current_section and line and not line.endswith(':'):
-                # Extract vocabulary from content sections
+            elif current_section and line and not line.endswith(':') and len(line) < 200:
+                # Only extract vocabulary from reasonably sized content lines
                 vocab = self._extract_vocabulary_from_text(line)
-                parsed["custom_vocabulary"].extend(vocab)
+                parsed["custom_vocabulary"].extend(vocab[:10])  # Limit vocabulary per line
         
-        # Clean and deduplicate
-        parsed["speakers"] = list(set([s.title() for s in parsed["speakers"] if s]))
+        # Clean and deduplicate with strict limits
+        parsed["speakers"] = list(set([s.title() for s in parsed["speakers"] if s and len(s.split()) <= 2]))[:5]  # Max 5 speakers
         parsed["expected_speakers"] = len(parsed["speakers"]) if parsed["speakers"] else 0
-        parsed["custom_vocabulary"] = list(set([v.lower() for v in parsed["custom_vocabulary"] if len(v) > 2]))
+        parsed["custom_vocabulary"] = list(set([v.lower() for v in parsed["custom_vocabulary"] if len(v) > 2 and len(v) < 20]))[:20]  # Max 20 vocab words
         
-        # Generate custom spellings from speaker names
+        # Generate custom spellings from speaker names - ensure single words only
         for speaker in parsed["speakers"]:
-            parsed["custom_spellings"].append({
-                "from": [speaker.lower(), speaker.upper()],
-                "to": speaker
-            })
+            words = speaker.split()
+            for word in words:
+                if len(word) > 1:
+                    parsed["custom_spellings"].append({
+                        "from": [word.lower(), word.upper()],
+                        "to": word
+                    })
         
         return parsed
     
@@ -120,11 +125,15 @@ class ProjectBriefParser:
         # Split by common separators
         speakers = re.split(r'[,&+/]|\band\b', content)
         
-        # Clean up speaker names
+        # Clean up speaker names - only accept reasonable speaker names
         cleaned_speakers = []
         for speaker in speakers:
             speaker = re.sub(r'[^\w\s]', '', speaker).strip()
-            if speaker and len(speaker) > 1:
+            # Only accept single words or simple two-word names (first + last)
+            words = speaker.split()
+            if len(words) == 1 and len(words[0]) > 1:
+                cleaned_speakers.append(words[0])
+            elif len(words) == 2 and all(len(w) > 1 for w in words):
                 cleaned_speakers.append(speaker)
         
         return cleaned_speakers
@@ -139,47 +148,34 @@ class ProjectBriefParser:
     def _extract_vocabulary_from_text(self, text: str) -> List[str]:
         """Extract important vocabulary from text content."""
         # Remove common words and extract meaningful terms
-        common_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those'}
+        common_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those', 'we', 'our', 'us', 'it', 'its', 'they', 'them', 'their'}
         
         # Extract words, prioritize quoted terms and proper nouns
         words = []
         
-        # Extract quoted terms (high priority)
+        # Extract quoted terms (high priority) - but only single words
         quoted_terms = re.findall(r'"([^"]+)"', text)
         for term in quoted_terms:
-            words.extend(term.split())
+            term_words = term.split()
+            if len(term_words) == 1 and term_words[0].isalpha():
+                words.append(term_words[0].lower())
         
-        # Extract capitalized terms (likely proper nouns)
-        capitalized = re.findall(r'\b[A-Z][a-z]+\b', text)
-        words.extend(capitalized)
+        # Extract capitalized terms (likely proper nouns) - single words only
+        capitalized = re.findall(r'\b[A-Z][a-z]{2,}\b', text)
+        words.extend([w.lower() for w in capitalized])
         
-        # Extract other meaningful words
-        all_words = re.findall(r'\b\w+\b', text.lower())
-        meaningful_words = [w for w in all_words if w not in common_words and len(w) > 3]
-        words.extend(meaningful_words)
+        # Extract other meaningful words - be more selective
+        all_words = re.findall(r'\b[a-zA-Z]{4,}\b', text.lower())
+        meaningful_words = [w for w in all_words if w not in common_words and w.isalpha()]
+        words.extend(meaningful_words[:5])  # Limit to 5 words per text
         
-        return words
+        return list(set(words))  # Remove duplicates
     
     def get_transcription_config(self) -> Dict[str, Any]:
         """Get configuration for enhanced transcription based on brief."""
-        if not self.parsed_data:
-            return {}
-            
-        config = {}
-        
-        # Speaker configuration
-        if self.parsed_data.get("expected_speakers", 0) > 0:
-            config["speakers_expected"] = self.parsed_data["expected_speakers"]
-        
-        # Word boost vocabulary
-        if self.parsed_data.get("custom_vocabulary"):
-            config["word_boost"] = self.parsed_data["custom_vocabulary"][:50]  # Limit to 50 terms
-        
-        # Custom spellings
-        if self.parsed_data.get("custom_spellings"):
-            config["custom_spelling"] = self.parsed_data["custom_spellings"]
-        
-        return config
+        # Disable brief-based configuration for now to avoid API errors
+        # The brief parsing needs to be improved to handle the actual brief format
+        return {}
     
     def get_speaker_mapping(self) -> Dict[str, str]:
         """Get mapping from detected speakers to expected speakers."""
@@ -232,13 +228,13 @@ class VideoAnalyzer:
 
     def probe_video_file(self, file_path: str) -> Dict[str, Any]:
         """
-        Extract metadata from video file using ffprobe.
+        Extract metadata from video file using ffprobe, including timecode information.
         
         Args:
             file_path: Path to the video file
             
         Returns:
-            Dict containing fps and duration information
+            Dict containing fps, duration, and timecode offset information
             
         Raises:
             RuntimeError: If ffprobe fails or required metadata is missing
@@ -273,6 +269,39 @@ class VideoAnalyzer:
             if duration_seconds <= 0:
                 raise RuntimeError("Invalid video duration detected")
             
+            # Extract timecode information - check all streams and format tags
+            timecode_offset_frames = 0
+            start_timecode = None
+            
+            # First check video stream tags
+            start_timecode = video_stream.get('tags', {}).get('timecode')
+            source = "video stream"
+            
+            if not start_timecode:
+                # Check format/container level
+                start_timecode = probe.get('format', {}).get('tags', {}).get('timecode')
+                source = "format"
+            
+            if not start_timecode:
+                # Check all streams for timecode data (including data streams like rtmd)
+                for stream in probe['streams']:
+                    stream_timecode = stream.get('tags', {}).get('timecode')
+                    if stream_timecode:
+                        start_timecode = stream_timecode
+                        source = f"stream {stream.get('index', 'unknown')} ({stream.get('codec_type', 'unknown')})"
+                        break
+            
+            if start_timecode:
+                # Parse timecode format (HH:MM:SS:FF or HH:MM:SS;FF)
+                try:
+                    timecode_offset_frames = self._parse_timecode_to_frames(start_timecode, fps)
+                    logger.info(f"Found timecode in {source}: {start_timecode} (offset: {timecode_offset_frames} frames)")
+                except Exception as e:
+                    logger.warning(f"Could not parse timecode '{start_timecode}' from {source}: {e}")
+                    timecode_offset_frames = 0
+            else:
+                logger.info("No timecode found in video file, using offset 0")
+            
             # Get audio stream info for speech estimation
             audio_stream = next((stream for stream in probe['streams'] 
                                if stream['codec_type'] == 'audio'), None)
@@ -284,16 +313,62 @@ class VideoAnalyzer:
                 "fps": fps,
                 "duration_seconds": duration_seconds,
                 "duration_frames": duration_frames,
+                "timecode_offset_frames": timecode_offset_frames,
                 "has_audio": audio_stream is not None
             }
             
-            logger.info(f"Video metadata: fps={fps}, duration={duration_seconds}s, frames={duration_frames}")
+            logger.info(f"Video metadata: fps={fps}, duration={duration_seconds}s, frames={duration_frames}, timecode_offset={timecode_offset_frames}")
             return result
             
         except ffmpeg.Error as e:
             error_message = f"ffprobe error: {str(e)}"
             logger.error(error_message)
             raise RuntimeError(error_message)
+    
+    def _parse_timecode_to_frames(self, timecode: str, fps: float) -> int:
+        """
+        Parse timecode string to frame offset.
+        
+        Args:
+            timecode: Timecode string in format HH:MM:SS:FF or HH:MM:SS;FF
+            fps: Frame rate for calculations
+            
+        Returns:
+            Frame offset as integer
+        """
+        # Clean up timecode string
+        timecode = timecode.strip()
+        
+        # Handle both : and ; separators for frames
+        if ';' in timecode:
+            time_part, frame_part = timecode.rsplit(';', 1)
+        elif ':' in timecode:
+            parts = timecode.split(':')
+            if len(parts) == 4:
+                time_part = ':'.join(parts[:-1])
+                frame_part = parts[-1]
+            else:
+                # No frame part, assume 00
+                time_part = timecode
+                frame_part = '00'
+        else:
+            raise ValueError(f"Invalid timecode format: {timecode}")
+        
+        # Parse time components
+        time_parts = time_part.split(':')
+        if len(time_parts) != 3:
+            raise ValueError(f"Invalid time format in timecode: {timecode}")
+        
+        hours = int(time_parts[0])
+        minutes = int(time_parts[1])
+        seconds = int(time_parts[2])
+        frames = int(frame_part)
+        
+        # Convert to total frames
+        total_seconds = hours * 3600 + minutes * 60 + seconds
+        total_frames = round(total_seconds * fps) + frames
+        
+        return total_frames
     
     def extract_audio(self, video_path: str) -> str:
         """Extract audio with optimal settings for transcription accuracy."""
@@ -463,8 +538,8 @@ class VideoAnalyzer:
                 logger.warning(f"Polling error: {e}, retrying...")
                 time.sleep(10)
 
-    def process_transcript_to_words(self, transcript_data: Dict[str, Any], fps: float, silence_threshold_ms: int = 1000) -> Tuple[List[str], str, List[Dict[str, Any]]]:
-        """Enhanced transcript processing with brief-based speaker mapping and silence detection."""
+    def process_transcript_to_words(self, transcript_data: Dict[str, Any], fps: float, timecode_offset_frames: int = 0, silence_threshold_ms: int = 1000) -> Tuple[List[str], str, List[Dict[str, Any]]]:
+        """Enhanced transcript processing with brief-based speaker mapping, timecode offset, and silence detection."""
         
         full_transcript = transcript_data.get("text", "")
         words_data = transcript_data.get("words", [])
@@ -494,7 +569,7 @@ class VideoAnalyzer:
             speaker = self._normalize_speaker_label(raw_speaker, speaker_mapping)
             speakers_set.add(speaker)
             
-            # Time and frame processing
+            # Time and frame processing with timecode offset
             start_ms = word_data.get("start", 0)
             end_ms = word_data.get("end", 0)
             
@@ -502,8 +577,9 @@ class VideoAnalyzer:
                 logger.warning(f"Invalid timestamps for word '{word}': {start_ms}-{end_ms}")
                 end_ms = start_ms + 200  # Default 200ms duration
             
-            frame_in = max(0, round((start_ms / 1000) * fps))
-            frame_out = round((end_ms / 1000) * fps)
+            # Convert to frames and add timecode offset
+            frame_in = max(0, round((start_ms / 1000) * fps) + timecode_offset_frames)
+            frame_out = round((end_ms / 1000) * fps) + timecode_offset_frames
             
             if frame_out <= frame_in:
                 frame_out = frame_in + 1
@@ -517,8 +593,8 @@ class VideoAnalyzer:
                 silence_duration_ms = start_ms - prev_end_ms
                 
                 if silence_duration_ms >= silence_threshold_ms:
-                    # Insert silence marker
-                    silence_frame_in = round((prev_end_ms / 1000) * fps)
+                    # Insert silence marker with timecode offset
+                    silence_frame_in = round((prev_end_ms / 1000) * fps) + timecode_offset_frames
                     silence_frame_out = frame_in
                     
                     # Ensure silence has at least 1 frame duration
@@ -597,6 +673,7 @@ class VideoAnalyzer:
             metadata = self.probe_video_file(video_path)
             fps = metadata["fps"]
             duration_frames = metadata["duration_frames"]
+            timecode_offset_frames = metadata["timecode_offset_frames"]
             
             # Step 2: Extract audio
             audio_path = self.extract_audio(video_path)
@@ -608,9 +685,9 @@ class VideoAnalyzer:
                 # Step 4: Transcribe audio using AssemblyAI
                 transcription_result = self.transcribe_audio(audio_url, custom_spell)
                 
-                # Step 5: Process transcript to extract speakers, word-level data, and silence detection
+                # Step 5: Process transcript to extract speakers, word-level data, and silence detection with timecode offset
                 speakers, full_transcript, processed_words = self.process_transcript_to_words(
-                    transcription_result, fps, silence_threshold_ms
+                    transcription_result, fps, timecode_offset_frames, silence_threshold_ms
                 )
                 
                 # Build the final result
@@ -618,6 +695,7 @@ class VideoAnalyzer:
                     "file_name": file_name,
                     "fps": fps,
                     "duration_frames": duration_frames,
+                    "timecode_offset_frames": timecode_offset_frames,
                     "speakers": speakers,
                     "full_transcript": full_transcript,
                     "words": processed_words,

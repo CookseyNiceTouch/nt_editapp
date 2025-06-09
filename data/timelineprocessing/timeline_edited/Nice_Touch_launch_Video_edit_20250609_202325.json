@@ -1,0 +1,330 @@
+{
+  "schema_version": "1.0",
+  "otio_schema_version": "0.17.0",
+  "timeline": {
+    "name": "Nice Touch Launch Video",
+    "fps": 25.0,
+    "metadata": {
+      "generated_by": "editagent_roughcut",
+      "source_file": "20250509_MTC_2206.MP4",
+      "target_duration_frames": 2875,
+      "actual_duration_frames": 2521
+    }
+  },
+  "tracks": [
+    {
+      "track_index": 0,
+      "name": "Video Track 1",
+      "kind": "Video",
+      "metadata": {
+        "track_type": "video",
+        "total_clips": 11,
+        "track_duration_frames": 2521
+      },
+      "clips": [
+        {
+          "clip_index": 0,
+          "name": "Opening Introduction",
+          "metadata": {
+            "speaker": "A",
+            "text": "Hi, I'm Cooksey. And I'm Paul. We've started something really exciting and we want you to be the first to know about it.",
+            "avg_confidence": 0.97,
+            "original_segment_id": 1
+          },
+          "source_range": {
+            "start_frame": 0,
+            "duration_frames": 216,
+            "end_frame": 216,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186556,
+              "duration_frames": 216,
+              "end_frame": 186772,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 1,
+          "name": "Core Mission",
+          "metadata": {
+            "speaker": "B",
+            "text": "It's all about creativity, innovation and helping creators to do their best work faster, better and easier.",
+            "avg_confidence": 0.96,
+            "original_segment_id": 2
+          },
+          "source_range": {
+            "start_frame": 216,
+            "duration_frames": 223,
+            "end_frame": 439,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186804,
+              "duration_frames": 223,
+              "end_frame": 187027,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 2,
+          "name": "Introducing Nice Touch",
+          "metadata": {
+            "speaker": "A",
+            "text": "Introducing Nice Touch. We're calling it the Operating System for Creators.",
+            "avg_confidence": 0.95,
+            "original_segment_id": 3
+          },
+          "source_range": {
+            "start_frame": 439,
+            "duration_frames": 105,
+            "end_frame": 544,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 188151,
+              "duration_frames": 105,
+              "end_frame": 188256,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 3,
+          "name": "What It Is",
+          "metadata": {
+            "speaker": "B",
+            "text": "Not an actual os, but a smart intuitive set of tools for streamlining your existing creative tools and processes.",
+            "avg_confidence": 0.94,
+            "original_segment_id": 4
+          },
+          "source_range": {
+            "start_frame": 544,
+            "duration_frames": 204,
+            "end_frame": 748,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 188270,
+              "duration_frames": 204,
+              "end_frame": 188474,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 4,
+          "name": "Benefits",
+          "metadata": {
+            "speaker": "A",
+            "text": "This means smoother workflows, fewer disruptions, and more opportunities to create amazing work, leading to better projects, more gigs and more income.",
+            "avg_confidence": 0.98,
+            "original_segment_id": 5
+          },
+          "source_range": {
+            "start_frame": 748,
+            "duration_frames": 192,
+            "end_frame": 940,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 188482,
+              "duration_frames": 192,
+              "end_frame": 188674,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 5,
+          "name": "Philosophy",
+          "metadata": {
+            "speaker": "A",
+            "text": "We're not trying to automate creativity itself. We want to take away the mundane tasks that hold you back.",
+            "avg_confidence": 0.97,
+            "original_segment_id": 6
+          },
+          "source_range": {
+            "start_frame": 940,
+            "duration_frames": 136,
+            "end_frame": 1076,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 188730,
+              "duration_frames": 136,
+              "end_frame": 188866,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 6,
+          "name": "Creator Problems",
+          "metadata": {
+            "speaker": "B",
+            "text": "Every creator understands the frustration of losing valuable hours to repetitive tasks, things like checking exports, organizing files, chasing feedback. We want to remove those barriers, helping you to spend more time doing what you genuinely love, creating.",
+            "avg_confidence": 0.94,
+            "original_segment_id": 7
+          },
+          "source_range": {
+            "start_frame": 1076,
+            "duration_frames": 498,
+            "end_frame": 1574,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 188904,
+              "duration_frames": 498,
+              "end_frame": 189402,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 7,
+          "name": "Community and Journey",
+          "metadata": {
+            "speaker": "B",
+            "text": "We're just at the start of this journey and we need you. We wouldn't be where we are now if we hadn't worked with some of the most talented and amazing people. It's all about collaboration.",
+            "avg_confidence": 0.95,
+            "original_segment_id": 8
+          },
+          "source_range": {
+            "start_frame": 1574,
+            "duration_frames": 250,
+            "end_frame": 1824,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 189430,
+              "duration_frames": 250,
+              "end_frame": 189680,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 8,
+          "name": "Call to Action",
+          "metadata": {
+            "speaker": "B",
+            "text": "So whether it's just a chat or you want to see what we're up to or get involved somehow, let's do this.",
+            "avg_confidence": 0.93,
+            "original_segment_id": 9
+          },
+          "source_range": {
+            "start_frame": 1824,
+            "duration_frames": 170,
+            "end_frame": 1994,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 205828,
+              "duration_frames": 170,
+              "end_frame": 205998,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 9,
+          "name": "Contact Details",
+          "metadata": {
+            "speaker": "A",
+            "text": "Go sign up on the site. Nicetouch app. Come chat with us on Discord. We're online most days. Or if you've got our numbers, just give us a call or drop us a message.",
+            "avg_confidence": 0.96,
+            "original_segment_id": 10
+          },
+          "source_range": {
+            "start_frame": 1994,
+            "duration_frames": 290,
+            "end_frame": 2284,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 208352,
+              "duration_frames": 290,
+              "end_frame": 208642,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 10,
+          "name": "Closing",
+          "metadata": {
+            "speaker": "A",
+            "text": "This is just the beginning. Who knows where we'll end up, but it's going to be big. Join us for the journey.",
+            "avg_confidence": 0.97,
+            "original_segment_id": 11
+          },
+          "source_range": {
+            "start_frame": 2284,
+            "duration_frames": 237,
+            "end_frame": 2521,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 210169,
+              "duration_frames": 237,
+              "end_frame": 210406,
+              "fps": 25.0
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_tracks": 1,
+    "total_clips": 11,
+    "timeline_duration_frames": 2521
+  }
+}

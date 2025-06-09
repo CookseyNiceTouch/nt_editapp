@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """
-Interactive script to import timeline files (OTIO/FCPXML/AAF) into DaVinci Resolve.
+Automated script to convert JSON to OTIO and import timeline files into DaVinci Resolve.
 
-This script imports a timeline from OTIO, FCPXML, or AAF files without importing source clips,
-replicating the manual File > Import > Timeline functionality.
+This script automatically finds JSON files in timeline_edited directory, converts them to OTIO,
+and then imports the resulting timeline into DaVinci Resolve without importing source clips.
 
-Supported formats:
-- OpenTimelineIO (.otio)
-- Final Cut Pro XML (.fcpxml)
-- Avid Authoring Format (.aaf)
+Import source: ../../data/timelineprocessing/timeline_edited/
+
+No user interaction required - runs completely automated.
 """
 
 import sys
 import os
+import glob
+import json
+from pathlib import Path
 
 # =============================================================================
 # CONFIGURABLE IMPORT SETTINGS
@@ -24,88 +26,200 @@ IMPORT_SOURCE_CLIPS = False        # Bool: whether to import source clips into m
 SOURCE_CLIPS_PATH = ""             # string: filesystem path to search for source clips
 SOURCE_CLIPS_FOLDERS = []          # List: Media Pool folder objects to search for clips
 
-# Note: interlaceProcessing is only valid for AAF import and has been omitted as requested
-# Note: timelineName is set per-import based on user input
+# Target directory for OTIO imports (relative to script location)
+IMPORT_SOURCE_DIR = os.path.join("..", "..", "data", "timelineprocessing", "timeline_edited")
 
 # =============================================================================
 
-def get_file_path():
-    """Get file path from user input with validation."""
-    print("Supported file formats:")
-    print("- OpenTimelineIO (.otio)")
-    print("- Final Cut Pro XML (.fcpxml)")
-    print("- Avid Authoring Format (.aaf)")
-    print()
+def get_import_directory():
+    """Get and validate the import directory path."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(script_dir))  # Go up from backend/resolveautomation to project root
+    import_dir = os.path.join(project_root, "data", "timelineprocessing", "timeline_edited")
+    import_dir = os.path.normpath(import_dir)
     
-    while True:
-        file_path = input("Enter the path to your timeline file: ").strip()
-        
-        # Remove quotes if user copied path with quotes
-        if file_path.startswith('"') and file_path.endswith('"'):
-            file_path = file_path[1:-1]
-        elif file_path.startswith("'") and file_path.endswith("'"):
-            file_path = file_path[1:-1]
-        
-        # Check if file exists
-        if not os.path.exists(file_path):
-            print(f"ERROR: File not found at: {file_path}")
-            print("Please check the path and try again.")
-            continue
-        
-        # Check file extension
-        file_ext = os.path.splitext(file_path)[1].lower()
-        if file_ext not in ['.otio', '.fcpxml', '.aaf']:
-            print(f"ERROR: Unsupported file format: {file_ext}")
-            print("Supported formats: .otio, .fcpxml, .aaf")
-            continue
-        
-        return file_path, file_ext
+    if not os.path.exists(import_dir):
+        print(f"ERROR: Import directory does not exist: {import_dir}")
+        print("Please run json2otio.py first to create modified OTIO files.")
+        return None
+    
+    print(f"✓ Import directory: {import_dir}")
+    return import_dir
 
-def get_timeline_name():
-    """Get timeline name from user input."""
-    print()
-    timeline_name = input("Enter timeline name (press Enter for 'default'): ").strip()
-    if not timeline_name:
-        timeline_name = "default"
+def convert_json_to_otio(import_dir):
+    """Convert JSON to OTIO using the json2otio converter, return OTIO file path."""
+    try:
+        # Import the json2otio module
+        script_dir = Path(__file__).parent.resolve()
+        sys.path.insert(0, str(script_dir))
+        
+        # Import the conversion function from json2otio
+        from json2otio import apply_json_edits_to_timeline
+        
+        print("Converting JSON to OTIO...")
+        # Run the conversion
+        success = apply_json_edits_to_timeline()
+        
+        if not success:
+            print("ERROR: JSON to OTIO conversion failed")
+            return None
+        
+        # Find the generated OTIO file
+        otio_pattern = os.path.join(import_dir, "*.otio")
+        otio_files = glob.glob(otio_pattern)
+        
+        if not otio_files:
+            print("ERROR: No OTIO file generated after JSON conversion")
+            return None
+        
+        # Use the most recently created OTIO file
+        otio_file = max(otio_files, key=os.path.getmtime)
+        print(f"✓ Generated OTIO file: {os.path.basename(otio_file)}")
+        return otio_file
+        
+    except ImportError as e:
+        print(f"Error importing json2otio module: {e}")
+        return None
+    except Exception as e:
+        print(f"Error during JSON to OTIO conversion: {e}")
+        return None
+
+def find_or_convert_otio_file(import_dir):
+    """Find existing OTIO file or convert from JSON in the import directory."""
+    # First, look for JSON files to convert
+    json_pattern = os.path.join(import_dir, "*.json")
+    json_files = glob.glob(json_pattern)
+    
+    if json_files:
+        if len(json_files) > 1:
+            print(f"WARNING: Multiple JSON files found in {import_dir}:")
+            for f in json_files:
+                print(f"  - {os.path.basename(f)}")
+            print("Converting the first one found...")
+        
+        json_file = json_files[0]
+        print(f"✓ Found JSON file: {os.path.basename(json_file)}")
+        
+        # Convert JSON to OTIO
+        return convert_json_to_otio(import_dir)
+    
+    # Fallback: look for existing OTIO files
+    otio_pattern = os.path.join(import_dir, "*.otio")
+    otio_files = glob.glob(otio_pattern)
+    
+    if not otio_files:
+        print(f"ERROR: No JSON or OTIO files found in {import_dir}")
+        print("Please run editagent_roughcut.py or editagent_reedit.py first to create JSON files.")
+        return None
+    
+    if len(otio_files) > 1:
+        print(f"WARNING: Multiple OTIO files found in {import_dir}:")
+        for f in otio_files:
+            print(f"  - {os.path.basename(f)}")
+        print("Using the most recent one...")
+    
+    # Use the most recently created OTIO file
+    otio_file = max(otio_files, key=os.path.getmtime)
+    print(f"✓ Found existing OTIO file: {os.path.basename(otio_file)}")
+    return otio_file
+
+def generate_timeline_name(otio_file_path):
+    """Generate timeline name from OTIO filename."""
+    filename = os.path.basename(otio_file_path)
+    timeline_name = os.path.splitext(filename)[0]
+    print(f"✓ Timeline name: {timeline_name}")
     return timeline_name
 
-def get_import_options(file_ext, timeline_name):
+def get_import_options(timeline_name):
     """Get import options using documented ImportTimelineFromFile parameters."""
     
-    # Use global configurable settings for consistent behavior across all formats
+    # Use global configurable settings for consistent behavior
     import_options = {
         "timelineName": timeline_name,                # string: name of timeline to be created
-        "importSourceClips": IMPORT_SOURCE_CLIPS,     # Bool: whether to import source clips (True by default in API)
+        "importSourceClips": IMPORT_SOURCE_CLIPS,     # Bool: whether to import source clips (False by default for our workflow)
         "sourceClipsPath": SOURCE_CLIPS_PATH,         # string: filesystem path to search for source clips
         "sourceClipsFolders": SOURCE_CLIPS_FOLDERS,   # List: Media Pool folder objects to search for clips
-        # Note: interlaceProcessing is only valid for AAF import, omitting as requested
     }
     
-    print(f"Using standardized import options for {file_ext.upper()}")
+    print("Import options:")
+    for key, value in import_options.items():
+        print(f"  {key}: {value}")
     
     return import_options
 
-def check_media_pool_for_clips(media_pool):
-    """Check if there are clips in the media pool and provide guidance."""
+def get_unique_timeline_name(project, base_timeline_name):
+    """Get a unique timeline name by appending suffix if needed."""
     try:
-        current_folder = media_pool.GetCurrentFolder()
-        clips = current_folder.GetClipList()
+        timeline_count = project.GetTimelineCount()
+        existing_names = set()
         
-        if not clips or len(clips) == 0:
-            print("⚠️  WARNING: No clips found in current media pool folder!")
-            print("   For best FCPXML import results:")
-            print("   1. Import your source media into the media pool FIRST")
-            print("   2. Then import the FCPXML file")
-            print("   This helps Resolve properly link timeline clips to media")
-            print()
-            return False
-        else:
-            print(f"✓ Found {len(clips)} clip(s) in media pool folder '{current_folder.GetName()}'")
-            return True
+        # Collect all existing timeline names
+        for i in range(1, timeline_count + 1):
+            existing_timeline = project.GetTimelineByIndex(i)
+            if existing_timeline:
+                existing_names.add(existing_timeline.GetName())
+        
+        # If base name doesn't exist, use it
+        if base_timeline_name not in existing_names:
+            return base_timeline_name
+        
+        # Find a unique name by appending suffix
+        suffix = 1
+        while True:
+            candidate_name = f"{base_timeline_name} ({suffix})"
+            if candidate_name not in existing_names:
+                print(f"Timeline '{base_timeline_name}' already exists - using '{candidate_name}' instead")
+                return candidate_name
+            suffix += 1
+            
+            # Safety check to prevent infinite loop
+            if suffix > 1000:
+                print(f"Warning: Could not find unique name after 1000 attempts, using timestamp suffix")
+                import time
+                timestamp_suffix = int(time.time())
+                return f"{base_timeline_name}_{timestamp_suffix}"
+                
+    except Exception as e:
+        print(f"Warning: Could not check existing timelines: {e}")
+        # Fallback to timestamp suffix
+        import time
+        timestamp_suffix = int(time.time())
+        return f"{base_timeline_name}_{timestamp_suffix}"
+
+def display_timeline_info(timeline):
+    """Display imported timeline information."""
+    try:
+        print("Timeline details:")
+        print(f"  Name: {timeline.GetName()}")
+        print(f"  Duration: {timeline.GetEndFrame() - timeline.GetStartFrame() + 1} frames")
+        print(f"  Start frame: {timeline.GetStartFrame()}")
+        print(f"  End frame: {timeline.GetEndFrame()}")
+        print(f"  Start timecode: {timeline.GetStartTimecode()}")
+        
+        # Get track counts
+        video_tracks = timeline.GetTrackCount("video")
+        audio_tracks = timeline.GetTrackCount("audio")
+        subtitle_tracks = timeline.GetTrackCount("subtitle")
+        
+        print(f"  Tracks - Video: {video_tracks}, Audio: {audio_tracks}, Subtitle: {subtitle_tracks}")
+        
+        # List timeline items if there are any
+        if video_tracks > 0:
+            total_video_items = 0
+            for track_idx in range(1, video_tracks + 1):
+                items = timeline.GetItemListInTrack("video", track_idx)
+                total_video_items += len(items)
+            print(f"  Total video items: {total_video_items}")
+        
+        if audio_tracks > 0:
+            total_audio_items = 0
+            for track_idx in range(1, audio_tracks + 1):
+                items = timeline.GetItemListInTrack("audio", track_idx)
+                total_audio_items += len(items)
+            print(f"  Total audio items: {total_audio_items}")
             
     except Exception as e:
-        print(f"Could not check media pool contents: {e}")
-        return None
+        print(f"Warning: Could not get complete timeline information: {e}")
 
 def main():
     try:
@@ -143,58 +257,41 @@ def main():
         print(f"✓ Current media pool folder: {current_folder.GetName()}")
         print()
         
-        # Get file path and timeline name from user
-        file_path, file_ext = get_file_path()
-        timeline_name = get_timeline_name()
+        # Get import directory
+        import_dir = get_import_directory()
+        if not import_dir:
+            return False
         
-        print(f"✓ File selected: {file_path}")
-        print(f"✓ File type: {file_ext.upper()}")
-        print(f"✓ Timeline name: {timeline_name}")
+        # Find JSON file and convert to OTIO, or use existing OTIO file
+        otio_file = find_or_convert_otio_file(import_dir)
+        if not otio_file:
+            return False
+        
+        # Generate timeline name from filename
+        base_timeline_name = generate_timeline_name(otio_file)
+        
+        # Get unique timeline name (adds suffix if needed)
+        timeline_name = get_unique_timeline_name(project, base_timeline_name)
+        
+        print(f"✓ File selected: {otio_file}")
+        print(f"✓ File type: OTIO")
+        print(f"✓ Final timeline name: {timeline_name}")
         print()
         
-        # Check media pool contents for FCPXML/AAF imports
-        if file_ext in ['.fcpxml', '.aaf']:
-            print("Checking media pool for source clips...")
-            has_clips = check_media_pool_for_clips(media_pool)
-            if has_clips is False:
-                proceed = input("Continue with import anyway? (y/N): ").strip().lower()
-                if proceed not in ['y', 'yes']:
-                    print("Import cancelled. Please import your source media first.")
-                    return False
-        
-        # Check for existing timeline with same name
-        try:
-            timeline_count = project.GetTimelineCount()
-            for i in range(1, timeline_count + 1):
-                existing_timeline = project.GetTimelineByIndex(i)
-                if existing_timeline and existing_timeline.GetName() == timeline_name:
-                    print(f"WARNING: Timeline '{timeline_name}' already exists!")
-                    overwrite = input("Do you want to continue anyway? (y/N): ").strip().lower()
-                    if overwrite not in ['y', 'yes']:
-                        print("Import cancelled by user.")
-                        return False
-                    break
-        except Exception as e:
-            print(f"Warning: Could not check existing timelines: {e}")
-        
-        # Set up import options based on file type
-        import_options = get_import_options(file_ext, timeline_name)
-        
-        print("Import options:")
-        for key, value in import_options.items():
-            print(f"  {key}: {value}")
+        # Set up import options
+        import_options = get_import_options(timeline_name)
         print()
         
-        # Import the timeline
-        print(f"Importing {file_ext.upper()} timeline...")
-        timeline = media_pool.ImportTimelineFromFile(file_path, import_options)
+        # Import the timeline automatically
+        print("Importing OTIO timeline...")
+        timeline = media_pool.ImportTimelineFromFile(otio_file, import_options)
         
         # If import fails, try with importSourceClips enabled as fallback
         if not timeline:
             print("Initial import failed. Trying with source clips import enabled...")
             fallback_options = import_options.copy()
             fallback_options["importSourceClips"] = True
-            timeline = media_pool.ImportTimelineFromFile(file_path, fallback_options)
+            timeline = media_pool.ImportTimelineFromFile(otio_file, fallback_options)
             
             if timeline:
                 print("✓ Fallback import method succeeded")
@@ -202,73 +299,34 @@ def main():
                 print("✗ All import methods failed")
         
         if timeline:
-            print(f"SUCCESS: Timeline '{timeline.GetName()}' imported successfully!")
+            print(f"✓ Timeline '{timeline.GetName()}' imported successfully!")
             print()
-            print("Timeline details:")
-            print(f"  Name: {timeline.GetName()}")
-            print(f"  Duration: {timeline.GetEndFrame() - timeline.GetStartFrame() + 1} frames")
-            print(f"  Start frame: {timeline.GetStartFrame()}")
-            print(f"  End frame: {timeline.GetEndFrame()}")
-            print(f"  Start timecode: {timeline.GetStartTimecode()}")
+            display_timeline_info(timeline)
             
-            # Get track counts
-            video_tracks = timeline.GetTrackCount("video")
-            audio_tracks = timeline.GetTrackCount("audio")
-            subtitle_tracks = timeline.GetTrackCount("subtitle")
-            
-            print(f"  Tracks - Video: {video_tracks}, Audio: {audio_tracks}, Subtitle: {subtitle_tracks}")
-            
-            # List timeline items if there are any
-            if video_tracks > 0:
-                print("  Video track contents:")
-                for track_idx in range(1, video_tracks + 1):
-                    items = timeline.GetItemListInTrack("video", track_idx)
-                    print(f"    Track {track_idx}: {len(items)} item(s)")
-            
-            if audio_tracks > 0:
-                print("  Audio track contents:")
-                for track_idx in range(1, audio_tracks + 1):
-                    items = timeline.GetItemListInTrack("audio", track_idx)
-                    print(f"    Track {track_idx}: {len(items)} item(s)")
+            # Verify file size for reference
+            try:
+                file_size = os.path.getsize(otio_file)
+                print(f"  Source file size: {file_size} bytes")
+            except Exception as e:
+                pass
             
             return True
         else:
-            print("ERROR: Failed to import timeline from file!")
+            print("ERROR: Failed to import timeline from OTIO file!")
             print()
             print("Possible issues:")
-            print(f"- {file_ext.upper()} file format is not compatible with this version of DaVinci Resolve")
+            print("- OTIO file format is not compatible with this version of DaVinci Resolve")
             print(f"- Timeline name '{timeline_name}' conflicts with existing timeline")
-            print("- Media referenced in file is not found in the project")
-            
-            if file_ext == '.fcpxml':
-                print("- FCPXML files contain absolute file paths that may not match your system")
-                print("- The original media files may be in different locations")
-                print("- Try importing the source media into your media pool first, then retry")
-                print("- Check that media file names in your project match those in the FCPXML")
-            
-            if file_ext == '.aaf':
-                print("- AAF files may have interlace processing requirements")
-                print("- The original media files may be in different locations than expected")
-                print("- Try importing the source media into your media pool first, then retry")
-                print("- Check that media file names and timecode match those in the AAF")
-                print("- AAF files from older Avid versions may have compatibility issues")
-            
-            print("- File contains unsupported elements or codec")
+            print("- Media referenced in OTIO file is not found in the project")
+            print("- OTIO file contains unsupported elements or codec")
+            print("- OTIO file may be corrupted or incorrectly formatted")
             print("- Check DaVinci Resolve console for more detailed error messages")
-            
-            # Show existing timelines for reference
-            try:
-                timeline_count = project.GetTimelineCount()
-                if timeline_count > 0:
-                    print(f"Existing timelines in project ({timeline_count}):")
-                    for i in range(1, timeline_count + 1):
-                        existing_timeline = project.GetTimelineByIndex(i)
-                        if existing_timeline:
-                            print(f"  {i}. {existing_timeline.GetName()}")
-                else:
-                    print("No existing timelines in project.")
-            except Exception as e:
-                print(f"Could not retrieve timeline information: {e}")
+            print()
+            print("Troubleshooting:")
+            print("- Ensure the original media is imported into your media pool")
+            print("- Check that media file paths in the OTIO match your project structure")
+            print("- Try importing the source media first, then retry the timeline import")
+            print("- Verify the OTIO file was generated correctly by json2otio.py")
             
             return False
             
@@ -291,16 +349,17 @@ def main():
         return False
 
 if __name__ == "__main__":
-    print("=== DaVinci Resolve Timeline Import Tool ===")
-    print("Interactive import for OTIO, FCPXML, and AAF files")
+    print("=== DaVinci Resolve JSON→OTIO→Import Tool (Automated) ===")
+    print("Converting JSON to OTIO and importing timeline into DaVinci Resolve")
     print()
     
     success = main()
     
     print()
     if success:
-        print("=== Import completed successfully! ===")
+        print("=== Conversion and import completed successfully! ===")
+        print("Timeline is now available in DaVinci Resolve")
         sys.exit(0)
     else:
-        print("=== Import failed! ===")
+        print("=== Conversion or import failed! ===")
         sys.exit(1)

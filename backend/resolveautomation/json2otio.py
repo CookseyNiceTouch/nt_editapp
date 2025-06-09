@@ -2,8 +2,8 @@
 """
 JSON to OpenTimelineIO Adapter
 
-Adapter to take JSON clip data and apply it to a reference OTIO timeline.
-Follows the same structure as otio2json.py for seamless workflow.
+Adapter to rebuild OTIO timelines from JSON data created by otio2json.py.
+Simple reconstruction with no complex calculations - just rebuild the OTIO structure.
 """
 
 import sys
@@ -18,189 +18,51 @@ except ImportError:
     sys.exit(1)
 
 
-def load_json_data(filepath: str) -> Dict[str, Any]:
-    """
-    Load and validate JSON file.
-    
-    Args:
-        filepath: Path to JSON file
-        
-    Returns:
-        Parsed JSON data
-    """
+def load_project_data() -> Dict[str, Any]:
+    """Load project data from projectdata.json for fallback values."""
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        script_dir = Path(__file__).parent.resolve()
+        project_root = script_dir.parent.parent
+        project_data_path = project_root / "data" / "projectdata.json"
         
-        # Basic validation
-        required_fields = ["timeline", "tracks", "summary"]
-        for field in required_fields:
-            if field not in data:
-                raise ValueError(f"Missing required field: {field}")
-        
-        return data
+        if project_data_path.exists():
+            with open(project_data_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        else:
+            print(f"Warning: Project data not found at {project_data_path}")
+            return {}
     except Exception as e:
-        print(f"Error loading JSON: {e}")
-        sys.exit(1)
-
-
-def safe_set_metadata(otio_object, metadata_dict: Dict[str, Any]) -> None:
-    """
-    Safely set metadata on an OTIO object, filtering out problematic keys.
-    
-    Args:
-        otio_object: OTIO object to set metadata on
-        metadata_dict: Dictionary of metadata to set
-    """
-    if not metadata_dict:
-        return
-    
-    # First pass - check if any keys are problematic
-    has_problematic_keys = False
-    for key in metadata_dict.keys():
-        if not isinstance(key, str) or not key.strip():
-            has_problematic_keys = True
-            break
-        if any(char in key for char in ['\n', '\r', '\t', '\0']):
-            has_problematic_keys = True
-            break
-        if key.startswith('_'):
-            has_problematic_keys = True
-            break
-    
-    # If we found problematic keys, skip metadata entirely
-    if has_problematic_keys:
-        return
-    
-    # Filter out any remaining edge cases
-    clean_metadata = {}
-    for key, value in metadata_dict.items():
-        clean_key = key.strip()
-        if clean_key and len(clean_key) > 0:
-            clean_metadata[clean_key] = value
-    
-    # Only set if we have clean metadata
-    if clean_metadata:
-        try:
-            otio_object.metadata = clean_metadata
-        except Exception as e:
-            # If we still get errors, just skip metadata for this object
-            return
-
-
-def apply_clip_modifications(otio_clip: otio.schema.Clip, json_clip: Dict[str, Any]) -> None:
-    """
-    Apply JSON clip data to an OTIO clip.
-    
-    Args:
-        otio_clip: OTIO clip to modify
-        json_clip: JSON clip data to apply
-    """
-    # Update clip name if different
-    if "name" in json_clip and json_clip["name"] != otio_clip.name:
-        otio_clip.name = json_clip["name"]
-    
-    # Update source range if provided
-    if "source_range" in json_clip:
-        source_range = json_clip["source_range"]
-        if all(key in source_range for key in ["start_frame", "duration_frames", "fps"]):
-            # Create new source range from JSON data
-            start_time = otio.opentime.RationalTime(
-                int(source_range["start_frame"]), 
-                float(source_range["fps"])
-            )
-            duration = otio.opentime.RationalTime(
-                int(source_range["duration_frames"]), 
-                float(source_range["fps"])
-            )
-            otio_clip.source_range = otio.opentime.TimeRange(start_time, duration)
-    
-    # Update media reference if provided
-    if "media_reference" in json_clip:
-        media_ref_data = json_clip["media_reference"]
-        
-        # Only update target_url if provided and different
-        if "target_url" in media_ref_data and hasattr(otio_clip.media_reference, 'target_url'):
-            if media_ref_data["target_url"] != otio_clip.media_reference.target_url:
-                otio_clip.media_reference.target_url = media_ref_data["target_url"]
-        
-        # Update available range if provided
-        if "available_range" in media_ref_data and hasattr(otio_clip.media_reference, 'available_range'):
-            avail_range = media_ref_data["available_range"]
-            if all(key in avail_range for key in ["start_frame", "duration_frames", "fps"]):
-                start_time = otio.opentime.RationalTime(
-                    int(avail_range["start_frame"]), 
-                    float(avail_range["fps"])
-                )
-                duration = otio.opentime.RationalTime(
-                    int(avail_range["duration_frames"]), 
-                    float(avail_range["fps"])
-                )
-                otio_clip.media_reference.available_range = otio.opentime.TimeRange(start_time, duration)
-    
-    # Update metadata using safe method
-    if "metadata" in json_clip and json_clip["metadata"]:
-        # Get existing metadata or create new
-        existing_metadata = dict(otio_clip.metadata) if otio_clip.metadata else {}
-        
-        # Process new metadata from JSON
-        for key, value in json_clip["metadata"].items():
-            # Skip invalid keys
-            if not isinstance(key, str) or not key.strip():
-                continue
-                
-            # Handle flattened metadata (reverse the flattening from otio2json)
-            if "_" in key and len(key.split("_", 1)) == 2:
-                parts = key.split("_", 1)
-                parent_key, sub_key = parts[0], parts[1]
-                
-                # Skip if either part is empty
-                if not parent_key.strip() or not sub_key.strip():
-                    continue
-                
-                if parent_key not in existing_metadata:
-                    existing_metadata[parent_key] = {}
-                
-                if isinstance(existing_metadata[parent_key], dict):
-                    existing_metadata[parent_key][sub_key] = value
-                else:
-                    # Convert to dict if it's not already
-                    existing_metadata[parent_key] = {sub_key: value}
-            else:
-                existing_metadata[key] = value
-        
-        # Use safe metadata setting
-        safe_set_metadata(otio_clip, existing_metadata)
+        print(f"Warning: Could not load project data: {e}")
+        return {}
 
 
 def create_clip_from_json(json_clip: Dict[str, Any]) -> otio.schema.Clip:
     """
-    Create a new OTIO clip from JSON data.
+    Create an OTIO clip from JSON clip data.
     
     Args:
-        json_clip: JSON clip data
+        json_clip: JSON clip data from otio2json format
         
     Returns:
-        New OTIO clip object
+        OTIO Clip object
     """
     # Create basic clip
     clip = otio.schema.Clip(name=json_clip.get("name", "Clip"))
     
-    # Set source range if provided
+    # Set source range from JSON
     if "source_range" in json_clip:
         source_range = json_clip["source_range"]
-        if all(key in source_range for key in ["start_frame", "duration_frames", "fps"]):
-            start_time = otio.opentime.RationalTime(
-                int(source_range["start_frame"]), 
-                float(source_range["fps"])
-            )
-            duration = otio.opentime.RationalTime(
-                int(source_range["duration_frames"]), 
-                float(source_range["fps"])
-            )
-            clip.source_range = otio.opentime.TimeRange(start_time, duration)
+        start_time = otio.opentime.RationalTime(
+            int(source_range["start_frame"]), 
+            float(source_range["fps"])
+        )
+        duration = otio.opentime.RationalTime(
+            int(source_range["duration_frames"]), 
+            float(source_range["fps"])
+        )
+        clip.source_range = otio.opentime.TimeRange(start_time, duration)
     
-    # Set media reference if provided
+    # Set media reference from JSON
     if "media_reference" in json_clip:
         media_ref_data = json_clip["media_reference"]
         
@@ -211,179 +73,128 @@ def create_clip_from_json(json_clip: Dict[str, Any]) -> otio.schema.Clip:
         # Set available range if provided
         if "available_range" in media_ref_data:
             avail_range = media_ref_data["available_range"]
-            if all(key in avail_range for key in ["start_frame", "duration_frames", "fps"]):
-                start_time = otio.opentime.RationalTime(
-                    int(avail_range["start_frame"]), 
-                    float(avail_range["fps"])
-                )
-                duration = otio.opentime.RationalTime(
-                    int(avail_range["duration_frames"]), 
-                    float(avail_range["fps"])
-                )
-                media_ref.available_range = otio.opentime.TimeRange(start_time, duration)
+            start_time = otio.opentime.RationalTime(
+                int(avail_range["start_frame"]), 
+                float(avail_range["fps"])
+            )
+            duration = otio.opentime.RationalTime(
+                int(avail_range["duration_frames"]), 
+                float(avail_range["fps"])
+            )
+            media_ref.available_range = otio.opentime.TimeRange(start_time, duration)
         
         clip.media_reference = media_ref
     
-    # Set metadata if provided - use safe method
+    # Set metadata from JSON (excluding text field - only for AI editing)
     if "metadata" in json_clip and json_clip["metadata"]:
-        metadata_dict = {}
-        
-        # Process metadata from JSON (handle flattened metadata)
+        # Process flattened metadata (reverse the flattening from otio2json)
         for key, value in json_clip["metadata"].items():
-            # Skip invalid keys
-            if not isinstance(key, str) or not key.strip():
+            # Skip text field - it's only for AI editing purposes, not for OTIO
+            if key == "text":
                 continue
                 
             if "_" in key and len(key.split("_", 1)) == 2:
                 parts = key.split("_", 1)
                 parent_key, sub_key = parts[0], parts[1]
                 
-                # Skip if either part is empty
-                if not parent_key.strip() or not sub_key.strip():
-                    continue
+                if parent_key not in clip.metadata:
+                    clip.metadata[parent_key] = {}
                 
-                if parent_key not in metadata_dict:
-                    metadata_dict[parent_key] = {}
-                
-                metadata_dict[parent_key][sub_key] = value
+                clip.metadata[parent_key][sub_key] = value
             else:
-                metadata_dict[key] = value
-        
-        # Use safe metadata setting
-        safe_set_metadata(clip, metadata_dict)
+                clip.metadata[key] = value
     
     return clip
 
 
-def match_clips_by_index(otio_track: otio.schema.Track, json_track: Dict[str, Any]) -> List[tuple]:
+def create_track_from_json(json_track: Dict[str, Any]) -> otio.schema.Track:
     """
-    Match OTIO clips with JSON clips by index, creating new clips when needed.
+    Create an OTIO track from JSON track data.
     
     Args:
-        otio_track: OTIO track
-        json_track: JSON track data
+        json_track: JSON track data from otio2json format
         
     Returns:
-        List of (otio_clip, json_clip, action) tuples where action is 'modify' or 'create'
+        OTIO Track object
     """
-    matches = []
-    otio_clips = [item for item in otio_track if isinstance(item, otio.schema.Clip)]
-    json_clips = [clip for clip in json_track["clips"] if clip.get("type") != "gap"]
+    # Create track with proper kind
+    track_kind = json_track.get("kind", "Video")
+    if track_kind.lower() == "video":
+        track = otio.schema.Track(name=json_track.get("name", "Track"), kind=otio.schema.TrackKind.Video)
+    elif track_kind.lower() == "audio":
+        track = otio.schema.Track(name=json_track.get("name", "Track"), kind=otio.schema.TrackKind.Audio)
+    else:
+        track = otio.schema.Track(name=json_track.get("name", "Track"))
     
-    # Match existing clips and identify clips to create
-    for json_clip in json_clips:
-        clip_index = json_clip.get("clip_index", 0)
-        if clip_index < len(otio_clips):
-            # Existing clip - modify it
-            matches.append((otio_clips[clip_index], json_clip, 'modify'))
+    # Add clips to track
+    for json_clip in json_track.get("clips", []):
+        if json_clip.get("type") == "gap":
+            # Create gap
+            duration_frames = json_clip.get("source_range", {}).get("duration_frames", 0)
+            if duration_frames > 0:
+                # Use fps from first real clip or default to 25
+                fps = 25.0
+                for clip_data in json_track.get("clips", []):
+                    if clip_data.get("type") != "gap" and "source_range" in clip_data:
+                        fps = clip_data["source_range"].get("fps", 25.0)
+                        break
+                
+                duration = otio.opentime.RationalTime(duration_frames, fps)
+                gap = otio.schema.Gap(
+                    name=json_clip.get("name", "Gap"),
+                    source_range=otio.opentime.TimeRange(duration=duration)
+                )
+                track.append(gap)
         else:
-            # New clip - create it
-            matches.append((None, json_clip, 'create'))
+            # Create regular clip
+            clip = create_clip_from_json(json_clip)
+            track.append(clip)
     
-    return matches
-
-
-def apply_track_modifications(otio_track: otio.schema.Track, json_track: Dict[str, Any]) -> None:
-    """
-    Apply JSON track data to an OTIO track, creating new clips as needed.
-    
-    Args:
-        otio_track: OTIO track to modify
-        json_track: JSON track data to apply
-    """
-    # Update track name if different
-    if "name" in json_track and json_track["name"] != otio_track.name:
-        otio_track.name = json_track["name"]
-    
-    # Match and update/create clips
-    clip_matches = match_clips_by_index(otio_track, json_track)
-    
-    # Track which clips we need to add
-    clips_to_add = []
-    
-    for otio_clip, json_clip, action in clip_matches:
-        if action == 'modify':
-            # Modify existing clip
-            apply_clip_modifications(otio_clip, json_clip)
-        elif action == 'create':
-            # Create new clip
-            try:
-                new_clip = create_clip_from_json(json_clip)
-                clips_to_add.append((json_clip.get("clip_index", 0), new_clip))
-            except Exception as e:
-                print(f"Warning: Failed to create clip {json_clip.get('name', 'Unknown')}: {e}")
-                continue
-    
-    # Add new clips to the track in the correct order
-    clips_to_add.sort(key=lambda x: x[0])  # Sort by clip_index
-    for clip_index, new_clip in clips_to_add:
-        # Insert at the correct position or append if at end
-        if clip_index < len(otio_track):
-            otio_track.insert(clip_index, new_clip)
-        else:
-            otio_track.append(new_clip)
-    
-    # Update track metadata if provided - use regular dict
+    # Set track metadata
     if "metadata" in json_track and json_track["metadata"]:
-        if not otio_track.metadata:
-            otio_track.metadata = {}
-        
         for key, value in json_track["metadata"].items():
-            # Skip empty keys
-            if key and isinstance(key, str) and key.strip() != "":
-                otio_track.metadata[key] = value
+            track.metadata[key] = value
+    
+    return track
 
 
-def apply_json_to_timeline(reference_timeline: otio.schema.Timeline, json_data: Dict[str, Any]) -> otio.schema.Timeline:
+def create_timeline_from_json(json_data: Dict[str, Any]) -> otio.schema.Timeline:
     """
-    Apply JSON modifications to a reference timeline.
+    Create an OTIO timeline from JSON data.
     
     Args:
-        reference_timeline: Reference OTIO timeline
-        json_data: JSON data to apply
+        json_data: JSON data from otio2json format
         
     Returns:
-        Modified timeline
+        OTIO Timeline object
     """
-    # Create a deep copy of the reference timeline
-    modified_timeline = reference_timeline.deepcopy()
-    
-    # Update timeline name if provided and different
+    # Extract timeline info
     timeline_info = json_data.get("timeline", {})
-    if "name" in timeline_info and timeline_info["name"] != modified_timeline.name:
-        modified_timeline.name = timeline_info["name"]
+    timeline_name = timeline_info.get("name", "Timeline")
+    timeline_fps = timeline_info.get("fps", 25.0)
     
-    # Update timeline metadata if provided - use regular dict
+    # Create timeline
+    timeline = otio.schema.Timeline(name=timeline_name)
+    
+    # Set timeline metadata
     if "metadata" in timeline_info and timeline_info["metadata"]:
-        if not modified_timeline.metadata:
-            modified_timeline.metadata = {}
-        
         for key, value in timeline_info["metadata"].items():
-            # Skip empty keys
-            if key and isinstance(key, str) and key.strip() != "":
-                modified_timeline.metadata[key] = value
+            timeline.metadata[key] = value
     
-    # Match and update tracks
-    json_tracks = json_data.get("tracks", [])
-    otio_tracks = [track for track in modified_timeline.tracks if isinstance(track, otio.schema.Track)]
+    # Add tracks to timeline
+    for json_track in json_data.get("tracks", []):
+        track = create_track_from_json(json_track)
+        timeline.tracks.append(track)
     
-    for json_track in json_tracks:
-        track_index = json_track.get("track_index", 0)
-        if track_index < len(otio_tracks):
-            apply_track_modifications(otio_tracks[track_index], json_track)
-        else:
-            print(f"Warning: JSON track index {track_index} exceeds OTIO tracks count ({len(otio_tracks)})")
-    
-    return modified_timeline
+    return timeline
 
 
-def convert_json_to_otio(json_filepath: str, reference_otio_filepath: str, output_filepath: str = None) -> bool:
+def convert_json_to_otio(json_filepath: str, output_filepath: str = None) -> bool:
     """
-    Convert JSON to OTIO using a reference timeline.
+    Convert JSON to OTIO by rebuilding the timeline structure.
     
     Args:
         json_filepath: Path to JSON file
-        reference_otio_filepath: Path to reference OTIO file
         output_filepath: Output OTIO file path (optional)
         
     Returns:
@@ -391,27 +202,39 @@ def convert_json_to_otio(json_filepath: str, reference_otio_filepath: str, outpu
     """
     try:
         # Load JSON data
-        json_data = load_json_data(json_filepath)
+        with open(json_filepath, 'r', encoding='utf-8') as f:
+            json_data = json.load(f)
+        
         print(f"✓ Loaded JSON: {json_filepath}")
         
-        # Load reference timeline
-        reference_timeline = otio.adapters.read_from_file(reference_otio_filepath)
-        print(f"✓ Loaded reference OTIO: {reference_otio_filepath}")
+        # Validate JSON format
+        required_fields = ["timeline", "tracks", "summary"]
+        for field in required_fields:
+            if field not in json_data:
+                raise ValueError(f"Missing required field: {field}")
         
-        # Apply modifications
-        modified_timeline = apply_json_to_timeline(reference_timeline, json_data)
-        print(f"✓ Applied JSON modifications to timeline")
+        # Check if timeline name is missing and add from project data
+        if not json_data.get("timeline", {}).get("name"):
+            project_data = load_project_data()
+            project_title = project_data.get("projectTitle", "Timeline")
+            if "timeline" not in json_data:
+                json_data["timeline"] = {}
+            json_data["timeline"]["name"] = project_title
+            print(f"✓ Added timeline name from project data: {project_title}")
+        
+        # Create timeline from JSON
+        timeline = create_timeline_from_json(json_data)
+        print(f"✓ Created timeline: {timeline.name}")
         
         # Determine output path
         if not output_filepath:
             json_name = Path(json_filepath).stem
-            output_dir = Path("../../data/edits/toNLE")
-            output_dir.mkdir(parents=True, exist_ok=True)
-            output_filepath = output_dir / f"{json_name}_modified.otio"
+            output_dir = Path(json_filepath).parent
+            output_filepath = output_dir / f"{json_name}.otio"
         
-        # Write modified timeline
-        otio.adapters.write_to_file(modified_timeline, str(output_filepath))
-        print(f"✓ Wrote modified timeline: {output_filepath}")
+        # Write timeline to file
+        otio.adapters.write_to_file(timeline, str(output_filepath))
+        print(f"✓ Wrote OTIO file: {output_filepath}")
         
         # Print summary
         summary = json_data.get("summary", {})
@@ -423,27 +246,83 @@ def convert_json_to_otio(json_filepath: str, reference_otio_filepath: str, outpu
         
     except Exception as e:
         print(f"Error during conversion: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def apply_json_edits_to_timeline() -> bool:
+    """
+    Hands-off conversion: automatically find JSON in timeline_edited and convert to OTIO.
+    
+    Returns:
+        True if successful
+    """
+    try:
+        # Define paths relative to script location
+        script_dir = Path(__file__).parent.resolve()
+        project_root = script_dir.parent.parent
+        timeline_edited_dir = project_root / "data" / "timelineprocessing" / "timeline_edited"
+        
+        # Ensure timeline_edited directory exists
+        timeline_edited_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Find JSON file in timeline_edited directory
+        json_files = list(timeline_edited_dir.glob("*.json"))
+        
+        if not json_files:
+            print(f"ERROR: No JSON files found in {timeline_edited_dir}")
+            print("Please copy/move your edited JSON file to the timeline_edited directory")
+            return False
+        
+        if len(json_files) > 1:
+            print(f"WARNING: Multiple JSON files found in {timeline_edited_dir}:")
+            for f in json_files:
+                print(f"  - {f.name}")
+            print("Using the first one found...")
+        
+        json_file = json_files[0]
+        output_file = timeline_edited_dir / json_file.with_suffix('.otio').name
+        
+        print(f"✓ Found edited JSON: {json_file.name}")
+        print(f"✓ Output will be: {output_file.name}")
+        print()
+        
+        # Check if output exists
+        if output_file.exists():
+            print(f"Overwriting existing file: {output_file}")
+        
+        # Perform conversion
+        print("Rebuilding OTIO from JSON data...")
+        success = convert_json_to_otio(str(json_file), str(output_file))
+        
+        if success:
+            print(f"✓ Created modified timeline: {output_file}")
+            print("You can now import this OTIO back into DaVinci Resolve")
+        
+        return success
+        
+    except Exception as e:
+        print(f"Error: {e}")
         return False
 
 
 # Adapter metadata
 __version__ = "1.0.0"
 __author__ = "NiceTouch"
-__description__ = "JSON to OTIO adapter using reference timeline"
+__description__ = "JSON to OTIO adapter - rebuild timelines from JSON"
 
 
 if __name__ == "__main__":
-    # CLI functionality
-    import argparse
+    print("=== JSON to OTIO Converter (Rebuild) ===")
+    print("Rebuilding OTIO timeline from JSON data")
+    print()
     
-    parser = argparse.ArgumentParser(description="Convert JSON to OTIO using reference timeline")
-    parser.add_argument("json_file", help="Input JSON file path")
-    parser.add_argument("reference_otio", help="Reference OTIO file path")
-    parser.add_argument("-o", "--output", help="Output OTIO file path (optional)")
+    success = apply_json_edits_to_timeline()
     
-    args = parser.parse_args()
-    
-    success = convert_json_to_otio(args.json_file, args.reference_otio, args.output)
-    
-    if not success:
+    if success:
+        print("\n=== Conversion completed successfully! ===")
+        sys.exit(0)
+    else:
+        print("\n=== Conversion failed! ===")
         sys.exit(1)
