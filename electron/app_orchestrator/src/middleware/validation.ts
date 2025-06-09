@@ -59,6 +59,7 @@ export const validateRequest = (rules: ValidationRule[], location: 'body' | 'que
         if (rule.min && value < rule.min) {
           errors.push(`${rule.field} must be at least ${rule.min}`);
         }
+        
         if (rule.max && value > rule.max) {
           errors.push(`${rule.field} must be at most ${rule.max}`);
         }
