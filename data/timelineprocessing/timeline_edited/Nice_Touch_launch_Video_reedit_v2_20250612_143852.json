@@ -2,41 +2,41 @@
   "schema_version": "1.0",
   "otio_schema_version": "0.17.0",
   "timeline": {
-    "name": "Nice Touch Launch Video - Tighter Edit",
+    "name": "Nice Touch Launch Video - 30s Cut",
     "fps": 25.0,
     "metadata": {
       "generated_by": "editagent_reedit",
       "source_file": "20250509_MTC_2206.MP4",
-      "target_duration_frames": 2549,
-      "actual_duration_frames": 2549,
+      "target_duration_frames": 750,
+      "actual_duration_frames": 750,
       "edit_iteration": 2,
-      "previous_duration_frames": 2521
+      "previous_duration_frames": 3303
     }
   },
   "tracks": [
     {
       "track_index": 0,
-      "name": "Video Track 1",
+      "name": "V1",
       "kind": "Video",
       "metadata": {
         "track_type": "video",
-        "total_clips": 5,
-        "track_duration_frames": 2549
+        "total_clips": 4,
+        "track_duration_frames": 750
       },
       "clips": [
         {
           "clip_index": 0,
           "name": "20250509_MTC_2206.MP4",
           "metadata": {
-            "speaker": "A/B",
-            "text": "Hi, I'm Cooksey. And I'm Paul. We've started something really exciting and we want you to be the first to know about it. It's all about creativity, innovation and helping creators to do their best work faster, better and easier.",
-            "avg_confidence": 0.95,
+            "speaker": "A",
+            "text": "Hi, I'm Cooksey. And I'm Paul. We've started something really exciting",
+            "avg_confidence": 0.96,
             "original_segment_id": 0
           },
           "source_range": {
             "start_frame": 186556,
-            "duration_frames": 471,
-            "end_frame": 187027,
+            "duration_frames": 150,
+            "end_frame": 186706,
             "fps": 25.0
           },
           "media_reference": {
@@ -56,14 +56,14 @@
           "name": "20250509_MTC_2206.MP4",
           "metadata": {
             "speaker": "A",
-            "text": "Introducing Nice Touch. We're calling it the operating system for Creators. Not an actual os, but a smart, intuitive set of tools that streamline your existing creative processes. This means smoother workflows, fewer disruptions, more opportunities to create amazing work, leading to better projects, more gigs, and more income for creators.",
-            "avg_confidence": 0.97,
+            "text": "Introducing Nice Touch. We're calling it the Operating System for Creators. Not an actual os, but a smart, intuitive set of tools that streamline your existing creative processes.",
+            "avg_confidence": 0.95,
             "original_segment_id": 1
           },
           "source_range": {
             "start_frame": 198452,
-            "duration_frames": 550,
-            "end_frame": 199002,
+            "duration_frames": 250,
+            "end_frame": 198702,
             "fps": 25.0
           },
           "media_reference": {
@@ -82,15 +82,15 @@
           "clip_index": 2,
           "name": "20250509_MTC_2206.MP4",
           "metadata": {
-            "speaker": "A/B",
-            "text": "We're just at the start of this journey and we need you. We wouldn't be where we are now if we hadn't worked with some of the most talented and amazing people. It's all about collaboration. So whether it's just a chat or you want to see what we're up to, let's get involved and let's do this.",
-            "avg_confidence": 0.96,
+            "speaker": "A",
+            "text": "We're not trying to automate creativity itself. We want to take away the mundane tasks that hold you back, helping you to spend more time doing what you genuinely love, creating.",
+            "avg_confidence": 0.94,
             "original_segment_id": 2
           },
           "source_range": {
-            "start_frame": 204018,
-            "duration_frames": 634,
-            "end_frame": 204652,
+            "start_frame": 199134,
+            "duration_frames": 200,
+            "end_frame": 199334,
             "fps": 25.0
           },
           "media_reference": {
@@ -109,42 +109,15 @@
           "clip_index": 3,
           "name": "20250509_MTC_2206.MP4",
           "metadata": {
-            "speaker": "A/B",
-            "text": "Go sign up on the site. Nicetouch app. Come chat with us on Discord. We're online most days. Or if you've got our numbers, just give us a call or drop us a message.",
-            "avg_confidence": 0.94,
+            "speaker": "A",
+            "text": "Go sign up on the site nicetouch app. Come chat with us on Discord.",
+            "avg_confidence": 0.93,
             "original_segment_id": 3
           },
           "source_range": {
-            "start_frame": 208352,
-            "duration_frames": 718,
-            "end_frame": 209070,
-            "fps": 25.0
-          },
-          "media_reference": {
-            "type": "ExternalReference",
-            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
-            "filename": "20250509_MTC_2206.MP4",
-            "available_range": {
-              "start_frame": 186262,
-              "duration_frames": 26616,
-              "end_frame": 212877,
-              "fps": 25.0
-            }
-          }
-        },
-        {
-          "clip_index": 4,
-          "name": "20250509_MTC_2206.MP4",
-          "metadata": {
-            "speaker": "A/B",
-            "text": "This is just the beginning. Who knows where we'll end up, but it's going to be big. Join us for the journey.",
-            "avg_confidence": 0.96,
-            "original_segment_id": 4
-          },
-          "source_range": {
-            "start_frame": 210169,
-            "duration_frames": 176,
-            "end_frame": 210345,
+            "start_frame": 208816,
+            "duration_frames": 150,
+            "end_frame": 208966,
             "fps": 25.0
           },
           "media_reference": {
@@ -167,23 +140,23 @@
       "kind": "Audio",
       "metadata": {
         "track_type": "audio",
-        "total_clips": 5,
-        "track_duration_frames": 2549
+        "total_clips": 4,
+        "track_duration_frames": 750
       },
       "clips": [
         {
           "clip_index": 0,
           "name": "20250509_MTC_2206.MP4",
           "metadata": {
-            "speaker": "A/B",
-            "text": "Hi, I'm Cooksey. And I'm Paul. We've started something really exciting and we want you to be the first to know about it. It's all about creativity, innovation and helping creators to do their best work faster, better and easier.",
-            "avg_confidence": 0.95,
+            "speaker": "A",
+            "text": "Hi, I'm Cooksey. And I'm Paul. We've started something really exciting",
+            "avg_confidence": 0.96,
             "original_segment_id": 0
           },
           "source_range": {
             "start_frame": 186556,
-            "duration_frames": 471,
-            "end_frame": 187027,
+            "duration_frames": 150,
+            "end_frame": 186706,
             "fps": 25.0
           },
           "media_reference": {
@@ -203,14 +176,14 @@
           "name": "20250509_MTC_2206.MP4",
           "metadata": {
             "speaker": "A",
-            "text": "Introducing Nice Touch. We're calling it the operating system for Creators. Not an actual os, but a smart, intuitive set of tools that streamline your existing creative processes. This means smoother workflows, fewer disruptions, more opportunities to create amazing work, leading to better projects, more gigs, and more income for creators.",
-            "avg_confidence": 0.97,
+            "text": "Introducing Nice Touch. We're calling it the Operating System for Creators. Not an actual os, but a smart, intuitive set of tools that streamline your existing creative processes.",
+            "avg_confidence": 0.95,
             "original_segment_id": 1
           },
           "source_range": {
             "start_frame": 198452,
-            "duration_frames": 550,
-            "end_frame": 199002,
+            "duration_frames": 250,
+            "end_frame": 198702,
             "fps": 25.0
           },
           "media_reference": {
@@ -229,15 +202,15 @@
           "clip_index": 2,
           "name": "20250509_MTC_2206.MP4",
           "metadata": {
-            "speaker": "A/B",
-            "text": "We're just at the start of this journey and we need you. We wouldn't be where we are now if we hadn't worked with some of the most talented and amazing people. It's all about collaboration. So whether it's just a chat or you want to see what we're up to, let's get involved and let's do this.",
-            "avg_confidence": 0.96,
+            "speaker": "A",
+            "text": "We're not trying to automate creativity itself. We want to take away the mundane tasks that hold you back, helping you to spend more time doing what you genuinely love, creating.",
+            "avg_confidence": 0.94,
             "original_segment_id": 2
           },
           "source_range": {
-            "start_frame": 204018,
-            "duration_frames": 634,
-            "end_frame": 204652,
+            "start_frame": 199134,
+            "duration_frames": 200,
+            "end_frame": 199334,
             "fps": 25.0
           },
           "media_reference": {
@@ -256,42 +229,15 @@
           "clip_index": 3,
           "name": "20250509_MTC_2206.MP4",
           "metadata": {
-            "speaker": "A/B",
-            "text": "Go sign up on the site. Nicetouch app. Come chat with us on Discord. We're online most days. Or if you've got our numbers, just give us a call or drop us a message.",
-            "avg_confidence": 0.94,
+            "speaker": "A",
+            "text": "Go sign up on the site nicetouch app. Come chat with us on Discord.",
+            "avg_confidence": 0.93,
             "original_segment_id": 3
           },
           "source_range": {
-            "start_frame": 208352,
-            "duration_frames": 718,
-            "end_frame": 209070,
-            "fps": 25.0
-          },
-          "media_reference": {
-            "type": "ExternalReference",
-            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
-            "filename": "20250509_MTC_2206.MP4",
-            "available_range": {
-              "start_frame": 186262,
-              "duration_frames": 26616,
-              "end_frame": 212877,
-              "fps": 25.0
-            }
-          }
-        },
-        {
-          "clip_index": 4,
-          "name": "20250509_MTC_2206.MP4",
-          "metadata": {
-            "speaker": "A/B",
-            "text": "This is just the beginning. Who knows where we'll end up, but it's going to be big. Join us for the journey.",
-            "avg_confidence": 0.96,
-            "original_segment_id": 4
-          },
-          "source_range": {
-            "start_frame": 210169,
-            "duration_frames": 176,
-            "end_frame": 210345,
+            "start_frame": 208816,
+            "duration_frames": 150,
+            "end_frame": 208966,
             "fps": 25.0
           },
           "media_reference": {
@@ -311,7 +257,7 @@
   ],
   "summary": {
     "total_tracks": 2,
-    "total_clips": 10,
-    "timeline_duration_frames": 2549
+    "total_clips": 8,
+    "timeline_duration_frames": 750
   }
 }

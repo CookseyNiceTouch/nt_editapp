@@ -407,21 +407,75 @@ def process_transcript(
 ) -> Dict[str, Any]:
     """Synchronous wrapper around the async process_transcript function."""
     
-    # Get the current event loop or create a new one
+    # Check if we're already in an event loop (called from chatbot)
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
+        # We're in an event loop already - need to run in a thread
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(
+                asyncio.run,
+                process_transcript_async(
+                    transcript_data, 
+                    user_brief,
+                    output_filename, 
+                    streaming_callback
+                )
+            )
+            return future.result()
     except RuntimeError:
+        # No running loop, create a new one
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-    
-    return loop.run_until_complete(
-        process_transcript_async(
-            transcript_data, 
-            user_brief,
-            output_filename, 
-            streaming_callback
-        )
-    )
+        try:
+            return loop.run_until_complete(
+                process_transcript_async(
+                    transcript_data, 
+                    user_brief,
+                    output_filename, 
+                    streaming_callback
+                )
+            )
+        finally:
+            loop.close()
+
+def clear_timeline_processing_folders():
+    """Clear the contents of timeline_ref and timeline_edited folders to prevent duplicates."""
+    try:
+        import shutil
+        
+        # Clear timeline_ref folder
+        if TIMELINE_REF_DIR.exists():
+            for item in TIMELINE_REF_DIR.iterdir():
+                if item.is_file():
+                    item.unlink()
+                    logger.info(f"Removed file: {item.name}")
+                elif item.is_dir():
+                    shutil.rmtree(item)
+                    logger.info(f"Removed directory: {item.name}")
+            print("✓ Cleared timeline_ref folder")
+        
+        # Clear timeline_edited folder
+        if TIMELINE_EDITED_DIR.exists():
+            for item in TIMELINE_EDITED_DIR.iterdir():
+                if item.is_file():
+                    item.unlink()
+                    logger.info(f"Removed file: {item.name}")
+                elif item.is_dir():
+                    shutil.rmtree(item)
+                    logger.info(f"Removed directory: {item.name}")
+            print("✓ Cleared timeline_edited folder")
+        
+        # Ensure directories exist
+        TIMELINE_REF_DIR.mkdir(parents=True, exist_ok=True)
+        TIMELINE_EDITED_DIR.mkdir(parents=True, exist_ok=True)
+        
+        return True
+        
+    except Exception as e:
+        print(f"⚠ Warning: Could not clear timeline processing folders: {e}")
+        logger.warning(f"Failed to clear timeline processing folders: {e}")
+        return False
 
 def run_import_otio():
     """Run the importotio.py script to import generated timeline to DaVinci Resolve."""
@@ -472,110 +526,134 @@ def stream_to_console(stream_type: str, content: str):
             # For small fragments, print without newline
             print(f"\033[92m{content}\033[0m", end="")
 
-# Main execution when script is run directly
-if __name__ == "__main__":
-    try:
-        print("=== AI Rough Cut Generator and Import Workflow ===")
-        print("This will generate a rough cut from transcript and import to DaVinci Resolve")
-        print()
+def main_roughcut_workflow(silent: bool = False) -> Dict[str, Any]:
+    """
+    Main rough cut generation workflow function that can be called programmatically or interactively.
+    
+    Args:
+        silent: If True, suppress most print output for programmatic use.
         
-        print("STEP 1: Loading project data and transcript")
-        print("="*60)
+    Returns:
+        Dict with success status and results or error information.
+    """
+    def print_if_not_silent(msg: str):
+        if not silent:
+            print(msg)
+    
+    try:
+        if not silent:
+            print("=== AI Rough Cut Generator and Import Workflow ===")
+            print("This will generate a rough cut from transcript and import to DaVinci Resolve")
+            print()
+        
+        print_if_not_silent("STEP 1: Preparing timeline processing environment")
+        print_if_not_silent("="*60)
+        
+        # Clear existing files to prevent confusion
+        print_if_not_silent("Clearing timeline processing folders...")
+        clear_timeline_processing_folders()
+        
+        print_if_not_silent("\nSTEP 2: Loading project data and transcript")
+        print_if_not_silent("="*60)
         
         # Load project data first
-        print("Loading project data...")
+        print_if_not_silent("Loading project data...")
         project_data = load_project_data()
         project_title = project_data["title"]
         user_brief = project_data["brief"]
         
-        print(f"✓ Project: {project_title}")
-        print(f"✓ Brief loaded ({len(user_brief)} characters)")
+        print_if_not_silent(f"✓ Project: {project_title}")
+        print_if_not_silent(f"✓ Brief loaded ({len(user_brief)} characters)")
         
         # Load transcript data
-        print("\nLoading transcript...")
+        print_if_not_silent("\nLoading transcript...")
         transcript_data = load_transcript_data()
         timecode_offset = transcript_data.get("timecode_offset_frames", 0)
-        print(f"✓ Transcript loaded from: {ANALYZED_DIR}")
-        print(f"✓ Timecode offset: {timecode_offset} frames")
+        print_if_not_silent(f"✓ Transcript loaded from: {ANALYZED_DIR}")
+        print_if_not_silent(f"✓ Timecode offset: {timecode_offset} frames")
         
-        print("\nSTEP 2: Analyzing transcript quality")
-        print("="*60)
+        print_if_not_silent("\nSTEP 3: Analyzing transcript quality")
+        print_if_not_silent("="*60)
         quality_report = analyze_transcript_quality(transcript_data)
         
         if "error" not in quality_report and "warning" not in quality_report:
-            print(f"✓ Transcript Quality Report:")
-            print(f"  • Total words: {quality_report['total_words']}")
-            print(f"  • Average confidence: {quality_report['avg_confidence']}")
-            print(f"  • Low confidence words: {quality_report['low_confidence_words']} ({quality_report['low_confidence_percentage']}%)")
+            print_if_not_silent(f"✓ Transcript Quality Report:")
+            print_if_not_silent(f"  • Total words: {quality_report['total_words']}")
+            print_if_not_silent(f"  • Average confidence: {quality_report['avg_confidence']}")
+            print_if_not_silent(f"  • Low confidence words: {quality_report['low_confidence_words']} ({quality_report['low_confidence_percentage']}%)")
             
             if quality_report['worst_words']:
-                print(f"  • Words needing attention: {len(quality_report['worst_words'])} words with confidence < 0.7")
+                print_if_not_silent(f"  • Words needing attention: {len(quality_report['worst_words'])} words with confidence < 0.7")
                 if quality_report['avg_confidence'] < 0.8:
-                    print("  ⚠ Consider reviewing audio quality or manual transcript verification")
+                    print_if_not_silent("  ⚠ Consider reviewing audio quality or manual transcript verification")
             
-            print(f"  • Speaker confidence:")
+            print_if_not_silent(f"  • Speaker confidence:")
             for speaker, conf in quality_report['speaker_confidence'].items():
                 status = "✓" if conf >= 0.8 else "⚠" if conf >= 0.7 else "✗"
-                print(f"    {status} {speaker}: {conf}")
+                print_if_not_silent(f"    {status} {speaker}: {conf}")
         
         # Generate output filename (matching existing timeline if available)
         output_filename = generate_output_filename(project_title, match_existing=True)
         
-        print(f"\nSTEP 3: Generating rough cut timeline")
-        print("="*60)
+        print_if_not_silent(f"\nSTEP 4: Generating rough cut timeline")
+        print_if_not_silent("="*60)
         
-        print(f"Processing setup:")
-        print(f"  • Project: {project_title}")
-        print(f"  • Brief preview: {user_brief[:100]}...")
-        print(f"  • Output directory: {TIMELINE_EDITED_DIR}")
-        print(f"  • Output filename: {output_filename.name}")
+        print_if_not_silent(f"Processing setup:")
+        print_if_not_silent(f"  • Project: {project_title}")
+        print_if_not_silent(f"  • Brief preview: {user_brief[:100]}...")
+        print_if_not_silent(f"  • Output directory: {TIMELINE_EDITED_DIR}")
+        print_if_not_silent(f"  • Output filename: {output_filename.name}")
         
         # Show timeline integration info
         existing_json = find_existing_timeline_json()
         if existing_json:
-            print(f"  • Matching existing timeline: {existing_json.name}")
-            print(f"  • Integration: This edit will replace the existing JSON in timeline_edited/")
+            print_if_not_silent(f"  • Matching existing timeline: {existing_json.name}")
+            print_if_not_silent(f"  • Integration: This edit will replace the existing JSON in timeline_edited/")
         else:
-            print(f"  • Creating new edit sequence")
+            print_if_not_silent(f"  • Creating new edit sequence")
         
-        print("\nStarting Claude processing with thinking enabled...\n")
+        print_if_not_silent("\nStarting Claude processing with thinking enabled...\n")
         
-        # Process with streaming to console
+        # Process with streaming to console (only if not silent)
+        streaming_callback = stream_to_console if not silent else None
         result = process_transcript(
             transcript_data, 
             user_brief, 
             output_filename=str(output_filename),
-            streaming_callback=stream_to_console
+            streaming_callback=streaming_callback
         )
         
-        print("\n\nRough cut generation complete.")
+        print_if_not_silent("\n\nRough cut generation complete.")
         
         if "error" in result:
-            print(f"❌ Error: {result['error']}")
+            print_if_not_silent(f"❌ Error: {result['error']}")
+            return {"success": False, "error": result['error']}
         else:
             # Extract timeline information
             timeline_info = result.get("timeline", {})
             tracks = result.get("tracks", [])
             summary = result.get("summary", {})
             
-            print(f"✓ Generated timeline: {timeline_info.get('name', 'Unknown')}")
-            print(f"✓ Total tracks: {summary.get('total_tracks', 0)}")
-            print(f"✓ Total clips: {summary.get('total_clips', 0)}")
-            print(f"✓ Timeline duration: {summary.get('timeline_duration_frames', 0)} frames")
-            print(f"✓ Output saved to: {output_filename}")
+            print_if_not_silent(f"✓ Generated timeline: {timeline_info.get('name', 'Unknown')}")
+            print_if_not_silent(f"✓ Total tracks: {summary.get('total_tracks', 0)}")
+            print_if_not_silent(f"✓ Total clips: {summary.get('total_clips', 0)}")
+            print_if_not_silent(f"✓ Timeline duration: {summary.get('timeline_duration_frames', 0)} frames")
+            print_if_not_silent(f"✓ Output saved to: {output_filename}")
             
             # Show track breakdown
-            for track in tracks:
-                track_name = track.get("name", "Unknown Track")
-                track_kind = track.get("kind", "Unknown")
-                clip_count = len(track.get("clips", []))
-                print(f"  - {track_name} ({track_kind}): {clip_count} clips")
+            if not silent:
+                for track in tracks:
+                    track_name = track.get("name", "Unknown Track")
+                    track_kind = track.get("kind", "Unknown")
+                    clip_count = len(track.get("clips", []))
+                    print(f"  - {track_name} ({track_kind}): {clip_count} clips")
             
             # Analyze confidence in the generated clips
             all_clips = []
             for track in tracks:
                 all_clips.extend(track.get("clips", []))
             
+            avg_clip_confidence = None
             if all_clips:
                 clip_confidences = []
                 for clip in all_clips:
@@ -585,35 +663,73 @@ if __name__ == "__main__":
                 
                 if clip_confidences:
                     avg_clip_confidence = sum(clip_confidences) / len(clip_confidences)
-                    print(f"\n✓ Average clip confidence: {avg_clip_confidence:.3f}")
+                    print_if_not_silent(f"\n✓ Average clip confidence: {avg_clip_confidence:.3f}")
                     
                     low_conf_clips = [i for i, conf in enumerate(clip_confidences) if conf < 0.7]
                     if low_conf_clips:
-                        print(f"⚠ Clips with low confidence: {len(low_conf_clips)} (review recommended)")
+                        print_if_not_silent(f"⚠ Clips with low confidence: {len(low_conf_clips)} (review recommended)")
             
-            # Step 4: Import timeline to DaVinci Resolve
-            print(f"\nSTEP 4: Importing timeline to DaVinci Resolve")
-            print("="*60)
+            # Step 5: Import timeline to DaVinci Resolve
+            print_if_not_silent(f"\nSTEP 5: Importing timeline to DaVinci Resolve")
+            print_if_not_silent("="*60)
             
             import_success = run_import_otio()
             
             if import_success:
-                print("\n🎉 ROUGH CUT WORKFLOW COMPLETED SUCCESSFULLY! 🎉")
-                print("Timeline is now available in DaVinci Resolve")
-                print("You can run editagent_reedit.py to make further modifications")
+                print_if_not_silent("\n🎉 ROUGH CUT WORKFLOW COMPLETED SUCCESSFULLY! 🎉")
+                print_if_not_silent("Timeline is now available in DaVinci Resolve")
+                print_if_not_silent("You can run editagent_reedit.py to make further modifications")
+                
+                return {
+                    "success": True,
+                    "timeline_name": timeline_info.get('name', 'Unknown'),
+                    "total_tracks": summary.get('total_tracks', 0),
+                    "total_clips": summary.get('total_clips', 0),
+                    "duration_frames": summary.get('timeline_duration_frames', 0),
+                    "output_file": str(output_filename),
+                    "avg_clip_confidence": avg_clip_confidence,
+                    "quality_report": quality_report
+                }
             else:
-                print("\n⚠️  Rough cut generated but import failed")
-                print("Timeline JSON is available in timeline_edited/ directory")
-                print("You can manually run importotio.py to import the timeline")
-                print("Or check DaVinci Resolve connection and try again")
+                error_msg = "Rough cut generated but import failed"
+                print_if_not_silent(f"\n⚠️  {error_msg}")
+                print_if_not_silent("Timeline JSON is available in timeline_edited/ directory")
+                print_if_not_silent("You can manually run importotio.py to import the timeline")
+                print_if_not_silent("Or check DaVinci Resolve connection and try again")
+                
+                return {
+                    "success": False,
+                    "error": error_msg,
+                    "partial_success": True,
+                    "timeline_generated": True,
+                    "output_file": str(output_filename)
+                }
     
     except FileNotFoundError as e:
-        print(f"❌ File Error: {e}")
-        print("\nRequired files:")
-        print(f"  • Transcript files: {ANALYZED_DIR}/*.transcript.json")
-        print(f"  • Project data: {PROJECT_DATA_PATH}")
+        error_msg = f"File Error: {e}"
+        print_if_not_silent(f"❌ {error_msg}")
+        if not silent:
+            print("\nRequired files:")
+            print(f"  • Transcript files: {ANALYZED_DIR}/*.transcript.json")
+            print(f"  • Project data: {PROJECT_DATA_PATH}")
+        return {"success": False, "error": error_msg}
     except ValueError as e:
-        print(f"❌ Data Error: {e}")
+        error_msg = f"Data Error: {e}"
+        print_if_not_silent(f"❌ {error_msg}")
+        return {"success": False, "error": error_msg}
     except Exception as e:
-        print(f"❌ Unexpected Error: {e}")
+        error_msg = f"Unexpected Error: {e}"
+        print_if_not_silent(f"❌ {error_msg}")
         logger.exception("Unexpected error in main execution")
+        return {"success": False, "error": error_msg}
+
+# Main execution when script is run directly
+if __name__ == "__main__":
+    # Run the workflow function
+    result = main_roughcut_workflow(silent=False)
+    
+    # Exit with appropriate code
+    if result["success"]:
+        exit(0)
+    else:
+        exit(1)

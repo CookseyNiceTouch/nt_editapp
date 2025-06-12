@@ -1,14 +1,14 @@
 {
     "OTIO_SCHEMA": "Timeline.1",
     "metadata": {
-        "actual_duration_frames": 2549,
+        "actual_duration_frames": 750,
         "edit_iteration": 2,
         "generated_by": "editagent_reedit",
-        "previous_duration_frames": 2521,
+        "previous_duration_frames": 3303,
         "source_file": "20250509_MTC_2206.MP4",
-        "target_duration_frames": 2549
+        "target_duration_frames": 750
     },
-    "name": "Nice Touch Launch Video - Tighter Edit",
+    "name": "Nice Touch Launch Video - 30s Cut",
     "global_start_time": null,
     "tracks": {
         "OTIO_SCHEMA": "Stack.1",
@@ -22,11 +22,11 @@
             {
                 "OTIO_SCHEMA": "Track.1",
                 "metadata": {
-                    "total_clips": 5,
-                    "track_duration_frames": 2549,
+                    "total_clips": 4,
+                    "track_duration_frames": 750,
                     "track_type": "video"
                 },
-                "name": "Video Track 1",
+                "name": "V1",
                 "source_range": null,
                 "effects": [],
                 "markers": [],
@@ -36,12 +36,12 @@
                         "OTIO_SCHEMA": "Clip.2",
                         "metadata": {
                             "avg": {
-                                "confidence": 0.95
+                                "confidence": 0.96
                             },
                             "original": {
                                 "segment_id": 0
                             },
-                            "speaker": "A/B"
+                            "speaker": "A"
                         },
                         "name": "20250509_MTC_2206.MP4",
                         "source_range": {
@@ -49,7 +49,7 @@
                             "duration": {
                                 "OTIO_SCHEMA": "RationalTime.1",
                                 "rate": 25.0,
-                                "value": 471.0
+                                "value": 150.0
                             },
                             "start_time": {
                                 "OTIO_SCHEMA": "RationalTime.1",
@@ -88,7 +88,7 @@
                         "OTIO_SCHEMA": "Clip.2",
                         "metadata": {
                             "avg": {
-                                "confidence": 0.97
+                                "confidence": 0.95
                             },
                             "original": {
                                 "segment_id": 1
@@ -101,7 +101,7 @@
                             "duration": {
                                 "OTIO_SCHEMA": "RationalTime.1",
                                 "rate": 25.0,
-                                "value": 550.0
+                                "value": 250.0
                             },
                             "start_time": {
                                 "OTIO_SCHEMA": "RationalTime.1",
@@ -140,12 +140,12 @@
                         "OTIO_SCHEMA": "Clip.2",
                         "metadata": {
                             "avg": {
-                                "confidence": 0.96
+                                "confidence": 0.94
                             },
                             "original": {
                                 "segment_id": 2
                             },
-                            "speaker": "A/B"
+                            "speaker": "A"
                         },
                         "name": "20250509_MTC_2206.MP4",
                         "source_range": {
@@ -153,12 +153,12 @@
                             "duration": {
                                 "OTIO_SCHEMA": "RationalTime.1",
                                 "rate": 25.0,
-                                "value": 634.0
+                                "value": 200.0
                             },
                             "start_time": {
                                 "OTIO_SCHEMA": "RationalTime.1",
                                 "rate": 25.0,
-                                "value": 204018.0
+                                "value": 199134.0
                             }
                         },
                         "effects": [],
@@ -192,12 +192,12 @@
                         "OTIO_SCHEMA": "Clip.2",
                         "metadata": {
                             "avg": {
-                                "confidence": 0.94
+                                "confidence": 0.93
                             },
                             "original": {
                                 "segment_id": 3
                             },
-                            "speaker": "A/B"
+                            "speaker": "A"
                         },
                         "name": "20250509_MTC_2206.MP4",
                         "source_range": {
@@ -205,64 +205,12 @@
                             "duration": {
                                 "OTIO_SCHEMA": "RationalTime.1",
                                 "rate": 25.0,
-                                "value": 718.0
+                                "value": 150.0
                             },
                             "start_time": {
                                 "OTIO_SCHEMA": "RationalTime.1",
                                 "rate": 25.0,
-                                "value": 208352.0
-                            }
-                        },
-                        "effects": [],
-                        "markers": [],
-                        "enabled": true,
-                        "media_references": {
-                            "DEFAULT_MEDIA": {
-                                "OTIO_SCHEMA": "ExternalReference.1",
-                                "metadata": {},
-                                "name": "",
-                                "available_range": {
-                                    "OTIO_SCHEMA": "TimeRange.1",
-                                    "duration": {
-                                        "OTIO_SCHEMA": "RationalTime.1",
-                                        "rate": 25.0,
-                                        "value": 26616.0
-                                    },
-                                    "start_time": {
-                                        "OTIO_SCHEMA": "RationalTime.1",
-                                        "rate": 25.0,
-                                        "value": 186262.0
-                                    }
-                                },
-                                "available_image_bounds": null,
-                                "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4"
-                            }
-                        },
-                        "active_media_reference_key": "DEFAULT_MEDIA"
-                    },
-                    {
-                        "OTIO_SCHEMA": "Clip.2",
-                        "metadata": {
-                            "avg": {
-                                "confidence": 0.96
-                            },
-                            "original": {
-                                "segment_id": 4
-                            },
-                            "speaker": "A/B"
-                        },
-                        "name": "20250509_MTC_2206.MP4",
-                        "source_range": {
-                            "OTIO_SCHEMA": "TimeRange.1",
-                            "duration": {
-                                "OTIO_SCHEMA": "RationalTime.1",
-                                "rate": 25.0,
-                                "value": 176.0
-                            },
-                            "start_time": {
-                                "OTIO_SCHEMA": "RationalTime.1",
-                                "rate": 25.0,
-                                "value": 210169.0
+                                "value": 208816.0
                             }
                         },
                         "effects": [],
@@ -298,8 +246,8 @@
             {
                 "OTIO_SCHEMA": "Track.1",
                 "metadata": {
-                    "total_clips": 5,
-                    "track_duration_frames": 2549,
+                    "total_clips": 4,
+                    "track_duration_frames": 750,
                     "track_type": "audio"
                 },
                 "name": "Audio 1",
@@ -312,12 +260,12 @@
                         "OTIO_SCHEMA": "Clip.2",
                         "metadata": {
                             "avg": {
-                                "confidence": 0.95
+                                "confidence": 0.96
                             },
                             "original": {
                                 "segment_id": 0
                             },
-                            "speaker": "A/B"
+                            "speaker": "A"
                         },
                         "name": "20250509_MTC_2206.MP4",
                         "source_range": {
@@ -325,7 +273,7 @@
                             "duration": {
                                 "OTIO_SCHEMA": "RationalTime.1",
                                 "rate": 25.0,
-                                "value": 471.0
+                                "value": 150.0
                             },
                             "start_time": {
                                 "OTIO_SCHEMA": "RationalTime.1",
@@ -364,7 +312,7 @@
                         "OTIO_SCHEMA": "Clip.2",
                         "metadata": {
                             "avg": {
-                                "confidence": 0.97
+                                "confidence": 0.95
                             },
                             "original": {
                                 "segment_id": 1
@@ -377,7 +325,7 @@
                             "duration": {
                                 "OTIO_SCHEMA": "RationalTime.1",
                                 "rate": 25.0,
-                                "value": 550.0
+                                "value": 250.0
                             },
                             "start_time": {
                                 "OTIO_SCHEMA": "RationalTime.1",
@@ -416,12 +364,12 @@
                         "OTIO_SCHEMA": "Clip.2",
                         "metadata": {
                             "avg": {
-                                "confidence": 0.96
+                                "confidence": 0.94
                             },
                             "original": {
                                 "segment_id": 2
                             },
-                            "speaker": "A/B"
+                            "speaker": "A"
                         },
                         "name": "20250509_MTC_2206.MP4",
                         "source_range": {
@@ -429,12 +377,12 @@
                             "duration": {
                                 "OTIO_SCHEMA": "RationalTime.1",
                                 "rate": 25.0,
-                                "value": 634.0
+                                "value": 200.0
                             },
                             "start_time": {
                                 "OTIO_SCHEMA": "RationalTime.1",
                                 "rate": 25.0,
-                                "value": 204018.0
+                                "value": 199134.0
                             }
                         },
                         "effects": [],
@@ -468,12 +416,12 @@
                         "OTIO_SCHEMA": "Clip.2",
                         "metadata": {
                             "avg": {
-                                "confidence": 0.94
+                                "confidence": 0.93
                             },
                             "original": {
                                 "segment_id": 3
                             },
-                            "speaker": "A/B"
+                            "speaker": "A"
                         },
                         "name": "20250509_MTC_2206.MP4",
                         "source_range": {
@@ -481,64 +429,12 @@
                             "duration": {
                                 "OTIO_SCHEMA": "RationalTime.1",
                                 "rate": 25.0,
-                                "value": 718.0
+                                "value": 150.0
                             },
                             "start_time": {
                                 "OTIO_SCHEMA": "RationalTime.1",
                                 "rate": 25.0,
-                                "value": 208352.0
-                            }
-                        },
-                        "effects": [],
-                        "markers": [],
-                        "enabled": true,
-                        "media_references": {
-                            "DEFAULT_MEDIA": {
-                                "OTIO_SCHEMA": "ExternalReference.1",
-                                "metadata": {},
-                                "name": "",
-                                "available_range": {
-                                    "OTIO_SCHEMA": "TimeRange.1",
-                                    "duration": {
-                                        "OTIO_SCHEMA": "RationalTime.1",
-                                        "rate": 25.0,
-                                        "value": 26616.0
-                                    },
-                                    "start_time": {
-                                        "OTIO_SCHEMA": "RationalTime.1",
-                                        "rate": 25.0,
-                                        "value": 186262.0
-                                    }
-                                },
-                                "available_image_bounds": null,
-                                "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4"
-                            }
-                        },
-                        "active_media_reference_key": "DEFAULT_MEDIA"
-                    },
-                    {
-                        "OTIO_SCHEMA": "Clip.2",
-                        "metadata": {
-                            "avg": {
-                                "confidence": 0.96
-                            },
-                            "original": {
-                                "segment_id": 4
-                            },
-                            "speaker": "A/B"
-                        },
-                        "name": "20250509_MTC_2206.MP4",
-                        "source_range": {
-                            "OTIO_SCHEMA": "TimeRange.1",
-                            "duration": {
-                                "OTIO_SCHEMA": "RationalTime.1",
-                                "rate": 25.0,
-                                "value": 176.0
-                            },
-                            "start_time": {
-                                "OTIO_SCHEMA": "RationalTime.1",
-                                "rate": 25.0,
-                                "value": 210169.0
+                                "value": 208816.0
                             }
                         },
                         "effects": [],

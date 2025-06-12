@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
 import glob
+import argparse
 from dotenv import load_dotenv
 import anthropic
 from anthropic import Anthropic
@@ -381,23 +382,79 @@ def process_reedit(
 ) -> Dict[str, Any]:
     """Synchronous wrapper around the async process_reedit function."""
     
-    # Get the current event loop or create a new one
+    # Check if we're already in an event loop (called from chatbot)
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
+        # We're in an event loop already - need to run in a thread
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(
+                asyncio.run,
+                process_reedit_async(
+                    existing_timeline,
+                    transcript_data, 
+                    user_brief,
+                    user_instructions,
+                    output_filename, 
+                    streaming_callback
+                )
+            )
+            return future.result()
     except RuntimeError:
+        # No running loop, create a new one
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-    
-    return loop.run_until_complete(
-        process_reedit_async(
-            existing_timeline,
-            transcript_data, 
-            user_brief,
-            user_instructions,
-            output_filename, 
-            streaming_callback
-        )
-    )
+        try:
+            return loop.run_until_complete(
+                process_reedit_async(
+                    existing_timeline,
+                    transcript_data, 
+                    user_brief,
+                    user_instructions,
+                    output_filename, 
+                    streaming_callback
+                )
+            )
+        finally:
+            loop.close()
+
+def clear_timeline_processing_folders():
+    """Clear the contents of timeline_ref and timeline_edited folders to prevent duplicates."""
+    try:
+        import shutil
+        
+        # Clear timeline_ref folder
+        if TIMELINE_REF_DIR.exists():
+            for item in TIMELINE_REF_DIR.iterdir():
+                if item.is_file():
+                    item.unlink()
+                    logger.info(f"Removed file: {item.name}")
+                elif item.is_dir():
+                    shutil.rmtree(item)
+                    logger.info(f"Removed directory: {item.name}")
+            print("✓ Cleared timeline_ref folder")
+        
+        # Clear timeline_edited folder
+        if TIMELINE_EDITED_DIR.exists():
+            for item in TIMELINE_EDITED_DIR.iterdir():
+                if item.is_file():
+                    item.unlink()
+                    logger.info(f"Removed file: {item.name}")
+                elif item.is_dir():
+                    shutil.rmtree(item)
+                    logger.info(f"Removed directory: {item.name}")
+            print("✓ Cleared timeline_edited folder")
+        
+        # Ensure directories exist
+        TIMELINE_REF_DIR.mkdir(parents=True, exist_ok=True)
+        TIMELINE_EDITED_DIR.mkdir(parents=True, exist_ok=True)
+        
+        return True
+        
+    except Exception as e:
+        print(f"⚠ Warning: Could not clear timeline processing folders: {e}")
+        logger.warning(f"Failed to clear timeline processing folders: {e}")
+        return False
 
 def run_export_otio():
     """Run the exportotio.py script to export current timeline from DaVinci Resolve."""
@@ -475,116 +532,144 @@ def stream_to_console(stream_type: str, content: str):
             # For small fragments, print without newline
             print(f"\033[92m{content}\033[0m", end="")
 
-# Main execution when script is run directly
-if __name__ == "__main__":
-    try:
-        print("=== DaVinci Resolve Re-editing Workflow ===")
-        print("This will export current timeline, apply edits, and re-import")
-        print()
+def main_reedit_workflow(user_instructions: str = None, silent: bool = False) -> Dict[str, Any]:
+    """
+    Main re-editing workflow function that can be called programmatically or interactively.
+    
+    Args:
+        user_instructions: The editing instructions. If None, will prompt interactively.
+        silent: If True, suppress most print output for programmatic use.
         
-        # Step 1: Export current timeline from DaVinci Resolve
-        print("STEP 1: Exporting current timeline from DaVinci Resolve")
-        print("="*60)
+    Returns:
+        Dict with success status and results or error information.
+    """
+    def print_if_not_silent(msg: str):
+        if not silent:
+            print(msg)
+    
+    try:
+        if not silent:
+            print("=== DaVinci Resolve Re-editing Workflow ===")
+            print("This will export current timeline, apply edits, and re-import")
+            print()
+        
+        # Step 1: Clear timeline processing folders and export current timeline
+        print_if_not_silent("STEP 1: Preparing timeline processing environment")
+        print_if_not_silent("="*60)
+        
+        # Clear existing files to prevent confusion
+        print_if_not_silent("Clearing timeline processing folders...")
+        clear_timeline_processing_folders()
+        
+        print_if_not_silent("\nExporting current timeline from DaVinci Resolve...")
         export_success = run_export_otio()
         
         if not export_success:
-            print("❌ Failed to export timeline from DaVinci Resolve")
-            print("Please ensure:")
-            print("- DaVinci Resolve is running")
-            print("- A timeline is currently active")
-            print("- Scripting is enabled in DaVinci Resolve")
-            exit(1)
+            error_msg = "Failed to export timeline from DaVinci Resolve"
+            print_if_not_silent(f"❌ {error_msg}")
+            if not silent:
+                print("Please ensure:")
+                print("- DaVinci Resolve is running")
+                print("- A timeline is currently active")
+                print("- Scripting is enabled in DaVinci Resolve")
+            return {"success": False, "error": error_msg}
         
-        print("\nSTEP 2: Loading project data and transcript")
-        print("="*60)
+        print_if_not_silent("\nSTEP 2: Loading project data and transcript")
+        print_if_not_silent("="*60)
         
         # Load project data
-        print("Loading project data...")
+        print_if_not_silent("Loading project data...")
         project_data = load_project_data()
         project_title = project_data["title"]
         user_brief = project_data["brief"]
         
-        print(f"✓ Project: {project_title}")
-        print(f"✓ Brief loaded ({len(user_brief)} characters)")
+        print_if_not_silent(f"✓ Project: {project_title}")
+        print_if_not_silent(f"✓ Brief loaded ({len(user_brief)} characters)")
         
         # Load transcript data
-        print("\nLoading transcript...")
+        print_if_not_silent("\nLoading transcript...")
         transcript_data = load_transcript_data()
         timecode_offset = transcript_data.get("timecode_offset_frames", 0)
-        print(f"✓ Transcript loaded from: {ANALYZED_DIR}")
-        print(f"✓ Timecode offset: {timecode_offset} frames")
+        print_if_not_silent(f"✓ Transcript loaded from: {ANALYZED_DIR}")
+        print_if_not_silent(f"✓ Timecode offset: {timecode_offset} frames")
         
-        print("\nSTEP 3: Looking for timeline data to re-edit")
-        print("="*60)
+        print_if_not_silent("\nSTEP 3: Looking for timeline data to re-edit")
+        print_if_not_silent("="*60)
         
         # First check for existing edited timelines
         timeline_path = find_existing_timeline_json()
         
         if timeline_path:
             existing_timeline = load_existing_timeline(timeline_path)
-            print(f"✓ Found existing edited timeline: {timeline_path.name}")
+            print_if_not_silent(f"✓ Found existing edited timeline: {timeline_path.name}")
         else:
             # Look for the exported JSON from step 1
-            print("No existing edited timeline found, using newly exported timeline...")
+            print_if_not_silent("No existing edited timeline found, using newly exported timeline...")
             timeline_ref_dir = PROJECT_ROOT / "data" / "timelineprocessing" / "timeline_ref"
             ref_json_files = list(timeline_ref_dir.glob("*.json"))
             
             if not ref_json_files:
-                print("❌ No timeline JSON found from export")
-                print("Export may have failed - please check DaVinci Resolve")
-                exit(1)
+                error_msg = "No timeline JSON found from export"
+                print_if_not_silent(f"❌ {error_msg}")
+                print_if_not_silent("Export may have failed - please check DaVinci Resolve")
+                return {"success": False, "error": error_msg}
             
             ref_timeline_path = ref_json_files[0]  # Use the most recent one
             existing_timeline = load_existing_timeline(ref_timeline_path)
-            print(f"✓ Using exported timeline: {ref_timeline_path.name}")
+            print_if_not_silent(f"✓ Using exported timeline: {ref_timeline_path.name}")
         
-        print("\nSTEP 4: Get re-editing instructions")
-        print("="*60)
-        print("What changes would you like to make to the current timeline?")
-        print("Examples:")
-        print("  - Remove all clips from speaker A")
-        print("  - Make the timeline 30 seconds shorter")
-        print("  - Add more content about 'creativity'")
-        print("  - Reorder clips to put the introduction first")
-        print("  - Replace the ending with a stronger conclusion")
-        print("-"*60)
+        # Get user instructions
+        if user_instructions is None:
+            print_if_not_silent("\nSTEP 4: Get re-editing instructions")
+            print_if_not_silent("="*60)
+            print_if_not_silent("What changes would you like to make to the current timeline?")
+            print_if_not_silent("Examples:")
+            print_if_not_silent("  - Remove all clips from speaker A")
+            print_if_not_silent("  - Make the timeline 30 seconds shorter")
+            print_if_not_silent("  - Add more content about 'creativity'")
+            print_if_not_silent("  - Reorder clips to put the introduction first")
+            print_if_not_silent("  - Replace the ending with a stronger conclusion")
+            print_if_not_silent("-"*60)
+            
+            user_instructions = input("Enter your re-editing instructions: ").strip()
+            
+            if not user_instructions:
+                error_msg = "No instructions provided"
+                print_if_not_silent(f"❌ {error_msg}. Exiting.")
+                return {"success": False, "error": error_msg}
         
-        user_instructions = input("Enter your re-editing instructions: ").strip()
+        print_if_not_silent(f"\n✓ Instructions: {user_instructions}")
         
-        if not user_instructions:
-            print("❌ No instructions provided. Exiting.")
-            exit(1)
-        
-        print(f"\n✓ Instructions: {user_instructions}")
-        
-        print("\nSTEP 5: Processing re-edit with AI")
-        print("="*60)
+        print_if_not_silent("\nSTEP 5: Processing re-edit with AI")
+        print_if_not_silent("="*60)
         
         # Generate output filename
         current_iteration = existing_timeline.get("timeline", {}).get("metadata", {}).get("edit_iteration", 1)
         output_filename = generate_reedit_filename(project_title, current_iteration + 1)
         
-        print(f"Processing setup:")
-        print(f"  • Project: {project_title}")
-        print(f"  • Instructions: {user_instructions}")
-        print(f"  • Output: {output_filename.name}")
+        print_if_not_silent(f"Processing setup:")
+        print_if_not_silent(f"  • Project: {project_title}")
+        print_if_not_silent(f"  • Instructions: {user_instructions}")
+        print_if_not_silent(f"  • Output: {output_filename.name}")
         
-        print("\nStarting Claude re-editing with thinking enabled...\n")
+        print_if_not_silent("\nStarting Claude re-editing with thinking enabled...\n")
         
-        # Process with streaming to console
+        # Process with streaming to console (only if not silent)
+        streaming_callback = stream_to_console if not silent else None
         result = process_reedit(
             existing_timeline,
             transcript_data, 
             user_brief,
             user_instructions,
             output_filename=str(output_filename),
-            streaming_callback=stream_to_console
+            streaming_callback=streaming_callback
         )
         
-        print("\n\nRe-editing complete.")
+        print_if_not_silent("\n\nRe-editing complete.")
         
         if "error" in result:
-            print(f"❌ Error: {result['error']}")
+            print_if_not_silent(f"❌ Error: {result['error']}")
+            return {"success": False, "error": result['error']}
         else:
             # Extract timeline information
             timeline_info = result.get("timeline", {})
@@ -592,53 +677,114 @@ if __name__ == "__main__":
             summary = result.get("summary", {})
             metadata = timeline_info.get("metadata", {})
             
-            print(f"✅ Modified timeline: {timeline_info.get('name', 'Unknown')}")
-            print(f"✓ Total tracks: {summary.get('total_tracks', 0)}")
-            print(f"✓ Total clips: {summary.get('total_clips', 0)}")
-            print(f"✓ New duration: {summary.get('timeline_duration_frames', 0)} frames")
+            print_if_not_silent(f"✅ Modified timeline: {timeline_info.get('name', 'Unknown')}")
+            print_if_not_silent(f"✓ Total tracks: {summary.get('total_tracks', 0)}")
+            print_if_not_silent(f"✓ Total clips: {summary.get('total_clips', 0)}")
+            print_if_not_silent(f"✓ New duration: {summary.get('timeline_duration_frames', 0)} frames")
             
             # Show duration change
             prev_duration = metadata.get("previous_duration_frames", 0)
             new_duration = summary.get("timeline_duration_frames", 0)
             duration_change = new_duration - prev_duration
             change_sign = "+" if duration_change > 0 else ""
-            print(f"✓ Duration change: {change_sign}{duration_change} frames")
+            print_if_not_silent(f"✓ Duration change: {change_sign}{duration_change} frames")
             
-            print(f"✓ Edit iteration: {metadata.get('edit_iteration', 1)}")
-            print(f"✓ Output saved to: {output_filename}")
+            print_if_not_silent(f"✓ Edit iteration: {metadata.get('edit_iteration', 1)}")
+            print_if_not_silent(f"✓ Output saved to: {output_filename}")
             
             # Show track breakdown
-            for track in tracks:
-                track_name = track.get("name", "Unknown Track")
-                track_kind = track.get("kind", "Unknown")
-                clip_count = len(track.get("clips", []))
-                print(f"  - {track_name} ({track_kind}): {clip_count} clips")
+            if not silent:
+                for track in tracks:
+                    track_name = track.get("name", "Unknown Track")
+                    track_kind = track.get("kind", "Unknown")
+                    clip_count = len(track.get("clips", []))
+                    print(f"  - {track_name} ({track_kind}): {clip_count} clips")
             
             # Step 6: Import modified timeline back to DaVinci Resolve
-            print(f"\nSTEP 6: Importing modified timeline back to DaVinci Resolve")
-            print("="*60)
+            print_if_not_silent(f"\nSTEP 6: Importing modified timeline back to DaVinci Resolve")
+            print_if_not_silent("="*60)
             
             import_success = run_import_otio()
             
             if import_success:
-                print("\n🎉 WORKFLOW COMPLETED SUCCESSFULLY! 🎉")
-                print("Modified timeline is now available in DaVinci Resolve")
-                print(f"You can run this script again to make further modifications")
+                print_if_not_silent("\n🎉 WORKFLOW COMPLETED SUCCESSFULLY! 🎉")
+                print_if_not_silent("Modified timeline is now available in DaVinci Resolve")
+                print_if_not_silent(f"You can run this script again to make further modifications")
+                
+                return {
+                    "success": True,
+                    "timeline_name": timeline_info.get('name', 'Unknown'),
+                    "total_tracks": summary.get('total_tracks', 0),
+                    "total_clips": summary.get('total_clips', 0),
+                    "duration_frames": summary.get('timeline_duration_frames', 0),
+                    "duration_change_frames": duration_change,
+                    "edit_iteration": metadata.get('edit_iteration', 1),
+                    "output_file": str(output_filename),
+                    "instructions": user_instructions
+                }
             else:
-                print("\n⚠️  Re-editing completed but import failed")
-                print("You can manually run importotio.py to import the timeline")
-                print("Or check DaVinci Resolve connection and try again")
+                error_msg = "Re-editing completed but import failed"
+                print_if_not_silent(f"\n⚠️  {error_msg}")
+                print_if_not_silent("You can manually run importotio.py to import the timeline")
+                print_if_not_silent("Or check DaVinci Resolve connection and try again")
+                
+                return {
+                    "success": False,
+                    "error": error_msg,
+                    "partial_success": True,
+                    "timeline_generated": True,
+                    "output_file": str(output_filename),
+                    "instructions": user_instructions
+                }
     
     except FileNotFoundError as e:
-        print(f"❌ File Error: {e}")
-        print("\nRequired files:")
-        print(f"  • Transcript files: {ANALYZED_DIR}/*.transcript.json")
-        print(f"  • Project data: {PROJECT_DATA_PATH}")
-        print(f"  • DaVinci Resolve timeline (will be exported automatically)")
+        error_msg = f"File Error: {e}"
+        print_if_not_silent(f"❌ {error_msg}")
+        if not silent:
+            print("\nRequired files:")
+            print(f"  • Transcript files: {ANALYZED_DIR}/*.transcript.json")
+            print(f"  • Project data: {PROJECT_DATA_PATH}")
+            print(f"  • DaVinci Resolve timeline (will be exported automatically)")
+        return {"success": False, "error": error_msg}
     except ValueError as e:
-        print(f"❌ Data Error: {e}")
+        error_msg = f"Data Error: {e}"
+        print_if_not_silent(f"❌ {error_msg}")
+        return {"success": False, "error": error_msg}
     except KeyboardInterrupt:
-        print(f"\n❌ Interrupted by user")
+        error_msg = "Interrupted by user"
+        print_if_not_silent(f"\n❌ {error_msg}")
+        return {"success": False, "error": error_msg}
     except Exception as e:
-        print(f"❌ Unexpected Error: {e}")
+        error_msg = f"Unexpected Error: {e}"
+        print_if_not_silent(f"❌ {error_msg}")
         logger.exception("Unexpected error in main execution")
+        return {"success": False, "error": error_msg}
+
+# Main execution when script is run directly
+if __name__ == "__main__":
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="DaVinci Resolve Re-editing Workflow")
+    parser.add_argument(
+        "--instructions", 
+        type=str, 
+        help="Re-editing instructions to apply to the timeline"
+    )
+    parser.add_argument(
+        "--silent", 
+        action="store_true", 
+        help="Run in silent mode with minimal output"
+    )
+    
+    args = parser.parse_args()
+    
+    # Run the workflow
+    result = main_reedit_workflow(
+        user_instructions=args.instructions,
+        silent=args.silent
+    )
+    
+    # Exit with appropriate code
+    if result["success"]:
+        exit(0)
+    else:
+        exit(1)

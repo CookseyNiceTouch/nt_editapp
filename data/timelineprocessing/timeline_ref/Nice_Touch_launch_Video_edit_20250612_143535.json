@@ -13,7 +13,7 @@
   "tracks": [
     {
       "track_index": 0,
-      "name": "Video Track 1",
+      "name": "V1",
       "kind": "Video",
       "clips": [
         {
@@ -22,8 +22,8 @@
           "metadata": {},
           "source_range": {
             "start_frame": 186556,
-            "duration_frames": 216,
-            "end_frame": 186771,
+            "duration_frames": 471,
+            "end_frame": 187026,
             "fps": 25.0
           },
           "media_reference": {
@@ -43,9 +43,9 @@
           "name": "20250509_MTC_2206.MP4",
           "metadata": {},
           "source_range": {
-            "start_frame": 186804,
-            "duration_frames": 223,
-            "end_frame": 187026,
+            "start_frame": 193104,
+            "duration_frames": 799,
+            "end_frame": 193902,
             "fps": 25.0
           },
           "media_reference": {
@@ -65,9 +65,9 @@
           "name": "20250509_MTC_2206.MP4",
           "metadata": {},
           "source_range": {
-            "start_frame": 188151,
-            "duration_frames": 105,
-            "end_frame": 188255,
+            "start_frame": 198452,
+            "duration_frames": 550,
+            "end_frame": 199001,
             "fps": 25.0
           },
           "media_reference": {
@@ -87,9 +87,9 @@
           "name": "20250509_MTC_2206.MP4",
           "metadata": {},
           "source_range": {
-            "start_frame": 188270,
-            "duration_frames": 204,
-            "end_frame": 188473,
+            "start_frame": 201712,
+            "duration_frames": 619,
+            "end_frame": 202330,
             "fps": 25.0
           },
           "media_reference": {
@@ -109,9 +109,9 @@
           "name": "20250509_MTC_2206.MP4",
           "metadata": {},
           "source_range": {
-            "start_frame": 188482,
-            "duration_frames": 192,
-            "end_frame": 188673,
+            "start_frame": 206430,
+            "duration_frames": 280,
+            "end_frame": 206709,
             "fps": 25.0
           },
           "media_reference": {
@@ -131,9 +131,9 @@
           "name": "20250509_MTC_2206.MP4",
           "metadata": {},
           "source_range": {
-            "start_frame": 188730,
-            "duration_frames": 136,
-            "end_frame": 188865,
+            "start_frame": 208202,
+            "duration_frames": 440,
+            "end_frame": 208641,
             "fps": 25.0
           },
           "media_reference": {
@@ -153,97 +153,9 @@
           "name": "20250509_MTC_2206.MP4",
           "metadata": {},
           "source_range": {
-            "start_frame": 188904,
-            "duration_frames": 498,
-            "end_frame": 189401,
-            "fps": 25.0
-          },
-          "media_reference": {
-            "type": "ExternalReference",
-            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
-            "filename": "20250509_MTC_2206.MP4",
-            "available_range": {
-              "start_frame": 186262,
-              "duration_frames": 26616,
-              "end_frame": 212877,
-              "fps": 25.0
-            }
-          }
-        },
-        {
-          "clip_index": 7,
-          "name": "20250509_MTC_2206.MP4",
-          "metadata": {},
-          "source_range": {
-            "start_frame": 189430,
-            "duration_frames": 250,
-            "end_frame": 189679,
-            "fps": 25.0
-          },
-          "media_reference": {
-            "type": "ExternalReference",
-            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
-            "filename": "20250509_MTC_2206.MP4",
-            "available_range": {
-              "start_frame": 186262,
-              "duration_frames": 26616,
-              "end_frame": 212877,
-              "fps": 25.0
-            }
-          }
-        },
-        {
-          "clip_index": 8,
-          "name": "20250509_MTC_2206.MP4",
-          "metadata": {},
-          "source_range": {
-            "start_frame": 205828,
-            "duration_frames": 170,
-            "end_frame": 205997,
-            "fps": 25.0
-          },
-          "media_reference": {
-            "type": "ExternalReference",
-            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
-            "filename": "20250509_MTC_2206.MP4",
-            "available_range": {
-              "start_frame": 186262,
-              "duration_frames": 26616,
-              "end_frame": 212877,
-              "fps": 25.0
-            }
-          }
-        },
-        {
-          "clip_index": 9,
-          "name": "20250509_MTC_2206.MP4",
-          "metadata": {},
-          "source_range": {
-            "start_frame": 208352,
-            "duration_frames": 290,
-            "end_frame": 208641,
-            "fps": 25.0
-          },
-          "media_reference": {
-            "type": "ExternalReference",
-            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
-            "filename": "20250509_MTC_2206.MP4",
-            "available_range": {
-              "start_frame": 186262,
-              "duration_frames": 26616,
-              "end_frame": 212877,
-              "fps": 25.0
-            }
-          }
-        },
-        {
-          "clip_index": 10,
-          "name": "20250509_MTC_2206.MP4",
-          "metadata": {},
-          "source_range": {
-            "start_frame": 210169,
-            "duration_frames": 237,
-            "end_frame": 210405,
+            "start_frame": 210713,
+            "duration_frames": 144,
+            "end_frame": 210856,
             "fps": 25.0
           },
           "media_reference": {
@@ -278,8 +190,8 @@
           },
           "source_range": {
             "start_frame": 186556,
-            "duration_frames": 216,
-            "end_frame": 186771,
+            "duration_frames": 471,
+            "end_frame": 187026,
             "fps": 25.0
           },
           "media_reference": {
@@ -301,9 +213,9 @@
             "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
           },
           "source_range": {
-            "start_frame": 186804,
-            "duration_frames": 223,
-            "end_frame": 187026,
+            "start_frame": 193104,
+            "duration_frames": 799,
+            "end_frame": 193902,
             "fps": 25.0
           },
           "media_reference": {
@@ -325,9 +237,9 @@
             "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
           },
           "source_range": {
-            "start_frame": 188151,
-            "duration_frames": 105,
-            "end_frame": 188255,
+            "start_frame": 198452,
+            "duration_frames": 550,
+            "end_frame": 199001,
             "fps": 25.0
           },
           "media_reference": {
@@ -349,9 +261,9 @@
             "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
           },
           "source_range": {
-            "start_frame": 188270,
-            "duration_frames": 204,
-            "end_frame": 188473,
+            "start_frame": 201712,
+            "duration_frames": 619,
+            "end_frame": 202330,
             "fps": 25.0
           },
           "media_reference": {
@@ -373,9 +285,9 @@
             "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
           },
           "source_range": {
-            "start_frame": 188482,
-            "duration_frames": 192,
-            "end_frame": 188673,
+            "start_frame": 206430,
+            "duration_frames": 280,
+            "end_frame": 206709,
             "fps": 25.0
           },
           "media_reference": {
@@ -397,9 +309,9 @@
             "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
           },
           "source_range": {
-            "start_frame": 188730,
-            "duration_frames": 136,
-            "end_frame": 188865,
+            "start_frame": 208202,
+            "duration_frames": 440,
+            "end_frame": 208641,
             "fps": 25.0
           },
           "media_reference": {
@@ -421,105 +333,9 @@
             "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
           },
           "source_range": {
-            "start_frame": 188904,
-            "duration_frames": 498,
-            "end_frame": 189401,
-            "fps": 25.0
-          },
-          "media_reference": {
-            "type": "ExternalReference",
-            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
-            "filename": "20250509_MTC_2206.MP4",
-            "available_range": {
-              "start_frame": 186262,
-              "duration_frames": 26616,
-              "end_frame": 212877,
-              "fps": 25.0
-            }
-          }
-        },
-        {
-          "clip_index": 7,
-          "name": "20250509_MTC_2206.MP4",
-          "metadata": {
-            "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
-          },
-          "source_range": {
-            "start_frame": 189430,
-            "duration_frames": 250,
-            "end_frame": 189679,
-            "fps": 25.0
-          },
-          "media_reference": {
-            "type": "ExternalReference",
-            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
-            "filename": "20250509_MTC_2206.MP4",
-            "available_range": {
-              "start_frame": 186262,
-              "duration_frames": 26616,
-              "end_frame": 212877,
-              "fps": 25.0
-            }
-          }
-        },
-        {
-          "clip_index": 8,
-          "name": "20250509_MTC_2206.MP4",
-          "metadata": {
-            "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
-          },
-          "source_range": {
-            "start_frame": 205828,
-            "duration_frames": 170,
-            "end_frame": 205997,
-            "fps": 25.0
-          },
-          "media_reference": {
-            "type": "ExternalReference",
-            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
-            "filename": "20250509_MTC_2206.MP4",
-            "available_range": {
-              "start_frame": 186262,
-              "duration_frames": 26616,
-              "end_frame": 212877,
-              "fps": 25.0
-            }
-          }
-        },
-        {
-          "clip_index": 9,
-          "name": "20250509_MTC_2206.MP4",
-          "metadata": {
-            "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
-          },
-          "source_range": {
-            "start_frame": 208352,
-            "duration_frames": 290,
-            "end_frame": 208641,
-            "fps": 25.0
-          },
-          "media_reference": {
-            "type": "ExternalReference",
-            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
-            "filename": "20250509_MTC_2206.MP4",
-            "available_range": {
-              "start_frame": 186262,
-              "duration_frames": 26616,
-              "end_frame": 212877,
-              "fps": 25.0
-            }
-          }
-        },
-        {
-          "clip_index": 10,
-          "name": "20250509_MTC_2206.MP4",
-          "metadata": {
-            "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
-          },
-          "source_range": {
-            "start_frame": 210169,
-            "duration_frames": 237,
-            "end_frame": 210405,
+            "start_frame": 210713,
+            "duration_frames": 144,
+            "end_frame": 210856,
             "fps": 25.0
           },
           "media_reference": {
@@ -546,7 +362,7 @@
   ],
   "summary": {
     "total_tracks": 2,
-    "total_clips": 22,
-    "timeline_duration_frames": 2521
+    "total_clips": 14,
+    "timeline_duration_frames": 3303
   }
 }

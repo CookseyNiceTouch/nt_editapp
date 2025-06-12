@@ -1,0 +1,232 @@
+{
+  "tools": [
+    {
+      "name": "test_resolve_connection",
+      "description": "Test if DaVinci Resolve is running and accessible via the scripting API",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "function": "test_resolve_connection",
+      "category": "resolve_status"
+    },
+    {
+      "name": "get_resolve_project_info",
+      "description": "Get information about the currently open project in DaVinci Resolve",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "function": "get_resolve_project_info",
+      "category": "resolve_project"
+    },
+    {
+      "name": "get_resolve_timeline_info",
+      "description": "Get information about the current timeline in DaVinci Resolve",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "function": "get_resolve_timeline_info",
+      "category": "resolve_timeline"
+    },
+    {
+      "name": "list_resolve_timelines",
+      "description": "List all timelines in the current DaVinci Resolve project",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "function": "list_resolve_timelines",
+      "category": "resolve_timeline"
+    },
+    {
+      "name": "get_resolve_media_pool_info",
+      "description": "Get information about the media pool in the current DaVinci Resolve project",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "include_clips": {
+            "type": "boolean",
+            "description": "Whether to include detailed clip information",
+            "default": false
+          }
+        },
+        "required": []
+      },
+      "function": "get_resolve_media_pool_info",
+      "category": "resolve_media"
+    },
+    {
+      "name": "export_current_timeline",
+      "description": "Export the current timeline from DaVinci Resolve to OTIO format",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "output_path": {
+            "type": "string",
+            "description": "Optional custom output path for the exported timeline"
+          }
+        },
+        "required": []
+      },
+      "function": "export_current_timeline",
+      "category": "resolve_export"
+    },
+    {
+      "name": "check_resolve_environment",
+      "description": "Check if the DaVinci Resolve scripting environment is properly configured",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "function": "check_resolve_environment",
+      "category": "resolve_status"
+    },
+    {
+      "name": "apply_zoom_to_clip",
+      "description": "Apply zoom settings to a specific clip for punch-ins and framing adjustments. Useful for adding variety to static shots by zooming in on speakers or important elements.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "track_index": {
+            "type": "integer",
+            "description": "Track index (1-based) where the clip is located",
+            "minimum": 1
+          },
+          "clip_index": {
+            "type": "integer",
+            "description": "Clip index (1-based) on the track to apply zoom to",
+            "minimum": 1
+          },
+          "zoom_value": {
+            "type": "number",
+            "description": "Zoom multiplier (1.0 = normal size, 1.1 = 10% zoom in, 1.2 = 20% zoom in, 2.0 = 100% zoom in)",
+            "minimum": 0.5,
+            "maximum": 10.0,
+            "default": 1.2
+          },
+          "lock_axes": {
+            "type": "boolean",
+            "description": "Lock X and Y zoom together (recommended for uniform punch-ins)",
+            "default": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description of the zoom purpose (e.g., 'punch in on speaker', 'focus on product')",
+            "default": ""
+          }
+        },
+        "required": ["track_index", "clip_index", "zoom_value"]
+      },
+      "function": "apply_zoom_to_clip",
+      "category": "resolve_editing"
+    },
+    {
+      "name": "list_clips_in_tracks",
+      "description": "List all clips across video tracks with their positions and details. Useful for identifying which clips to apply effects to.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "track_type": {
+            "type": "string",
+            "description": "Type of tracks to list clips from",
+            "enum": ["video", "audio"],
+            "default": "video"
+          }
+        },
+        "required": []
+      },
+      "function": "list_clips_in_tracks",
+      "category": "resolve_timeline"
+    },
+    {
+      "name": "reedit_timeline",
+      "description": "Apply comprehensive editing instructions to the current timeline. This tool calls the re-edit workflow directly, which exports the current timeline, applies AI-powered editing changes, and imports the result back to DaVinci Resolve.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "instructions": {
+            "type": "string",
+            "description": "Detailed editing instructions to apply to the timeline (e.g., 'Remove all clips from speaker A', 'Make the timeline 30 seconds shorter', 'Reorder clips to put introduction first')"
+          },
+          "description": {
+            "type": "string",
+            "description": "Optional description of the editing goal for context",
+            "default": ""
+          }
+        },
+        "required": ["instructions"]
+      },
+      "function": "reedit_timeline",
+      "category": "timeline_editing"
+    },
+    {
+      "name": "test_reedit_environment",
+      "description": "Test the re-edit environment and verify module import capabilities for direct function calling",
+      "parameters": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "function": "test_reedit_environment",
+      "category": "timeline_editing"
+    },
+    {
+      "name": "generate_roughcut",
+      "description": "Generate a rough cut timeline from transcript data. This tool analyzes the transcript, creates an initial timeline structure, and imports it to DaVinci Resolve.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Optional description of the rough cut generation goal for context",
+            "default": ""
+          }
+        },
+        "required": []
+      },
+      "function": "generate_roughcut",
+      "category": "timeline_generation"
+    }
+  ],
+  "categories": {
+    "resolve_status": {
+      "description": "Tools for checking DaVinci Resolve status and environment",
+      "icon": "🔧"
+    },
+    "resolve_project": {
+      "description": "Tools for working with DaVinci Resolve projects",
+      "icon": "📁"
+    },
+    "resolve_timeline": {
+      "description": "Tools for working with DaVinci Resolve timelines",
+      "icon": "🎬"
+    },
+    "resolve_media": {
+      "description": "Tools for working with DaVinci Resolve media pool",
+      "icon": "🎥"
+    },
+    "resolve_export": {
+      "description": "Tools for exporting from DaVinci Resolve",
+      "icon": "📤"
+    },
+    "resolve_editing": {
+      "description": "Tools for editing and modifying clips in DaVinci Resolve",
+      "icon": "✂️"
+    },
+    "timeline_editing": {
+      "description": "Tools for comprehensive timeline editing and restructuring",
+      "icon": "🎬"
+    },
+    "timeline_generation": {
+      "description": "Tools for generating new timelines from transcript data",
+      "icon": "🎭"
+    }
+  }
+}
