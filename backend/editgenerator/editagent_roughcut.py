@@ -349,12 +349,6 @@ async def process_transcript_async(
                             if streaming_callback:
                                 streaming_callback("response", event.delta.text)
         
-        # Save thinking output for debugging if needed
-        if output_filename:
-            thinking_path = Path(output_filename).with_suffix(".thinking.txt")
-            with open(thinking_path, "w") as f:
-                f.write(thinking_content)
-            
         # Parse the JSON response
         try:
             logger.info("Parsing Claude's response as JSON")
