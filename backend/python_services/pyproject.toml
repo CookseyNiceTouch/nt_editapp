@@ -1,7 +1,51 @@
 [project]
 name = "python-services"
 version = "0.1.0"
-description = "Add your description here"
+description = "Unified Python services for video editing automation including AI services, asset analysis, and Resolve automation"
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    # AI Services dependencies
+    "anthropic>=0.21.0",
+    "python-dotenv>=1.0.0",
+    "jsonschema>=4.20.0",
+    
+    # Asset Analysis dependencies  
+    "requests>=2.28.0",
+    "ffmpeg-python>=0.2.0",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "python-multipart>=0.0.6",
+    "pydantic>=2.5.0",
+    "aiofiles>=23.0.0",
+    "websockets>=12.0",
+    
+    # Resolve Automation dependencies
+    "pyaaf2>=1.4,<1.7",
+    "OpenTimelineIO==0.16.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0"
+]
+
+[project.scripts]
+# Main unified API
+python-services = "main:main"
+
+# Individual service scripts
+videoanalyzer = "services.assetanalysis.videoanalyzer:main"
+transcription-api = "services.assetanalysis.api:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["services", "shared"]
