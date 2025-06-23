@@ -20,6 +20,10 @@ dependencies = [
     "aiofiles>=23.0.0",
     "websockets>=12.0",
     
+    # Test UI dependencies
+    "customtkinter>=5.2.0",
+    "tkinterdnd2>=0.3.0",
+    
     # Resolve Automation dependencies
     "pyaaf2>=1.4,<1.7",
     "OpenTimelineIO==0.16.0",
@@ -39,6 +43,9 @@ python-services = "main:main"
 # Individual service scripts
 videoanalyzer = "services.assetanalysis.videoanalyzer:main"
 transcription-api = "services.assetanalysis.api:main"
+
+# Test UI script
+test-ui = "testUI.pythonstacktest:main"
 
 [build-system]
 requires = ["hatchling"]

@@ -433,69 +433,62 @@ def process_transcript(
         finally:
             loop.close()
 
-def clear_timeline_processing_folders():
-    """Clear the contents of timeline_ref and timeline_edited folders to prevent duplicates."""
+def clear_timeline_edited_folder():
+    """Clear the timeline_edited folder using pipeline API."""
     try:
-        import shutil
-        
-        # Clear timeline_ref folder
-        if TIMELINE_REF_DIR.exists():
-            for item in TIMELINE_REF_DIR.iterdir():
-                if item.is_file():
-                    item.unlink()
-                    logger.info(f"Removed file: {item.name}")
-                elif item.is_dir():
-                    shutil.rmtree(item)
-                    logger.info(f"Removed directory: {item.name}")
-            print("✓ Cleared timeline_ref folder")
-        
-        # Clear timeline_edited folder
-        if TIMELINE_EDITED_DIR.exists():
-            for item in TIMELINE_EDITED_DIR.iterdir():
-                if item.is_file():
-                    item.unlink()
-                    logger.info(f"Removed file: {item.name}")
-                elif item.is_dir():
-                    shutil.rmtree(item)
-                    logger.info(f"Removed directory: {item.name}")
-            print("✓ Cleared timeline_edited folder")
-        
-        # Ensure directories exist
-        TIMELINE_REF_DIR.mkdir(parents=True, exist_ok=True)
-        TIMELINE_EDITED_DIR.mkdir(parents=True, exist_ok=True)
-        
-        return True
-        
-    except Exception as e:
-        print(f"⚠ Warning: Could not clear timeline processing folders: {e}")
-        logger.warning(f"Failed to clear timeline processing folders: {e}")
-        return False
-
-def run_import_otio():
-    """Run the importotio.py script to import generated timeline to DaVinci Resolve."""
-    try:
-        # Import the importotio module
+        # Import the pipeline API module
         resolveautomation_dir = SCRIPT_DIR.parent / "resolveautomation"
         sys.path.insert(0, str(resolveautomation_dir))
         
-        # Import and run the main function from importotio
-        from importotio import main as import_main
+        # Import and use the pipeline API
+        from pipeline_api import clear_edited_directory
         
-        print("Importing timeline to DaVinci Resolve...")
-        success = import_main()
+        print("Clearing timeline_edited folder...")
+        success = clear_edited_directory()
         
         if success:
-            print("✓ Timeline import completed successfully!")
+            print("✓ Timeline_edited folder cleared successfully!")
+            return True
+        else:
+            print("✗ Failed to clear timeline_edited folder!")
+            return False
+            
+    except ImportError as e:
+        print(f"Error importing pipeline API: {e}")
+        logger.error(f"Pipeline API import error: {e}")
+        return False
+    except Exception as e:
+        print(f"Error clearing timeline_edited folder: {e}")
+        logger.error(f"Clear folder error: {e}")
+        return False
+
+def import_timeline_from_json():
+    """Convert JSON to OTIO and import timeline to DaVinci Resolve using pipeline API."""
+    try:
+        # Import the pipeline API module
+        resolveautomation_dir = SCRIPT_DIR.parent / "resolveautomation"
+        sys.path.insert(0, str(resolveautomation_dir))
+        
+        # Import and use the pipeline API
+        from pipeline_api import import_timeline_from_json
+        
+        print("Converting JSON to OTIO and importing timeline to DaVinci Resolve...")
+        success = import_timeline_from_json()
+        
+        if success:
+            print("✓ Timeline conversion and import completed successfully!")
             return True
         else:
             print("✗ Timeline import failed!")
             return False
             
     except ImportError as e:
-        print(f"Error importing importotio module: {e}")
+        print(f"Error importing pipeline API: {e}")
+        logger.error(f"Pipeline API import error: {e}")
         return False
     except Exception as e:
         print(f"Error during timeline import: {e}")
+        logger.error(f"Timeline import error: {e}")
         return False
 
 def stream_to_console(stream_type: str, content: str):
@@ -543,9 +536,9 @@ def main_roughcut_workflow(silent: bool = False) -> Dict[str, Any]:
         print_if_not_silent("STEP 1: Preparing timeline processing environment")
         print_if_not_silent("="*60)
         
-        # Clear existing files to prevent confusion
-        print_if_not_silent("Clearing timeline processing folders...")
-        clear_timeline_processing_folders()
+        # Clear timeline_edited folder to prepare for new content
+        print_if_not_silent("Clearing timeline_edited folder...")
+        clear_timeline_edited_folder()
         
         print_if_not_silent("\nSTEP 2: Loading project data and transcript")
         print_if_not_silent("="*60)
@@ -664,10 +657,10 @@ def main_roughcut_workflow(silent: bool = False) -> Dict[str, Any]:
                         print_if_not_silent(f"⚠ Clips with low confidence: {len(low_conf_clips)} (review recommended)")
             
             # Step 5: Import timeline to DaVinci Resolve
-            print_if_not_silent(f"\nSTEP 5: Importing timeline to DaVinci Resolve")
+            print_if_not_silent(f"\nSTEP 5: Converting JSON to OTIO and importing to DaVinci Resolve")
             print_if_not_silent("="*60)
             
-            import_success = run_import_otio()
+            import_success = import_timeline_from_json()
             
             if import_success:
                 print_if_not_silent("\n🎉 ROUGH CUT WORKFLOW COMPLETED SUCCESSFULLY! 🎉")

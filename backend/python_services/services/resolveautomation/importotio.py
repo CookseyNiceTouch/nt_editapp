@@ -1,153 +1,19 @@
 #!/usr/bin/env python3
 """
-Automated script to convert JSON to OTIO and import timeline files into DaVinci Resolve.
+DaVinci Resolve OTIO Import Tool
 
-This script automatically finds JSON files in timeline_edited directory, converts them to OTIO,
-and then imports the resulting timeline into DaVinci Resolve without importing source clips.
-
-Import source: ../../data/timelineprocessing/timeline_edited/
-
-No user interaction required - runs completely automated.
+Pure importer that imports OTIO timeline files into DaVinci Resolve.
+No hardcoded paths - designed to be used by datapipeline.py or standalone.
 """
 
 import sys
 import os
-import glob
-import json
+import argparse
 from pathlib import Path
+from typing import Optional, Dict, Any
 
-# =============================================================================
-# CONFIGURABLE IMPORT SETTINGS
-# =============================================================================
-# These settings can be easily modified for testing different import behaviors
-# Based on documented ImportTimelineFromFile parameters
 
-IMPORT_SOURCE_CLIPS = False        # Bool: whether to import source clips into media pool
-SOURCE_CLIPS_PATH = ""             # string: filesystem path to search for source clips
-SOURCE_CLIPS_FOLDERS = []          # List: Media Pool folder objects to search for clips
-
-# Target directory for OTIO imports (relative to script location)
-IMPORT_SOURCE_DIR = os.path.join("..", "..", "data", "timelineprocessing", "timeline_edited")
-
-# =============================================================================
-
-def get_import_directory():
-    """Get and validate the import directory path."""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(os.path.dirname(script_dir))  # Go up from backend/resolveautomation to project root
-    import_dir = os.path.join(project_root, "data", "timelineprocessing", "timeline_edited")
-    import_dir = os.path.normpath(import_dir)
-    
-    if not os.path.exists(import_dir):
-        print(f"ERROR: Import directory does not exist: {import_dir}")
-        print("Please run json2otio.py first to create modified OTIO files.")
-        return None
-    
-    print(f"✓ Import directory: {import_dir}")
-    return import_dir
-
-def convert_json_to_otio(import_dir):
-    """Convert JSON to OTIO using the json2otio converter, return OTIO file path."""
-    try:
-        # Import the json2otio module
-        script_dir = Path(__file__).parent.resolve()
-        sys.path.insert(0, str(script_dir))
-        
-        # Import the conversion function from json2otio
-        from json2otio import apply_json_edits_to_timeline
-        
-        print("Converting JSON to OTIO...")
-        # Run the conversion
-        success = apply_json_edits_to_timeline()
-        
-        if not success:
-            print("ERROR: JSON to OTIO conversion failed")
-            return None
-        
-        # Find the generated OTIO file
-        otio_pattern = os.path.join(import_dir, "*.otio")
-        otio_files = glob.glob(otio_pattern)
-        
-        if not otio_files:
-            print("ERROR: No OTIO file generated after JSON conversion")
-            return None
-        
-        # Use the most recently created OTIO file
-        otio_file = max(otio_files, key=os.path.getmtime)
-        print(f"✓ Generated OTIO file: {os.path.basename(otio_file)}")
-        return otio_file
-        
-    except ImportError as e:
-        print(f"Error importing json2otio module: {e}")
-        return None
-    except Exception as e:
-        print(f"Error during JSON to OTIO conversion: {e}")
-        return None
-
-def find_or_convert_otio_file(import_dir):
-    """Find existing OTIO file or convert from JSON in the import directory."""
-    # First, look for JSON files to convert
-    json_pattern = os.path.join(import_dir, "*.json")
-    json_files = glob.glob(json_pattern)
-    
-    if json_files:
-        if len(json_files) > 1:
-            print(f"WARNING: Multiple JSON files found in {import_dir}:")
-            for f in json_files:
-                print(f"  - {os.path.basename(f)}")
-            print("Converting the first one found...")
-        
-        json_file = json_files[0]
-        print(f"✓ Found JSON file: {os.path.basename(json_file)}")
-        
-        # Convert JSON to OTIO
-        return convert_json_to_otio(import_dir)
-    
-    # Fallback: look for existing OTIO files
-    otio_pattern = os.path.join(import_dir, "*.otio")
-    otio_files = glob.glob(otio_pattern)
-    
-    if not otio_files:
-        print(f"ERROR: No JSON or OTIO files found in {import_dir}")
-        print("Please run editagent_roughcut.py or editagent_reedit.py first to create JSON files.")
-        return None
-    
-    if len(otio_files) > 1:
-        print(f"WARNING: Multiple OTIO files found in {import_dir}:")
-        for f in otio_files:
-            print(f"  - {os.path.basename(f)}")
-        print("Using the most recent one...")
-    
-    # Use the most recently created OTIO file
-    otio_file = max(otio_files, key=os.path.getmtime)
-    print(f"✓ Found existing OTIO file: {os.path.basename(otio_file)}")
-    return otio_file
-
-def generate_timeline_name(otio_file_path):
-    """Generate timeline name from OTIO filename."""
-    filename = os.path.basename(otio_file_path)
-    timeline_name = os.path.splitext(filename)[0]
-    print(f"✓ Timeline name: {timeline_name}")
-    return timeline_name
-
-def get_import_options(timeline_name):
-    """Get import options using documented ImportTimelineFromFile parameters."""
-    
-    # Use global configurable settings for consistent behavior
-    import_options = {
-        "timelineName": timeline_name,                # string: name of timeline to be created
-        "importSourceClips": IMPORT_SOURCE_CLIPS,     # Bool: whether to import source clips (False by default for our workflow)
-        "sourceClipsPath": SOURCE_CLIPS_PATH,         # string: filesystem path to search for source clips
-        "sourceClipsFolders": SOURCE_CLIPS_FOLDERS,   # List: Media Pool folder objects to search for clips
-    }
-    
-    print("Import options:")
-    for key, value in import_options.items():
-        print(f"  {key}: {value}")
-    
-    return import_options
-
-def get_unique_timeline_name(project, base_timeline_name):
+def get_unique_timeline_name(project, base_timeline_name: str) -> str:
     """Get a unique timeline name by appending suffix if needed."""
     try:
         timeline_count = project.GetTimelineCount()
@@ -186,7 +52,8 @@ def get_unique_timeline_name(project, base_timeline_name):
         timestamp_suffix = int(time.time())
         return f"{base_timeline_name}_{timestamp_suffix}"
 
-def display_timeline_info(timeline):
+
+def display_timeline_info(timeline) -> None:
     """Display imported timeline information."""
     try:
         print("Timeline details:")
@@ -221,7 +88,27 @@ def display_timeline_info(timeline):
     except Exception as e:
         print(f"Warning: Could not get complete timeline information: {e}")
 
-def main():
+
+def import_otio_timeline(
+    otio_file_path: str, 
+    timeline_name: Optional[str] = None,
+    import_source_clips: bool = False,
+    source_clips_path: str = "",
+    source_clips_folders: Optional[list] = None
+) -> bool:
+    """
+    Import an OTIO timeline file into DaVinci Resolve.
+    
+    Args:
+        otio_file_path: Path to the OTIO file to import
+        timeline_name: Name for the imported timeline (optional, uses filename if not provided)
+        import_source_clips: Whether to import source clips into media pool
+        source_clips_path: Filesystem path to search for source clips
+        source_clips_folders: Media Pool folder objects to search for clips
+        
+    Returns:
+        True if successful, False otherwise
+    """
     try:
         # Import DaVinci Resolve API
         print("Importing DaVinci Resolve API...")
@@ -257,41 +144,51 @@ def main():
         print(f"✓ Current media pool folder: {current_folder.GetName()}")
         print()
         
-        # Get import directory
-        import_dir = get_import_directory()
-        if not import_dir:
+        # Validate OTIO file
+        otio_file = Path(otio_file_path)
+        if not otio_file.exists():
+            print(f"ERROR: OTIO file does not exist: {otio_file}")
             return False
         
-        # Find JSON file and convert to OTIO, or use existing OTIO file
-        otio_file = find_or_convert_otio_file(import_dir)
-        if not otio_file:
-            return False
+        if not otio_file.suffix.lower() == '.otio':
+            print(f"WARNING: File doesn't have .otio extension: {otio_file}")
         
-        # Generate timeline name from filename
-        base_timeline_name = generate_timeline_name(otio_file)
+        print(f"✓ OTIO file: {otio_file}")
+        
+        # Generate timeline name
+        if timeline_name is None:
+            base_timeline_name = otio_file.stem
+        else:
+            base_timeline_name = timeline_name
         
         # Get unique timeline name (adds suffix if needed)
-        timeline_name = get_unique_timeline_name(project, base_timeline_name)
-        
-        print(f"✓ File selected: {otio_file}")
-        print(f"✓ File type: OTIO")
-        print(f"✓ Final timeline name: {timeline_name}")
+        final_timeline_name = get_unique_timeline_name(project, base_timeline_name)
+        print(f"✓ Timeline name: {final_timeline_name}")
         print()
         
         # Set up import options
-        import_options = get_import_options(timeline_name)
+        import_options = {
+            "timelineName": final_timeline_name,
+            "importSourceClips": import_source_clips,
+            "sourceClipsPath": source_clips_path,
+            "sourceClipsFolders": source_clips_folders or []
+        }
+        
+        print("Import options:")
+        for key, value in import_options.items():
+            print(f"  {key}: {value}")
         print()
         
-        # Import the timeline automatically
+        # Import the timeline
         print("Importing OTIO timeline...")
-        timeline = media_pool.ImportTimelineFromFile(otio_file, import_options)
+        timeline = media_pool.ImportTimelineFromFile(str(otio_file), import_options)
         
         # If import fails, try with importSourceClips enabled as fallback
-        if not timeline:
+        if not timeline and not import_source_clips:
             print("Initial import failed. Trying with source clips import enabled...")
             fallback_options = import_options.copy()
             fallback_options["importSourceClips"] = True
-            timeline = media_pool.ImportTimelineFromFile(otio_file, fallback_options)
+            timeline = media_pool.ImportTimelineFromFile(str(otio_file), fallback_options)
             
             if timeline:
                 print("✓ Fallback import method succeeded")
@@ -305,9 +202,9 @@ def main():
             
             # Verify file size for reference
             try:
-                file_size = os.path.getsize(otio_file)
+                file_size = otio_file.stat().st_size
                 print(f"  Source file size: {file_size} bytes")
-            except Exception as e:
+            except Exception:
                 pass
             
             return True
@@ -316,7 +213,7 @@ def main():
             print()
             print("Possible issues:")
             print("- OTIO file format is not compatible with this version of DaVinci Resolve")
-            print(f"- Timeline name '{timeline_name}' conflicts with existing timeline")
+            print(f"- Timeline name '{final_timeline_name}' conflicts with existing timeline")
             print("- Media referenced in OTIO file is not found in the project")
             print("- OTIO file contains unsupported elements or codec")
             print("- OTIO file may be corrupted or incorrectly formatted")
@@ -348,18 +245,50 @@ def main():
         print(traceback.format_exc())
         return False
 
-if __name__ == "__main__":
-    print("=== DaVinci Resolve JSON→OTIO→Import Tool (Automated) ===")
-    print("Converting JSON to OTIO and importing timeline into DaVinci Resolve")
+
+def main():
+    """Main function for command-line usage."""
+    parser = argparse.ArgumentParser(
+        description="Import OpenTimelineIO files into DaVinci Resolve",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python importotio.py timeline.otio
+  python importotio.py timeline.otio --name "My Timeline"
+  python importotio.py timeline.otio --import-clips --clips-path /path/to/media
+        """
+    )
+    
+    parser.add_argument('input', help='Input OTIO file path')
+    parser.add_argument('--name', '-n', help='Timeline name (optional, uses filename if not provided)')
+    parser.add_argument('--import-clips', action='store_true', 
+                       help='Import source clips into media pool')
+    parser.add_argument('--clips-path', help='Filesystem path to search for source clips')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
+    
+    args = parser.parse_args()
+    
+    print("=== DaVinci Resolve OTIO Import Tool ===")
+    print("Importing OTIO timeline into DaVinci Resolve")
     print()
     
-    success = main()
+    success = import_otio_timeline(
+        args.input,
+        timeline_name=args.name,
+        import_source_clips=args.import_clips,
+        source_clips_path=args.clips_path or "",
+        source_clips_folders=None
+    )
     
     print()
     if success:
-        print("=== Conversion and import completed successfully! ===")
+        print("=== Import completed successfully! ===")
         print("Timeline is now available in DaVinci Resolve")
         sys.exit(0)
     else:
-        print("=== Conversion or import failed! ===")
+        print("=== Import failed! ===")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

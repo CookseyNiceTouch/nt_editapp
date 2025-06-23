@@ -412,98 +412,6 @@ def process_reedit(
         finally:
             loop.close()
 
-def clear_timeline_processing_folders():
-    """Clear the contents of timeline_ref and timeline_edited folders to prevent duplicates."""
-    try:
-        import shutil
-        
-        # Clear timeline_ref folder
-        if TIMELINE_REF_DIR.exists():
-            for item in TIMELINE_REF_DIR.iterdir():
-                if item.is_file():
-                    item.unlink()
-                    logger.info(f"Removed file: {item.name}")
-                elif item.is_dir():
-                    shutil.rmtree(item)
-                    logger.info(f"Removed directory: {item.name}")
-            print("✓ Cleared timeline_ref folder")
-        
-        # Clear timeline_edited folder
-        if TIMELINE_EDITED_DIR.exists():
-            for item in TIMELINE_EDITED_DIR.iterdir():
-                if item.is_file():
-                    item.unlink()
-                    logger.info(f"Removed file: {item.name}")
-                elif item.is_dir():
-                    shutil.rmtree(item)
-                    logger.info(f"Removed directory: {item.name}")
-            print("✓ Cleared timeline_edited folder")
-        
-        # Ensure directories exist
-        TIMELINE_REF_DIR.mkdir(parents=True, exist_ok=True)
-        TIMELINE_EDITED_DIR.mkdir(parents=True, exist_ok=True)
-        
-        return True
-        
-    except Exception as e:
-        print(f"⚠ Warning: Could not clear timeline processing folders: {e}")
-        logger.warning(f"Failed to clear timeline processing folders: {e}")
-        return False
-
-def run_export_otio():
-    """Run the exportotio.py script to export current timeline from DaVinci Resolve."""
-    try:
-        # Import the exportotio module
-        resolveautomation_dir = SCRIPT_DIR.parent / "resolveautomation"
-        sys.path.insert(0, str(resolveautomation_dir))
-        
-        # Import and run the main function from exportotio
-        from exportotio import main as export_main
-        
-        print("Exporting current timeline from DaVinci Resolve...")
-        success = export_main()
-        
-        if success:
-            print("✓ Timeline export completed successfully!")
-            return True
-        else:
-            print("✗ Timeline export failed!")
-            return False
-            
-    except ImportError as e:
-        print(f"Error importing exportotio module: {e}")
-        return False
-    except Exception as e:
-        print(f"Error during timeline export: {e}")
-        return False
-
-def run_import_otio():
-    """Run the importotio.py script to import modified timeline back to DaVinci Resolve."""
-    try:
-        # Import the importotio module
-        resolveautomation_dir = SCRIPT_DIR.parent / "resolveautomation"
-        sys.path.insert(0, str(resolveautomation_dir))
-        
-        # Import and run the main function from importotio
-        from importotio import main as import_main
-        
-        print("Importing modified timeline back to DaVinci Resolve...")
-        success = import_main()
-        
-        if success:
-            print("✓ Timeline import completed successfully!")
-            return True
-        else:
-            print("✗ Timeline import failed!")
-            return False
-            
-    except ImportError as e:
-        print(f"Error importing importotio module: {e}")
-        return False
-    except Exception as e:
-        print(f"Error during timeline import: {e}")
-        return False
-
 def stream_to_console(stream_type: str, content: str):
     """
     Improved streaming callback that prints to console in a more readable format.
@@ -526,9 +434,128 @@ def stream_to_console(stream_type: str, content: str):
             # For small fragments, print without newline
             print(f"\033[92m{content}\033[0m", end="")
 
-def main_reedit_workflow(user_instructions: str = None, silent: bool = False) -> Dict[str, Any]:
+def export_timeline_to_json():
     """
-    Main re-editing workflow function that can be called programmatically or interactively.
+    Pipeline Workflow 1: Export timeline from Resolve and convert to JSON.
+    This clears timeline_ref, exports OTIO from Resolve, and converts to JSON.
+    """
+    try:
+        # Import the pipeline API module
+        resolveautomation_dir = SCRIPT_DIR.parent / "resolveautomation"
+        sys.path.insert(0, str(resolveautomation_dir))
+        
+        # Import and use the pipeline API
+        from pipeline_api import export_timeline_to_json
+        
+        print("Running Pipeline Workflow 1: Export timeline and convert to JSON...")
+        success = export_timeline_to_json()
+        
+        if success:
+            print("✓ Timeline export and JSON conversion completed successfully!")
+            return True
+        else:
+            print("✗ Timeline export failed!")
+            return False
+            
+    except ImportError as e:
+        print(f"Error importing pipeline API: {e}")
+        logger.error(f"Pipeline API import error: {e}")
+        return False
+    except Exception as e:
+        print(f"Error during timeline export: {e}")
+        logger.error(f"Timeline export error: {e}")
+        return False
+
+def clear_edited_directory():
+    """Clear the timeline_edited folder using pipeline API."""
+    try:
+        # Import the pipeline API module
+        resolveautomation_dir = SCRIPT_DIR.parent / "resolveautomation"
+        sys.path.insert(0, str(resolveautomation_dir))
+        
+        # Import and use the pipeline API
+        from pipeline_api import clear_edited_directory
+        
+        print("Clearing timeline_edited folder...")
+        success = clear_edited_directory()
+        
+        if success:
+            print("✓ Timeline_edited folder cleared successfully!")
+            return True
+        else:
+            print("✗ Failed to clear timeline_edited folder!")
+            return False
+            
+    except ImportError as e:
+        print(f"Error importing pipeline API: {e}")
+        logger.error(f"Pipeline API import error: {e}")
+        return False
+    except Exception as e:
+        print(f"Error clearing timeline_edited folder: {e}")
+        logger.error(f"Clear folder error: {e}")
+        return False
+
+def import_timeline_from_json():
+    """
+    Pipeline Workflow 3: Convert JSON to OTIO and import to Resolve.
+    This converts JSON in timeline_edited to OTIO and imports to Resolve.
+    """
+    try:
+        # Import the pipeline API module
+        resolveautomation_dir = SCRIPT_DIR.parent / "resolveautomation"
+        sys.path.insert(0, str(resolveautomation_dir))
+        
+        # Import and use the pipeline API
+        from pipeline_api import import_timeline_from_json
+        
+        print("Running Pipeline Workflow 3: Convert JSON to OTIO and import to Resolve...")
+        success = import_timeline_from_json()
+        
+        if success:
+            print("✓ Timeline conversion and import completed successfully!")
+            return True
+        else:
+            print("✗ Timeline import failed!")
+            return False
+            
+    except ImportError as e:
+        print(f"Error importing pipeline API: {e}")
+        logger.error(f"Pipeline API import error: {e}")
+        return False
+    except Exception as e:
+        print(f"Error during timeline import: {e}")
+        logger.error(f"Timeline import error: {e}")
+        return False
+
+def get_ref_json_file() -> Optional[Path]:
+    """Get the JSON file from timeline_ref directory."""
+    try:
+        # Import the pipeline API module
+        resolveautomation_dir = SCRIPT_DIR.parent / "resolveautomation"
+        sys.path.insert(0, str(resolveautomation_dir))
+        
+        # Import and use the pipeline API
+        from pipeline_api import PipelineAPI
+        
+        api = PipelineAPI()
+        return api.get_ref_json_file()
+        
+    except Exception as e:
+        logger.error(f"Error getting ref JSON file: {e}")
+        return None
+
+def main_reedit_workflow(user_instructions: Optional[str] = None, silent: bool = False) -> Dict[str, Any]:
+    """
+    Main re-editing workflow using pipeline API.
+    
+    Complete workflow:
+    1. Clear timeline_ref and timeline_edited folders
+    2. Export OTIO from Resolve to timeline_ref
+    3. Convert OTIO to JSON
+    4. Use ref JSON for AI tasks and create edited JSON
+    5. Place edited JSON in timeline_edited folder
+    6. Convert JSON to OTIO
+    7. Import OTIO to Resolve
     
     Args:
         user_instructions: The editing instructions. If None, will prompt interactively.
@@ -547,16 +574,11 @@ def main_reedit_workflow(user_instructions: str = None, silent: bool = False) ->
             print("This will export current timeline, apply edits, and re-import")
             print()
         
-        # Step 1: Clear timeline processing folders and export current timeline
-        print_if_not_silent("STEP 1: Preparing timeline processing environment")
+        # Step 1: Export current timeline and convert to JSON (Pipeline Workflow 1)
+        print_if_not_silent("STEP 1: Exporting timeline from Resolve and converting to JSON")
         print_if_not_silent("="*60)
         
-        # Clear existing files to prevent confusion
-        print_if_not_silent("Clearing timeline processing folders...")
-        clear_timeline_processing_folders()
-        
-        print_if_not_silent("\nExporting current timeline from DaVinci Resolve...")
-        export_success = run_export_otio()
+        export_success = export_timeline_to_json()
         
         if not export_success:
             error_msg = "Failed to export timeline from DaVinci Resolve"
@@ -568,7 +590,16 @@ def main_reedit_workflow(user_instructions: str = None, silent: bool = False) ->
                 print("- Scripting is enabled in DaVinci Resolve")
             return {"success": False, "error": error_msg}
         
-        print_if_not_silent("\nSTEP 2: Loading project data and transcript")
+        # Step 2: Clear timeline_edited folder
+        print_if_not_silent("\nSTEP 2: Clearing timeline_edited folder")
+        print_if_not_silent("="*60)
+        
+        clear_success = clear_edited_directory()
+        if not clear_success:
+            print_if_not_silent("⚠ Warning: Could not clear timeline_edited folder")
+        
+        # Step 3: Load project data and transcript
+        print_if_not_silent("\nSTEP 3: Loading project data and transcript")
         print_if_not_silent("="*60)
         
         # Load project data
@@ -587,34 +618,22 @@ def main_reedit_workflow(user_instructions: str = None, silent: bool = False) ->
         print_if_not_silent(f"✓ Transcript loaded from: {ANALYZED_DIR}")
         print_if_not_silent(f"✓ Timecode offset: {timecode_offset} frames")
         
-        print_if_not_silent("\nSTEP 3: Looking for timeline data to re-edit")
+        # Step 4: Load the exported JSON from timeline_ref
+        print_if_not_silent("\nSTEP 4: Loading exported timeline JSON")
         print_if_not_silent("="*60)
         
-        # First check for existing edited timelines
-        timeline_path = find_existing_timeline_json()
+        ref_json_file = get_ref_json_file()
+        if not ref_json_file:
+            error_msg = "No timeline JSON found in timeline_ref folder"
+            print_if_not_silent(f"❌ {error_msg}")
+            return {"success": False, "error": error_msg}
         
-        if timeline_path:
-            existing_timeline = load_existing_timeline(timeline_path)
-            print_if_not_silent(f"✓ Found existing edited timeline: {timeline_path.name}")
-        else:
-            # Look for the exported JSON from step 1
-            print_if_not_silent("No existing edited timeline found, using newly exported timeline...")
-            timeline_ref_dir = PROJECT_ROOT / "data" / "timelineprocessing" / "timeline_ref"
-            ref_json_files = list(timeline_ref_dir.glob("*.json"))
-            
-            if not ref_json_files:
-                error_msg = "No timeline JSON found from export"
-                print_if_not_silent(f"❌ {error_msg}")
-                print_if_not_silent("Export may have failed - please check DaVinci Resolve")
-                return {"success": False, "error": error_msg}
-            
-            ref_timeline_path = ref_json_files[0]  # Use the most recent one
-            existing_timeline = load_existing_timeline(ref_timeline_path)
-            print_if_not_silent(f"✓ Using exported timeline: {ref_timeline_path.name}")
+        existing_timeline = load_existing_timeline(ref_json_file)
+        print_if_not_silent(f"✓ Using exported timeline: {ref_json_file.name}")
         
-        # Get user instructions
+        # Step 5: Get user instructions
         if user_instructions is None:
-            print_if_not_silent("\nSTEP 4: Get re-editing instructions")
+            print_if_not_silent("\nSTEP 5: Get re-editing instructions")
             print_if_not_silent("="*60)
             print_if_not_silent("What changes would you like to make to the current timeline?")
             print_if_not_silent("Examples:")
@@ -634,10 +653,11 @@ def main_reedit_workflow(user_instructions: str = None, silent: bool = False) ->
         
         print_if_not_silent(f"\n✓ Instructions: {user_instructions}")
         
-        print_if_not_silent("\nSTEP 5: Processing re-edit with AI")
+        # Step 6: Process re-edit with AI and save to timeline_edited
+        print_if_not_silent("\nSTEP 6: Processing re-edit with AI")
         print_if_not_silent("="*60)
         
-        # Generate output filename
+        # Generate output filename in timeline_edited folder
         current_iteration = existing_timeline.get("timeline", {}).get("metadata", {}).get("edit_iteration", 1)
         output_filename = generate_reedit_filename(project_title, current_iteration + 1)
         
@@ -664,72 +684,45 @@ def main_reedit_workflow(user_instructions: str = None, silent: bool = False) ->
         if "error" in result:
             print_if_not_silent(f"❌ Error: {result['error']}")
             return {"success": False, "error": result['error']}
-        else:
-            # Extract timeline information
+        
+        # Step 7: Convert edited JSON to OTIO and import to Resolve (Pipeline Workflow 3)
+        print_if_not_silent(f"\nSTEP 7: Converting JSON to OTIO and importing to Resolve")
+        print_if_not_silent("="*60)
+        
+        import_success = import_timeline_from_json()
+        
+        if import_success:
+            print_if_not_silent("\n🎉 WORKFLOW COMPLETED SUCCESSFULLY! 🎉")
+            print_if_not_silent("Modified timeline is now available in DaVinci Resolve")
+            
+            # Extract timeline information for return
             timeline_info = result.get("timeline", {})
-            tracks = result.get("tracks", [])
             summary = result.get("summary", {})
             metadata = timeline_info.get("metadata", {})
             
-            print_if_not_silent(f"✅ Modified timeline: {timeline_info.get('name', 'Unknown')}")
-            print_if_not_silent(f"✓ Total tracks: {summary.get('total_tracks', 0)}")
-            print_if_not_silent(f"✓ Total clips: {summary.get('total_clips', 0)}")
-            print_if_not_silent(f"✓ New duration: {summary.get('timeline_duration_frames', 0)} frames")
+            return {
+                "success": True,
+                "timeline_name": timeline_info.get('name', 'Unknown'),
+                "total_tracks": summary.get('total_tracks', 0),
+                "total_clips": summary.get('total_clips', 0),
+                "duration_frames": summary.get('timeline_duration_frames', 0),
+                "edit_iteration": metadata.get('edit_iteration', 1),
+                "output_file": str(output_filename),
+                "instructions": user_instructions
+            }
+        else:
+            error_msg = "Re-editing completed but import failed"
+            print_if_not_silent(f"\n⚠️  {error_msg}")
+            print_if_not_silent("You can manually run the import workflow to import the timeline")
             
-            # Show duration change
-            prev_duration = metadata.get("previous_duration_frames", 0)
-            new_duration = summary.get("timeline_duration_frames", 0)
-            duration_change = new_duration - prev_duration
-            change_sign = "+" if duration_change > 0 else ""
-            print_if_not_silent(f"✓ Duration change: {change_sign}{duration_change} frames")
-            
-            print_if_not_silent(f"✓ Edit iteration: {metadata.get('edit_iteration', 1)}")
-            print_if_not_silent(f"✓ Output saved to: {output_filename}")
-            
-            # Show track breakdown
-            if not silent:
-                for track in tracks:
-                    track_name = track.get("name", "Unknown Track")
-                    track_kind = track.get("kind", "Unknown")
-                    clip_count = len(track.get("clips", []))
-                    print(f"  - {track_name} ({track_kind}): {clip_count} clips")
-            
-            # Step 6: Import modified timeline back to DaVinci Resolve
-            print_if_not_silent(f"\nSTEP 6: Importing modified timeline back to DaVinci Resolve")
-            print_if_not_silent("="*60)
-            
-            import_success = run_import_otio()
-            
-            if import_success:
-                print_if_not_silent("\n🎉 WORKFLOW COMPLETED SUCCESSFULLY! 🎉")
-                print_if_not_silent("Modified timeline is now available in DaVinci Resolve")
-                print_if_not_silent(f"You can run this script again to make further modifications")
-                
-                return {
-                    "success": True,
-                    "timeline_name": timeline_info.get('name', 'Unknown'),
-                    "total_tracks": summary.get('total_tracks', 0),
-                    "total_clips": summary.get('total_clips', 0),
-                    "duration_frames": summary.get('timeline_duration_frames', 0),
-                    "duration_change_frames": duration_change,
-                    "edit_iteration": metadata.get('edit_iteration', 1),
-                    "output_file": str(output_filename),
-                    "instructions": user_instructions
-                }
-            else:
-                error_msg = "Re-editing completed but import failed"
-                print_if_not_silent(f"\n⚠️  {error_msg}")
-                print_if_not_silent("You can manually run importotio.py to import the timeline")
-                print_if_not_silent("Or check DaVinci Resolve connection and try again")
-                
-                return {
-                    "success": False,
-                    "error": error_msg,
-                    "partial_success": True,
-                    "timeline_generated": True,
-                    "output_file": str(output_filename),
-                    "instructions": user_instructions
-                }
+            return {
+                "success": False,
+                "error": error_msg,
+                "partial_success": True,
+                "timeline_generated": True,
+                "output_file": str(output_filename),
+                "instructions": user_instructions
+            }
     
     except FileNotFoundError as e:
         error_msg = f"File Error: {e}"

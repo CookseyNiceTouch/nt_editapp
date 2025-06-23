@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-JSON to OpenTimelineIO Adapter
+JSON to OpenTimelineIO Converter
 
-Adapter to rebuild OTIO timelines from JSON data created by otio2json.py.
-Simple reconstruction with no complex calculations - just rebuild the OTIO structure.
+Pure converter that takes JSON files and converts them to OTIO format.
+No hardcoded paths - designed to be used by datapipeline.py or standalone.
 """
 
 import sys
 import json
+import argparse
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
@@ -18,11 +19,14 @@ except ImportError:
     sys.exit(1)
 
 
-def load_project_data() -> Dict[str, Any]:
+def load_project_data(project_root: Optional[Path] = None) -> Dict[str, Any]:
     """Load project data from projectdata.json for fallback values."""
     try:
-        script_dir = Path(__file__).parent.resolve()
-        project_root = script_dir.parent.parent
+        if project_root is None:
+            # Try to find project root relative to this script
+            script_dir = Path(__file__).parent.resolve()
+            project_root = script_dir.parent.parent
+        
         project_data_path = project_root / "data" / "projectdata.json"
         
         if project_data_path.exists():
@@ -294,19 +298,22 @@ def auto_generate_audio_tracks(json_data: Dict[str, Any]) -> Dict[str, Any]:
     return enhanced_data
 
 
-def create_timeline_from_json(json_data: Dict[str, Any]) -> otio.schema.Timeline:
+def create_timeline_from_json(json_data: Dict[str, Any], auto_audio: bool = True) -> otio.schema.Timeline:
     """
     Create an OTIO timeline from JSON data.
-    Automatically generates matching audio tracks if only video tracks are present.
     
     Args:
         json_data: JSON data from otio2json format
+        auto_audio: Whether to automatically generate matching audio tracks if only video tracks are present
         
     Returns:
         OTIO Timeline object
     """
-    # Auto-generate audio tracks if needed
-    enhanced_data = auto_generate_audio_tracks(json_data)
+    # Auto-generate audio tracks if requested and needed
+    if auto_audio:
+        enhanced_data = auto_generate_audio_tracks(json_data)
+    else:
+        enhanced_data = json_data
     
     # Extract timeline info
     timeline_info = enhanced_data.get("timeline", {})
@@ -329,23 +336,44 @@ def create_timeline_from_json(json_data: Dict[str, Any]) -> otio.schema.Timeline
     return timeline
 
 
-def convert_json_to_otio(json_filepath: str, output_filepath: str = None) -> bool:
+def convert_json_to_otio(input_path: str, output_path: Optional[str] = None, auto_audio: bool = True, project_root: Optional[str] = None) -> bool:
     """
     Convert JSON to OTIO by rebuilding the timeline structure.
     
     Args:
-        json_filepath: Path to JSON file
-        output_filepath: Output OTIO file path (optional)
+        input_path: Path to JSON file
+        output_path: Output OTIO file path (optional, defaults to same name with .otio extension)
+        auto_audio: Whether to automatically generate matching audio tracks
+        project_root: Path to project root for loading project data (optional)
         
     Returns:
         True if successful
     """
     try:
+        input_file = Path(input_path)
+        
+        if not input_file.exists():
+            print(f"ERROR: Input file does not exist: {input_file}")
+            return False
+        
+        if not input_file.suffix.lower() == '.json':
+            print(f"WARNING: Input file doesn't have .json extension: {input_file}")
+        
+        # Determine output path
+        if output_path is None:
+            output_file = input_file.with_suffix('.otio')
+        else:
+            output_file = Path(output_path)
+        
+        print(f"Converting JSON to OTIO:")
+        print(f"  Input:  {input_file}")
+        print(f"  Output: {output_file}")
+        
         # Load JSON data
-        with open(json_filepath, 'r', encoding='utf-8') as f:
+        with open(input_file, 'r', encoding='utf-8') as f:
             json_data = json.load(f)
         
-        print(f"✓ Loaded JSON: {json_filepath}")
+        print(f"✓ Loaded JSON: {input_file}")
         
         # Validate JSON format
         required_fields = ["timeline", "tracks", "summary"]
@@ -355,7 +383,8 @@ def convert_json_to_otio(json_filepath: str, output_filepath: str = None) -> boo
         
         # Check if timeline name is missing and add from project data
         if not json_data.get("timeline", {}).get("name"):
-            project_data = load_project_data()
+            project_root_path = Path(project_root) if project_root else None
+            project_data = load_project_data(project_root_path)
             project_title = project_data.get("projectTitle", "Timeline")
             if "timeline" not in json_data:
                 json_data["timeline"] = {}
@@ -363,18 +392,15 @@ def convert_json_to_otio(json_filepath: str, output_filepath: str = None) -> boo
             print(f"✓ Added timeline name from project data: {project_title}")
         
         # Create timeline from JSON
-        timeline = create_timeline_from_json(json_data)
+        timeline = create_timeline_from_json(json_data, auto_audio)
         print(f"✓ Created timeline: {timeline.name}")
         
-        # Determine output path
-        if not output_filepath:
-            json_name = Path(json_filepath).stem
-            output_dir = Path(json_filepath).parent
-            output_filepath = output_dir / f"{json_name}.otio"
+        # Create output directory if needed
+        output_file.parent.mkdir(parents=True, exist_ok=True)
         
         # Write timeline to file
-        otio.adapters.write_to_file(timeline, str(output_filepath))
-        print(f"✓ Wrote OTIO file: {output_filepath}")
+        otio.adapters.write_to_file(timeline, str(output_file))
+        print(f"✓ Wrote OTIO file: {output_file}")
         
         # Print summary
         summary = json_data.get("summary", {})
@@ -385,80 +411,42 @@ def convert_json_to_otio(json_filepath: str, output_filepath: str = None) -> boo
         return True
         
     except Exception as e:
-        print(f"Error during conversion: {e}")
+        print(f"ERROR: Conversion failed: {e}")
         import traceback
         traceback.print_exc()
         return False
 
 
-def apply_json_edits_to_timeline() -> bool:
-    """
-    Hands-off conversion: automatically find JSON in timeline_edited and convert to OTIO.
+def main():
+    """Main function for command-line usage."""
+    parser = argparse.ArgumentParser(
+        description="Convert JSON files to OpenTimelineIO format",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python json2otio.py timeline.json
+  python json2otio.py timeline.json output.otio
+  python json2otio.py /path/to/timeline.json /path/to/output.otio --no-auto-audio
+        """
+    )
     
-    Returns:
-        True if successful
-    """
-    try:
-        # Define paths relative to script location
-        script_dir = Path(__file__).parent.resolve()
-        project_root = script_dir.parent.parent
-        timeline_edited_dir = project_root / "data" / "timelineprocessing" / "timeline_edited"
-        
-        # Ensure timeline_edited directory exists
-        timeline_edited_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Find JSON file in timeline_edited directory
-        json_files = list(timeline_edited_dir.glob("*.json"))
-        
-        if not json_files:
-            print(f"ERROR: No JSON files found in {timeline_edited_dir}")
-            print("Please copy/move your edited JSON file to the timeline_edited directory")
-            return False
-        
-        if len(json_files) > 1:
-            print(f"WARNING: Multiple JSON files found in {timeline_edited_dir}:")
-            for f in json_files:
-                print(f"  - {f.name}")
-            print("Using the first one found...")
-        
-        json_file = json_files[0]
-        output_file = timeline_edited_dir / json_file.with_suffix('.otio').name
-        
-        print(f"✓ Found edited JSON: {json_file.name}")
-        print(f"✓ Output will be: {output_file.name}")
-        print()
-        
-        # Check if output exists
-        if output_file.exists():
-            print(f"Overwriting existing file: {output_file}")
-        
-        # Perform conversion
-        print("Rebuilding OTIO from JSON data...")
-        success = convert_json_to_otio(str(json_file), str(output_file))
-        
-        if success:
-            print(f"✓ Created modified timeline: {output_file}")
-            print("You can now import this OTIO back into DaVinci Resolve")
-        
-        return success
-        
-    except Exception as e:
-        print(f"Error: {e}")
-        return False
-
-
-# Adapter metadata
-__version__ = "1.0.0"
-__author__ = "NiceTouch"
-__description__ = "JSON to OTIO adapter - rebuild timelines from JSON"
-
-
-if __name__ == "__main__":
-    print("=== JSON to OTIO Converter (Rebuild) ===")
-    print("Rebuilding OTIO timeline from JSON data")
-    print()
+    parser.add_argument('input', help='Input JSON file path')
+    parser.add_argument('output', nargs='?', help='Output OTIO file path (optional)')
+    parser.add_argument('--no-auto-audio', action='store_true', 
+                       help='Disable automatic audio track generation')
+    parser.add_argument('--project-root', help='Path to project root directory')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
     
-    success = apply_json_edits_to_timeline()
+    args = parser.parse_args()
+    
+    print("=== JSON to OTIO Converter ===")
+    
+    success = convert_json_to_otio(
+        args.input, 
+        args.output, 
+        auto_audio=not args.no_auto_audio,
+        project_root=args.project_root
+    )
     
     if success:
         print("\n=== Conversion completed successfully! ===")
@@ -466,3 +454,13 @@ if __name__ == "__main__":
     else:
         print("\n=== Conversion failed! ===")
         sys.exit(1)
+
+
+# Adapter metadata
+__version__ = "1.0.0"
+__author__ = "NiceTouch"
+__description__ = "JSON to OTIO converter - rebuild timelines from JSON"
+
+
+if __name__ == "__main__":
+    main()

@@ -2,27 +2,28 @@
 """
 Unified Python Services API
 FastAPI wrapper for video editing automation services including:
-- AI Services (chatbot, edit agents)
 - Asset Analysis (video analysis, transcription)
-- Resolve Automation (OTIO, project management)
 """
 
 import os
+import sys
+import uuid
+import json
+import asyncio
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
+from datetime import datetime
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 # Import service modules
 try:
-    from services.ai_services import chatbot_backend, editagent_reedit, editagent_roughcut
     from services.assetanalysis import api as asset_api, videoanalyzer
-    from services.resolveautomation import resolve_api
 except ImportError as e:
-    print(f"Warning: Could not import some services: {e}")
+    print(f"Warning: Could not import asset analysis services: {e}")
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -41,6 +42,35 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Global job tracking dictionary
+analysis_jobs: Dict[str, Dict[str, Any]] = {}
+
+# Request/Response models for Asset Analysis
+class AnalysisJobRequest(BaseModel):
+    video_path: str
+    output_path: Optional[str] = None
+    brief_path: Optional[str] = None
+    custom_spell: Optional[List[Dict[str, Any]]] = None
+    silence_threshold_ms: int = 1000
+
+class AnalysisJobResponse(BaseModel):
+    job_id: str
+    status: str
+    message: str
+    video_path: str
+    created_at: str
+
+class AnalysisStatusResponse(BaseModel):
+    job_id: str
+    status: str  # "queued", "processing", "completed", "failed"
+    message: str
+    progress: Optional[str] = None
+    created_at: str
+    completed_at: Optional[str] = None
+    result: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+    output_file: Optional[str] = None
 
 # Health check and status models
 class HealthResponse(BaseModel):
@@ -70,9 +100,7 @@ async def root():
 async def health_check():
     """Health check endpoint showing status of all services"""
     services_status = {
-        "ai_services": "available",
-        "asset_analysis": "available", 
-        "resolve_automation": "available"
+        "asset_analysis": "available"
     }
     
     return HealthResponse(
@@ -87,43 +115,215 @@ async def list_services():
     """List all available services and their endpoints"""
     services = [
         ServiceInfo(
-            name="AI Services",
-            description="Chatbot and video editing AI agents",
-            status="available",
-            endpoints=["/ai/chat", "/ai/edit/roughcut", "/ai/edit/reedit"]
-        ),
-        ServiceInfo(
             name="Asset Analysis", 
             description="Video analysis and transcription services",
             status="available",
-            endpoints=["/analysis/video", "/analysis/transcribe"]
-        ),
-        ServiceInfo(
-            name="Resolve Automation",
-            description="DaVinci Resolve and OTIO timeline management", 
-            status="available",
-            endpoints=["/resolve/import", "/resolve/export", "/resolve/timeline"]
+            endpoints=["/analysis/start", "/analysis/status/{job_id}", "/analysis/jobs"]
         )
     ]
     return services
 
-# AI Services Routes
-@app.get("/ai/status")
-async def ai_services_status():
-    """Status of AI services"""
-    return {"status": "AI services available", "services": ["chatbot", "roughcut", "reedit"]}
-
-# Asset Analysis Routes  
+# Asset Analysis Routes
 @app.get("/analysis/status")
 async def asset_analysis_status():
     """Status of asset analysis services"""
     return {"status": "Asset analysis services available", "services": ["video_analyzer", "transcription"]}
 
-# Resolve Automation Routes
-@app.get("/resolve/status") 
-async def resolve_automation_status():
-    """Status of resolve automation services"""
-    return {"status": "Resolve automation services available", "services": ["otio_import", "otio_export", "timeline_management"]}
+@app.post("/analysis/start", response_model=AnalysisJobResponse)
+async def start_analysis(request: AnalysisJobRequest, background_tasks: BackgroundTasks):
+    """
+    Start a new video analysis job
+    
+    This endpoint accepts a video file path and analysis parameters,
+    creates a job ID, and starts processing in the background.
+    """
+    try:
+        # Validate video file exists
+        if not os.path.isfile(request.video_path):
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Video file not found: {request.video_path}"
+            )
+        
+        # Validate brief file if provided
+        if request.brief_path and not os.path.isfile(request.brief_path):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Brief file not found: {request.brief_path}"
+            )
+        
+        # Generate unique job ID
+        job_id = str(uuid.uuid4())
+        
+        # Create job record
+        job_data = {
+            "job_id": job_id,
+            "status": "queued",
+            "message": "Analysis job created and queued for processing",
+            "video_path": request.video_path,
+            "output_path": request.output_path,
+            "brief_path": request.brief_path,
+            "custom_spell": request.custom_spell,
+            "silence_threshold_ms": request.silence_threshold_ms,
+            "created_at": datetime.now().isoformat(),
+            "completed_at": None,
+            "result": None,
+            "error": None,
+            "output_file": None,
+            "progress": "Job queued for processing"
+        }
+        
+        # Store job in global tracking
+        analysis_jobs[job_id] = job_data
+        
+        # Start background processing
+        background_tasks.add_task(process_analysis_job, job_id)
+        
+        return AnalysisJobResponse(
+            job_id=job_id,
+            status="queued",
+            message="Analysis job created and queued for processing",
+            video_path=request.video_path,
+            created_at=job_data["created_at"]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create analysis job: {str(e)}")
+
+@app.get("/analysis/status/{job_id}", response_model=AnalysisStatusResponse)
+async def get_analysis_status(job_id: str):
+    """
+    Get the status of a specific analysis job
+    
+    Returns current status, progress information, and results if completed.
+    """
+    if job_id not in analysis_jobs:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    
+    job_data = analysis_jobs[job_id]
+    
+    return AnalysisStatusResponse(
+        job_id=job_data["job_id"],
+        status=job_data["status"],
+        message=job_data["message"],
+        progress=job_data.get("progress"),
+        created_at=job_data["created_at"],
+        completed_at=job_data.get("completed_at"),
+        result=job_data.get("result"),
+        error=job_data.get("error"),
+        output_file=job_data.get("output_file")
+    )
+
+@app.get("/analysis/jobs")
+async def list_analysis_jobs():
+    """
+    List all analysis jobs with their current status
+    
+    Returns a summary of all jobs in the system.
+    """
+    jobs_summary = []
+    for job_id, job_data in analysis_jobs.items():
+        jobs_summary.append({
+            "job_id": job_id,
+            "status": job_data["status"],
+            "video_path": job_data["video_path"],
+            "created_at": job_data["created_at"],
+            "completed_at": job_data.get("completed_at")
+        })
+    
+    return {
+        "total_jobs": len(analysis_jobs),
+        "jobs": jobs_summary
+    }
+
+@app.delete("/analysis/jobs/{job_id}")
+async def delete_analysis_job(job_id: str):
+    """
+    Delete a completed or failed analysis job from tracking
+    
+    Note: This only removes the job from memory tracking, not the output files.
+    """
+    if job_id not in analysis_jobs:
+        raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
+    
+    job_data = analysis_jobs[job_id]
+    
+    # Only allow deletion of completed or failed jobs
+    if job_data["status"] in ["processing", "queued"]:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot delete job in '{job_data['status']}' status"
+        )
+    
+    del analysis_jobs[job_id]
+    
+    return {"message": f"Job {job_id} deleted successfully"}
+
+async def process_analysis_job(job_id: str):
+    """
+    Background task to process video analysis job
+    
+    This function runs the actual video analysis using the VideoAnalyzer.
+    """
+    try:
+        # Update job status
+        analysis_jobs[job_id]["status"] = "processing"
+        analysis_jobs[job_id]["message"] = "Video analysis in progress"
+        analysis_jobs[job_id]["progress"] = "Initializing video analyzer..."
+        
+        # Get job parameters
+        job_data = analysis_jobs[job_id]
+        
+        # Add services path for imports
+        services_path = os.path.join(os.path.dirname(__file__), "services", "assetanalysis")
+        if services_path not in sys.path:
+            sys.path.insert(0, services_path)
+        
+        # Import and initialize VideoAnalyzer
+        from videoanalyzer import VideoAnalyzer
+        
+        analysis_jobs[job_id]["progress"] = "Loading video analyzer..."
+        analyzer = VideoAnalyzer(brief_path=job_data["brief_path"])
+        
+        analysis_jobs[job_id]["progress"] = "Starting video analysis..."
+        
+        # Process the video
+        result = analyzer.analyze(
+            video_path=job_data["video_path"],
+            output_path=job_data["output_path"],
+            custom_spell=job_data["custom_spell"],
+            brief_path=job_data["brief_path"],
+            silence_threshold_ms=job_data["silence_threshold_ms"]
+        )
+        
+        # Check for errors in result
+        if "error" in result:
+            analysis_jobs[job_id]["status"] = "failed"
+            analysis_jobs[job_id]["message"] = f"Analysis failed: {result['error']}"
+            analysis_jobs[job_id]["error"] = result["error"]
+            analysis_jobs[job_id]["completed_at"] = datetime.now().isoformat()
+            return
+        
+        # Determine output file path
+        output_file = job_data["output_path"] or f"{job_data['video_path']}.transcript.json"
+        
+        # Success - update job with results
+        analysis_jobs[job_id]["status"] = "completed"
+        analysis_jobs[job_id]["message"] = "Video analysis completed successfully"
+        analysis_jobs[job_id]["completed_at"] = datetime.now().isoformat()
+        analysis_jobs[job_id]["result"] = result
+        analysis_jobs[job_id]["output_file"] = output_file
+        analysis_jobs[job_id]["progress"] = "Analysis completed successfully"
+        
+    except Exception as e:
+        # Handle any processing errors
+        analysis_jobs[job_id]["status"] = "failed"
+        analysis_jobs[job_id]["message"] = f"Analysis failed with error: {str(e)}"
+        analysis_jobs[job_id]["error"] = str(e)
+        analysis_jobs[job_id]["completed_at"] = datetime.now().isoformat()
+        analysis_jobs[job_id]["progress"] = "Analysis failed"
 
 # Error handlers
 @app.exception_handler(404)
@@ -150,6 +350,10 @@ def main():
     print("  - API Documentation: http://localhost:8000/docs")
     print("  - Health Check: http://localhost:8000/health") 
     print("  - Services List: http://localhost:8000/services")
+    print("  - Asset Analysis:")
+    print("    - Start Analysis: POST /analysis/start")
+    print("    - Check Status: GET /analysis/status/{job_id}")
+    print("    - List Jobs: GET /analysis/jobs")
     
     uvicorn.run(
         "main:app",

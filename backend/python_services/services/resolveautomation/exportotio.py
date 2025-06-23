@@ -1,38 +1,20 @@
 #!/usr/bin/env python3
 """
-Automated script to export the current timeline from DaVinci Resolve to OpenTimelineIO (OTIO) format.
+DaVinci Resolve OTIO Export Tool
 
-This script automatically exports the currently active timeline from DaVinci Resolve
-to OTIO format, saving it to the timeline_ref directory with the timeline name as filename.
-After successful export, it automatically converts the OTIO to JSON format for editing.
-
-Export location: ../../data/timelineprocessing/timeline_ref/
-
-No user interaction required - runs completely automated.
+Pure exporter that exports the current timeline from DaVinci Resolve to OTIO format.
+No hardcoded paths - designed to be used by datapipeline.py or standalone.
 """
 
 import sys
 import os
 import re
+import argparse
 from pathlib import Path
+from typing import Optional
 
-# =============================================================================
-# CONFIGURABLE EXPORT SETTINGS
-# =============================================================================
-# These settings can be easily modified for testing different export behaviors
 
-# Target directory for OTIO exports (relative to script location)
-EXPORT_TARGET_DIR = os.path.join("..", "..", "data", "timelineprocessing", "timeline_ref")
-
-# Export options - based on DaVinci Resolve API ExportTimelineToFile parameters
-EXPORT_OPTIONS = {
-    # Add any export-specific options here when they become available in the API
-    # Currently the API documentation is limited for OTIO export options
-}
-
-# =============================================================================
-
-def sanitize_filename(filename):
+def sanitize_filename(filename: str) -> str:
     """Sanitize filename by removing or replacing invalid characters."""
     # Remove invalid characters for Windows/Linux filesystems
     invalid_chars = r'[<>:"/\\|?*]'
@@ -47,24 +29,8 @@ def sanitize_filename(filename):
     
     return sanitized
 
-def get_export_directory():
-    """Get and validate the export directory path."""
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(os.path.dirname(script_dir))  # Go up from backend/resolveautomation to project root
-    export_dir = os.path.join(project_root, "data", "timelineprocessing", "timeline_ref")
-    export_dir = os.path.normpath(export_dir)
-    
-    # Create directory if it doesn't exist
-    try:
-        os.makedirs(export_dir, exist_ok=True)
-        print(f"✓ Export directory: {export_dir}")
-        return export_dir
-    except Exception as e:
-        print(f"ERROR: Could not create export directory: {export_dir}")
-        print(f"Error: {e}")
-        return None
 
-def get_timeline_info(timeline):
+def get_timeline_info(timeline) -> dict:
     """Get detailed information about the timeline for display."""
     try:
         info = {
@@ -82,21 +48,23 @@ def get_timeline_info(timeline):
         print(f"Warning: Could not get complete timeline information: {e}")
         return {'name': timeline.GetName() if timeline else 'Unknown'}
 
-def display_timeline_info(timeline_info):
+
+def display_timeline_info(timeline_info: dict) -> None:
     """Display timeline information for logging."""
     print("Timeline details:")
     for key, value in timeline_info.items():
         formatted_key = key.replace('_', ' ').title()
         print(f"  {formatted_key}: {value}")
 
-def export_timeline_to_otio(timeline, export_path):
+
+def export_timeline_to_otio(resolve_api, timeline, export_path: str) -> bool:
     """Export the timeline to OTIO format."""
     try:
         print(f"Exporting timeline to: {export_path}")
         
         # Use the timeline's Export method with EXPORT_OTIO constant
         # This was added in DaVinci Resolve 18.5 Beta 3
-        success = timeline.Export(export_path, resolve.EXPORT_OTIO)
+        success = timeline.Export(export_path, resolve_api.EXPORT_OTIO)
         
         if success:
             print("✓ Timeline exported successfully!")
@@ -109,27 +77,18 @@ def export_timeline_to_otio(timeline, export_path):
         print(f"ERROR during export: {e}")
         return False
 
-def convert_otio_to_json():
-    """Convert the exported OTIO file to JSON format using the otio2json converter."""
-    try:
-        # Import the otio2json module
-        script_dir = Path(__file__).parent.resolve()
-        sys.path.insert(0, str(script_dir))
-        
-        # Import the conversion function from otio2json
-        from otio2json import convert_timeline_ref_to_json
-        
-        # Run the conversion
-        return convert_timeline_ref_to_json()
-        
-    except ImportError as e:
-        print(f"Error importing otio2json module: {e}")
-        return False
-    except Exception as e:
-        print(f"Error during OTIO to JSON conversion: {e}")
-        return False
 
-def main():
+def export_current_timeline(output_path: Optional[str] = None, timeline_name: Optional[str] = None) -> bool:
+    """
+    Export the current timeline from DaVinci Resolve to OTIO format.
+    
+    Args:
+        output_path: Path to save the OTIO file (optional, will auto-generate if not provided)
+        timeline_name: Specific timeline name to export (optional, uses current timeline if not provided)
+        
+    Returns:
+        True if successful, False otherwise
+    """
     try:
         # Import DaVinci Resolve API
         print("Importing DaVinci Resolve API...")
@@ -138,7 +97,6 @@ def main():
         
         # Connect to DaVinci Resolve
         print("Connecting to DaVinci Resolve...")
-        global resolve
         resolve = dvr_script.scriptapp("Resolve")
         if not resolve:
             print("ERROR: Could not connect to DaVinci Resolve!")
@@ -169,52 +127,77 @@ def main():
         
         print(f"✓ Connected to project: {project.GetName()}")
         
-        # Get export directory
-        export_dir = get_export_directory()
-        if not export_dir:
-            return False
+        # Get the timeline to export
+        if timeline_name:
+            # Find timeline by name
+            timeline_count = project.GetTimelineCount()
+            current_timeline = None
+            for i in range(1, timeline_count + 1):
+                timeline = project.GetTimelineByIndex(i)
+                if timeline and timeline.GetName() == timeline_name:
+                    current_timeline = timeline
+                    break
+            
+            if not current_timeline:
+                print(f"ERROR: Timeline '{timeline_name}' not found!")
+                print("Available timelines:")
+                for i in range(1, timeline_count + 1):
+                    tl = project.GetTimelineByIndex(i)
+                    if tl:
+                        print(f"  - {tl.GetName()}")
+                return False
+        else:
+            # Get the current timeline
+            current_timeline = project.GetCurrentTimeline()
+            if not current_timeline:
+                print("ERROR: No timeline is currently active!")
+                print("Please select a timeline in DaVinci Resolve first.")
+                return False
         
-        # Get the current timeline automatically
-        current_timeline = project.GetCurrentTimeline()
-        if not current_timeline:
-            print("ERROR: No timeline is currently active!")
-            print("Please select a timeline in DaVinci Resolve first.")
-            return False
-        
-        print(f"✓ Current timeline: {current_timeline.GetName()}")
+        print(f"✓ Target timeline: {current_timeline.GetName()}")
         
         # Get timeline information
         timeline_info = get_timeline_info(current_timeline)
         display_timeline_info(timeline_info)
         
-        # Generate filename from timeline name for natural workflow
-        timeline_name = timeline_info['name']
-        sanitized_name = sanitize_filename(timeline_name)
-        filename = f"{sanitized_name}.otio"
-        export_path = os.path.join(export_dir, filename)
+        # Determine output path
+        if output_path is None:
+            # Generate filename from timeline name
+            sanitized_name = sanitize_filename(timeline_info['name'])
+            filename = f"{sanitized_name}.otio"
+            output_file = Path.cwd() / filename
+        else:
+            output_file = Path(output_path)
+            # Ensure .otio extension
+            if not output_file.suffix.lower() == '.otio':
+                output_file = output_file.with_suffix('.otio')
         
-        # Handle existing files automatically (overwrite)
-        if os.path.exists(export_path):
-            print(f"Overwriting existing file: {filename}")
+        # Create output directory if needed
+        output_file.parent.mkdir(parents=True, exist_ok=True)
         
-        print(f"Export filename: {filename}")
-        print(f"Timeline name: {timeline_name}")
+        # Handle existing files
+        if output_file.exists():
+            print(f"Overwriting existing file: {output_file}")
         
-        # Perform the export automatically
+        print(f"Export filename: {output_file}")
+        print(f"Timeline name: {timeline_info['name']}")
+        print()
+        
+        # Perform the export
         print("Starting export...")
-        success = export_timeline_to_otio(current_timeline, export_path)
+        success = export_timeline_to_otio(resolve, current_timeline, str(output_file))
         
         if success:
             # Verify file was created and get size
-            if os.path.exists(export_path):
-                file_size = os.path.getsize(export_path)
+            if output_file.exists():
+                file_size = output_file.stat().st_size
                 print(f"✓ Export completed successfully!")
-                print(f"  File: {export_path}")
+                print(f"  File: {output_file}")
                 print(f"  Size: {file_size} bytes")
                 
                 # Basic validation - OTIO files should contain certain text
                 try:
-                    with open(export_path, 'r', encoding='utf-8') as f:
+                    with open(output_file, 'r', encoding='utf-8') as f:
                         content = f.read(1000)  # Read first 1000 chars
                         if 'OTIO_SCHEMA' in content or 'Timeline' in content:
                             print("✓ File appears to be valid OTIO format")
@@ -225,18 +208,7 @@ def main():
                     print(f"⚠️  Warning: Could not validate file format: {e}")
                     return False
                 
-                # Automatically convert OTIO to JSON for editing workflow
-                print()
-                print("Converting OTIO to JSON for editing workflow...")
-                json_success = convert_otio_to_json()
-                
-                if json_success:
-                    print("✓ OTIO to JSON conversion completed successfully!")
-                    return True
-                else:
-                    print("⚠️  Warning: OTIO export succeeded but JSON conversion failed")
-                    print("You can manually run otio2json.py to convert the OTIO file")
-                    return True  # Still return True since OTIO export succeeded
+                return True
             else:
                 print("ERROR: Export reported success but file was not created!")
                 return False
@@ -269,18 +241,40 @@ def main():
         print(traceback.format_exc())
         return False
 
-if __name__ == "__main__":
-    print("=== DaVinci Resolve OTIO Export Tool (Automated) ===")
-    print("Exporting current timeline to OpenTimelineIO format and converting to JSON")
+
+def main():
+    """Main function for command-line usage."""
+    parser = argparse.ArgumentParser(
+        description="Export timeline from DaVinci Resolve to OpenTimelineIO format",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python exportotio.py
+  python exportotio.py --output my_timeline.otio
+  python exportotio.py --timeline "Timeline 1" --output /path/to/timeline.otio
+        """
+    )
+    
+    parser.add_argument('--output', '-o', help='Output OTIO file path (optional)')
+    parser.add_argument('--timeline', '-t', help='Specific timeline name to export (optional, uses current timeline)')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.0.0')
+    
+    args = parser.parse_args()
+    
+    print("=== DaVinci Resolve OTIO Export Tool ===")
+    print("Exporting timeline to OpenTimelineIO format")
     print()
     
-    success = main()
+    success = export_current_timeline(args.output, args.timeline)
     
     print()
     if success:
-        print("=== Export and conversion completed successfully! ===")
-        print("OTIO file and JSON ready for editing workflow")
+        print("=== Export completed successfully! ===")
         sys.exit(0)
     else:
         print("=== Export failed! ===")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
