@@ -18,11 +18,13 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional, Union, Tuple
 from pathlib import Path
 
-import ffmpeg
+from moviepy import VideoFileClip
 from dotenv import load_dotenv
 
 # Load environment variables from .env file (for API keys)
-load_dotenv()
+# Look for .env file in the python_services directory (up 2 levels from this script)
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 # Configure logging
 logging.basicConfig(
@@ -241,87 +243,59 @@ class VideoAnalyzer:
         """
         logger.info(f"Probing video file: {file_path}")
         
+        # Normalize path for Windows compatibility and log details
+        normalized_path = os.path.normpath(file_path)
+        logger.info(f"Normalized path: {normalized_path}")
+        logger.info(f"Current working directory: {os.getcwd()}")
+        logger.info(f"File exists check: {os.path.exists(normalized_path)}")
+        
+        # Check if file exists first
+        if not os.path.exists(normalized_path):
+            raise RuntimeError(f"Video file not found: {normalized_path} (original: {file_path})")
+        
+        file_path = normalized_path  # Use normalized path for ffmpeg
+        
         try:
-            probe = ffmpeg.probe(file_path)
+            # Use MoviePy to get video information
+            video_clip = VideoFileClip(file_path)
             
-            # Get video stream info
-            video_stream = next((stream for stream in probe['streams'] 
-                               if stream['codec_type'] == 'video'), None)
+            try:
+                # Get basic video properties
+                fps = video_clip.fps
+                duration_seconds = video_clip.duration
+                has_audio = video_clip.audio is not None
+                
+                if fps <= 0:
+                    raise RuntimeError("Invalid frame rate detected")
+                
+                if duration_seconds <= 0:
+                    raise RuntimeError("Invalid video duration detected")
+                
+                # Calculate total frames
+                duration_frames = round(duration_seconds * fps)
+                
+                # For now, we'll set timecode offset to 0 since MoviePy doesn't easily expose timecode metadata
+                # This could be enhanced later by reading the file metadata directly if needed
+                timecode_offset_frames = 0
+                logger.info("No timecode extraction implemented with MoviePy, using offset 0")
+                
+                result = {
+                    "fps": fps,
+                    "duration_seconds": duration_seconds,
+                    "duration_frames": duration_frames,
+                    "timecode_offset_frames": timecode_offset_frames,
+                    "has_audio": has_audio
+                }
+                
+                logger.info(f"Video metadata: fps={fps}, duration={duration_seconds}s, frames={duration_frames}, has_audio={has_audio}")
+                return result
+                
+            finally:
+                # Clean up the video clip to free resources
+                video_clip.close()
             
-            if not video_stream:
-                raise RuntimeError("No video stream found in the file")
-            
-            # Extract framerate
-            fps_parts = video_stream.get('r_frame_rate', '').split('/')
-            if len(fps_parts) == 2 and fps_parts[1] != '0':
-                fps = float(fps_parts[0]) / float(fps_parts[1])
-            else:
-                # Fallback to avg_frame_rate if r_frame_rate is not available
-                fps_parts = video_stream.get('avg_frame_rate', '').split('/')
-                if len(fps_parts) == 2 and fps_parts[1] != '0':
-                    fps = float(fps_parts[0]) / float(fps_parts[1])
-                else:
-                    raise RuntimeError("Could not determine video frame rate")
-            
-            # Get duration in seconds
-            duration_seconds = float(video_stream.get('duration', probe.get('format', {}).get('duration', 0)))
-            
-            if duration_seconds <= 0:
-                raise RuntimeError("Invalid video duration detected")
-            
-            # Extract timecode information - check all streams and format tags
-            timecode_offset_frames = 0
-            start_timecode = None
-            
-            # First check video stream tags
-            start_timecode = video_stream.get('tags', {}).get('timecode')
-            source = "video stream"
-            
-            if not start_timecode:
-                # Check format/container level
-                start_timecode = probe.get('format', {}).get('tags', {}).get('timecode')
-                source = "format"
-            
-            if not start_timecode:
-                # Check all streams for timecode data (including data streams like rtmd)
-                for stream in probe['streams']:
-                    stream_timecode = stream.get('tags', {}).get('timecode')
-                    if stream_timecode:
-                        start_timecode = stream_timecode
-                        source = f"stream {stream.get('index', 'unknown')} ({stream.get('codec_type', 'unknown')})"
-                        break
-            
-            if start_timecode:
-                # Parse timecode format (HH:MM:SS:FF or HH:MM:SS;FF)
-                try:
-                    timecode_offset_frames = self._parse_timecode_to_frames(start_timecode, fps)
-                    logger.info(f"Found timecode in {source}: {start_timecode} (offset: {timecode_offset_frames} frames)")
-                except Exception as e:
-                    logger.warning(f"Could not parse timecode '{start_timecode}' from {source}: {e}")
-                    timecode_offset_frames = 0
-            else:
-                logger.info("No timecode found in video file, using offset 0")
-            
-            # Get audio stream info for speech estimation
-            audio_stream = next((stream for stream in probe['streams'] 
-                               if stream['codec_type'] == 'audio'), None)
-            
-            # Calculate total frames
-            duration_frames = round(duration_seconds * fps)
-            
-            result = {
-                "fps": fps,
-                "duration_seconds": duration_seconds,
-                "duration_frames": duration_frames,
-                "timecode_offset_frames": timecode_offset_frames,
-                "has_audio": audio_stream is not None
-            }
-            
-            logger.info(f"Video metadata: fps={fps}, duration={duration_seconds}s, frames={duration_frames}, timecode_offset={timecode_offset_frames}")
-            return result
-            
-        except ffmpeg.Error as e:
-            error_message = f"ffprobe error: {str(e)}"
+        except Exception as e:
+            error_message = f"Video probing error: {str(e)}"
             logger.error(error_message)
             raise RuntimeError(error_message)
     
@@ -371,54 +345,42 @@ class VideoAnalyzer:
         return total_frames
     
     def extract_audio(self, video_path: str) -> str:
-        """Extract audio with optimal settings for transcription accuracy."""
+        """Extract audio using MoviePy for standalone operation."""
         logger.info(f"Extracting audio from: {video_path}")
         
         try:
-            # Create temporary file for high-quality audio
+            # Create temporary file for audio
             audio_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
             audio_path = audio_file.name
             audio_file.close()
             
-            # Get source audio properties first
-            probe = ffmpeg.probe(video_path)
-            audio_stream = next((stream for stream in probe['streams'] 
-                               if stream['codec_type'] == 'audio'), None)
+            # Load video and extract audio using MoviePy
+            video_clip = VideoFileClip(video_path)
             
-            if not audio_stream:
-                raise RuntimeError("No audio stream found")
+            try:
+                if video_clip.audio is None:
+                    raise RuntimeError("No audio stream found in video file")
+                
+                # Extract audio with optimal settings for transcription
+                audio_clip = video_clip.audio
+                
+                # Export audio as WAV with settings optimized for speech recognition
+                audio_clip.write_audiofile(audio_path)
+                
+                # Clean up clips
+                audio_clip.close()
+                
+                # Log quality metrics
+                file_size_mb = os.path.getsize(audio_path) / (1024 * 1024)
+                logger.info(f"Extracted audio: {file_size_mb:.2f}MB")
+                
+                return audio_path
+                
+            finally:
+                # Always clean up the video clip
+                video_clip.close()
             
-            # Determine optimal sample rate (prefer source rate up to 48kHz)
-            source_rate = int(audio_stream.get('sample_rate', 44100))
-            optimal_rate = min(source_rate, 48000)  # Cap at 48kHz
-            optimal_rate = max(optimal_rate, 22050)  # Minimum 22kHz for quality
-            
-            # Extract with optimal settings
-            stream = ffmpeg.input(video_path)
-            
-            # Apply audio filters for cleanup
-            audio = stream.audio.filter('highpass', f=80)  # Remove low-frequency noise
-            audio = audio.filter('lowpass', f=8000)        # Remove high-frequency noise
-            audio = audio.filter('volume', '1.5')          # Boost volume slightly
-            
-            # Output with optimal codec and settings
-            out = ffmpeg.output(
-                audio, audio_path,
-                acodec='pcm_s16le',    # Uncompressed 16-bit PCM
-                ac=1,                  # Mono for speaker diarization
-                ar=optimal_rate,       # Optimal sample rate
-                audio_bitrate='256k'   # High bitrate
-            )
-            
-            ffmpeg.run(out, overwrite_output=True, quiet=True)
-            
-            # Log quality metrics
-            file_size_mb = os.path.getsize(audio_path) / (1024 * 1024)
-            logger.info(f"Extracted audio: {optimal_rate}Hz, {file_size_mb:.2f}MB")
-            
-            return audio_path
-            
-        except ffmpeg.Error as e:
+        except Exception as e:
             error_message = f"Audio extraction error: {str(e)}"
             logger.error(error_message)
             raise RuntimeError(error_message)
@@ -746,13 +708,14 @@ class VideoAnalyzer:
         # Process the video with silence detection
         result = self.process_video(video_path, custom_spell, silence_threshold_ms)
         
-        # Determine output path if not provided - always use analyzed directory
+        # Always use the data/analyzed directory relative to project root
         if output_path is None:
-            # Get the directory of this script
+            # Get the directory of this script (backend/python_services/services/assetanalysis)
             script_dir = Path(__file__).parent
             
-            # Navigate to project root (up 2 levels from backend/transcriptanalysis) and then to data/analyzed
-            analyzed_dir = script_dir.parent.parent / "data" / "analyzed"
+            # Navigate to project root (up 4 levels) and then to data/analyzed
+            # Path: services/assetanalysis -> services -> python_services -> backend -> project_root
+            analyzed_dir = script_dir.parent.parent.parent.parent / "data" / "analyzed"
             
             # Ensure the directory exists
             analyzed_dir.mkdir(parents=True, exist_ok=True)
@@ -760,7 +723,7 @@ class VideoAnalyzer:
             # Create filename from video filename
             video_filename = Path(video_path).stem  # Gets filename without extension
             output_filename = f"{video_filename}.transcript.json"
-            output_path = analyzed_dir / output_filename
+            output_path = str(analyzed_dir / output_filename)
             
             logger.info(f"Auto-generated output path: {output_path}")
         
@@ -770,10 +733,8 @@ class VideoAnalyzer:
         
         logger.info(f"Transcript saved to: {output_path}")
         
-        # Return non-zero exit code on error
-        if "error" in result:
-            exit(1)
-            
+        # For API usage, return the result with error information instead of exiting
+        # The calling code can check for "error" in the result
         return result
 
 
@@ -799,7 +760,12 @@ def main():
                 custom_spell = json.load(f)
         
         analyzer = VideoAnalyzer(assemblyai_api_key=args.api_key, brief_path=args.brief)
-        analyzer.analyze(args.video_path, args.output, custom_spell, args.brief, args.silence_threshold)
+        result = analyzer.analyze(args.video_path, args.output, custom_spell, args.brief, args.silence_threshold)
+        
+        # Exit with error code if processing failed (only for command-line usage)
+        if "error" in result:
+            exit(1)
+            
     except Exception as e:
         logger.error(f"Fatal error: {str(e)}")
         exit(1)

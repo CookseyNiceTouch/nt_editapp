@@ -12,7 +12,14 @@ from dotenv import load_dotenv
 import anthropic
 from anthropic import Anthropic
 from jsonschema import validate
-from prompts.prompts_roughcut import system_prompt, user_prompt
+
+# Handle imports that work both when run directly and as a module
+try:
+    # Try relative imports first (when run as module)
+    from .prompts.prompts_roughcut import system_prompt, user_prompt
+except ImportError:
+    # Fall back to absolute imports (when run directly)
+    from prompts.prompts_roughcut import system_prompt, user_prompt
 
 # Set up logging
 logging.basicConfig(
@@ -225,7 +232,7 @@ def load_prompts(transcript_data: Dict[str, Any], user_brief: str, proj_name: st
     """Load system prompt and format user prompt with transcript data and brief."""
     system = system_prompt()
     transcript_json = json.dumps(transcript_data, indent=2)
-    user = user_prompt(transcript_json=transcript_json, brief=user_brief, project_name=proj_name)
+    user = user_prompt(transcript_json=transcript_json, brief=user_brief, project_name=proj_name or "Unknown Project")
     return system, user
 
 def analyze_transcript_quality(transcript_data: Dict[str, Any]) -> Dict[str, Any]:

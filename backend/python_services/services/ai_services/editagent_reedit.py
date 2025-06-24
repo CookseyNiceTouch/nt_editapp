@@ -13,7 +13,14 @@ from dotenv import load_dotenv
 import anthropic
 from anthropic import Anthropic
 from jsonschema import validate
-from prompts.prompts_reedit import system_prompt, user_prompt
+
+# Handle imports that work both when run directly and as a module
+try:
+    # Try relative imports first (when run as module)
+    from .prompts.prompts_reedit import system_prompt, user_prompt
+except ImportError:
+    # Fall back to absolute imports (when run directly)
+    from prompts.prompts_reedit import system_prompt, user_prompt
 
 # Set up logging
 logging.basicConfig(
@@ -259,7 +266,7 @@ def load_prompts(existing_timeline: Dict[str, Any], transcript_data: Dict[str, A
         existing_timeline_json=existing_timeline_json,
         transcript_json=transcript_json, 
         brief=user_brief, 
-        project_name=proj_name,
+        project_name=proj_name or "Unknown Project",
         user_instructions=user_instructions
     )
     return system, user
@@ -285,7 +292,7 @@ async def process_reedit_async(
         
         # Get prompts
         system_prompt_text, user_prompt_text = load_prompts(
-            existing_timeline, transcript_data, user_brief, project_name, user_instructions
+            existing_timeline, transcript_data, user_brief, project_name or "Unknown Project", user_instructions
         )
         
         # Create a message with streaming

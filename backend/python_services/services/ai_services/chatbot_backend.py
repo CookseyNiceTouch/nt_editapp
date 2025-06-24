@@ -10,8 +10,16 @@ from typing import Dict, Any, Optional, List, Callable
 from dotenv import load_dotenv
 import anthropic
 from anthropic import Anthropic
-from prompts.prompts_chatbot import system_prompt, user_prompt, welcome_prompt
-from toolcalling.toolcaller import tool_caller, get_tool_schemas_for_claude
+
+# Handle imports that work both when run directly and as a module
+try:
+    # Try relative imports first (when run as module)
+    from .prompts.prompts_chatbot import system_prompt, user_prompt, welcome_prompt
+    from .toolcalling.toolcaller import tool_caller, get_tool_schemas_for_claude
+except ImportError:
+    # Fall back to absolute imports (when run directly)
+    from prompts.prompts_chatbot import system_prompt, user_prompt, welcome_prompt
+    from toolcalling.toolcaller import tool_caller, get_tool_schemas_for_claude
 
 # Set up logging
 logging.basicConfig(
@@ -178,14 +186,14 @@ class ChatbotBackend:
         
         try:
             # Get prompts with conversation history and project context
-            system_prompt_text = system_prompt(self.project_data)
-            user_prompt_text = user_prompt(message, self.get_recent_history(), self.project_data)
+            system_prompt_text = system_prompt(self.project_data or {})
+            user_prompt_text = user_prompt(message, self.get_recent_history(), self.project_data or {})
             
             # Get available tools for Claude function calling (if enabled)
             tools = get_tool_schemas_for_claude() if self.enable_tools else None
             
             logger.info(f"Sending message to Claude API (conversation: {self.conversation_id})")
-            if self.enable_tools:
+            if self.enable_tools and tools:
                 logger.info(f"Available tools: {len(tools)}")
             else:
                 logger.info("Tools disabled for this conversation")
@@ -348,7 +356,7 @@ class ChatbotBackend:
     
     def get_welcome_message(self) -> str:
         """Get the welcome message for new conversations."""
-        return welcome_prompt(self.project_data)
+        return welcome_prompt(self.project_data or {})
     
     def clear_conversation(self):
         """Clear the current conversation history."""
@@ -365,9 +373,9 @@ class ChatbotBackend:
             "conversation_file": str(self.get_conversation_file_path())
         }
     
-    def call_tool_manually(self, tool_name: str, parameters: Dict[str, Any] = None) -> Dict[str, Any]:
+    def call_tool_manually(self, tool_name: str, parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Manually call a tool for testing purposes."""
-        return tool_caller.call_tool(tool_name, parameters)
+        return tool_caller.call_tool(tool_name, parameters or {})
     
     def list_available_tools(self) -> List[Dict[str, Any]]:
         """Get list of available tools."""

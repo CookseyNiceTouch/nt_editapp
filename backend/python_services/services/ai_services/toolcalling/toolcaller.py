@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 
 # Get paths relative to this file
 TOOLCALLING_DIR = Path(__file__).parent.resolve()
-SCRIPT_DIR = TOOLCALLING_DIR.parent  # backend/editgenerator
-PROJECT_ROOT = SCRIPT_DIR.parent.parent  # Go up to project root
-RESOLVE_AUTOMATION_DIR = PROJECT_ROOT / "backend" / "resolveautomation"
+SCRIPT_DIR = TOOLCALLING_DIR.parent  # backend/python_services/services/ai_services
+PROJECT_ROOT = SCRIPT_DIR.parent.parent.parent  # Go up to nt_editapp project root
+RESOLVE_AUTOMATION_DIR = SCRIPT_DIR.parent / "resolveautomation"
 
 # Tool directory file
 TOOL_DIRECTORY_PATH = TOOLCALLING_DIR / "tooldiretory.json"
@@ -98,9 +98,14 @@ class ToolCaller:
     
     def get_all_tool_schemas(self) -> List[Dict[str, Any]]:
         """Get schemas for all tools (for Claude function calling)."""
-        return [self.get_tool_schema(name) for name in self.tools.keys()]
+        schemas = []
+        for name in self.tools.keys():
+            schema = self.get_tool_schema(name)
+            if schema is not None:
+                schemas.append(schema)
+        return schemas
     
-    def call_tool(self, tool_name: str, parameters: Dict[str, Any] = None) -> Dict[str, Any]:
+    def call_tool(self, tool_name: str, parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Call a specific tool with given parameters."""
         if tool_name not in self.tools:
             return {
@@ -862,7 +867,7 @@ def get_available_tools() -> List[Dict[str, Any]]:
     """Get all available tools."""
     return tool_caller.get_available_tools()
 
-def call_tool(tool_name: str, parameters: Dict[str, Any] = None) -> Dict[str, Any]:
+def call_tool(tool_name: str, parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Call a tool by name."""
     return tool_caller.call_tool(tool_name, parameters)
 

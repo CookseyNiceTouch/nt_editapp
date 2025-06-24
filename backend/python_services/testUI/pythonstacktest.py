@@ -42,208 +42,205 @@ class VideoAnalysisTestUI:
         self.setup_ui()
         
     def setup_ui(self):
-        """Initialize the main UI components"""
-        # Create main window with drag-and-drop support
+        """Setup the main UI layout"""
+        # Configure main window
         self.root = TkinterDnD.Tk()
-        self.root.title("Video Analysis API Test")
-        self.root.geometry("800x700")
-        
-        # Configure grid
+        self.root.title("Video Analysis Test UI")
+        self.root.geometry("600x500")  # Reduced height since removing results pane
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
         
-        # Main container
-        self.main_frame = ctk.CTkFrame(self.root)
-        self.main_frame.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
+        # Create main scrollable frame
+        self.main_frame = ctk.CTkScrollableFrame(self.root)
+        self.main_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         self.main_frame.grid_columnconfigure(0, weight=1)
         
-        # Title
-        title_label = ctk.CTkLabel(
-            self.main_frame,
-            text="Video Analysis API Test",
-            font=ctk.CTkFont(size=24, weight="bold")
-        )
-        title_label.grid(row=0, column=0, pady=(20, 30))
-        
-        # API Status
+        # Setup sections
         self.setup_api_status_section()
-        
-        # File Selection Section
         self.setup_file_selection_section()
-        
-        # Analysis Controls
         self.setup_analysis_controls_section()
-        
-        # Status Display
         self.setup_status_display_section()
+        # Removed results section
         
-        # Results Display
-        self.setup_results_section()
+        # Setup drag and drop
+        self.root.drop_target_register(DND_FILES)
+        self.root.dnd_bind('<<Drop>>', self.on_file_drop)
         
-        # Check API status on startup
+        # Start API status checking
         self.check_api_status()
+        self.root.after(5000, self.periodic_api_check)
         
     def setup_api_status_section(self):
         """Setup API connection status display"""
         api_frame = ctk.CTkFrame(self.main_frame)
-        api_frame.grid(row=1, column=0, sticky="ew", padx=20, pady=(0, 20))
+        api_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=(0, 10))
         api_frame.grid_columnconfigure(1, weight=1)
         
-        ctk.CTkLabel(api_frame, text="API Status:", font=ctk.CTkFont(weight="bold")).grid(
-            row=0, column=0, padx=10, pady=10, sticky="w"
+        # API Status
+        ctk.CTkLabel(api_frame, text="API Status:", font=ctk.CTkFont(size=12, weight="bold")).grid(
+            row=0, column=0, padx=(10, 5), pady=8, sticky="w"
         )
         
         self.api_status_label = ctk.CTkLabel(
             api_frame, 
             text="Checking...", 
+            font=ctk.CTkFont(size=11),
             text_color="orange"
         )
-        self.api_status_label.grid(row=0, column=1, padx=10, pady=10, sticky="w")
+        self.api_status_label.grid(row=0, column=1, padx=5, pady=8, sticky="w")
         
         self.refresh_api_btn = ctk.CTkButton(
             api_frame,
             text="Refresh",
-            width=80,
+            width=60,
+            height=24,
+            font=ctk.CTkFont(size=11),
             command=self.check_api_status
         )
-        self.refresh_api_btn.grid(row=0, column=2, padx=10, pady=10)
+        self.refresh_api_btn.grid(row=0, column=2, padx=8, pady=6)
         
     def setup_file_selection_section(self):
-        """Setup drag-and-drop and file selection area"""
+        """Setup file selection with inline browse button"""
         file_frame = ctk.CTkFrame(self.main_frame)
-        file_frame.grid(row=2, column=0, sticky="ew", padx=20, pady=(0, 20))
-        file_frame.grid_columnconfigure(0, weight=1)
+        file_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=(0, 10))
+        file_frame.grid_columnconfigure(1, weight=1)  # Make file path column expandable
         
         # Section title
         ctk.CTkLabel(
             file_frame, 
-            text="Select Video File", 
-            font=ctk.CTkFont(size=16, weight="bold")
-        ).grid(row=0, column=0, pady=(15, 10))
+            text="File Selection", 
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).grid(row=0, column=0, columnspan=3, pady=(8, 5))
         
-        # Drag and drop area
-        self.drop_frame = ctk.CTkFrame(file_frame, height=120)
-        self.drop_frame.grid(row=1, column=0, sticky="ew", padx=20, pady=(0, 10))
-        self.drop_frame.grid_columnconfigure(0, weight=1)
-        self.drop_frame.grid_propagate(False)
+        # File path display and browse button on same row
+        ctk.CTkLabel(
+            file_frame, 
+            text="File:"
+        ).grid(row=1, column=0, padx=(10, 5), pady=5, sticky="w")
         
-        # Configure drag and drop
-        self.drop_frame.drop_target_register(DND_FILES)
-        self.drop_frame.dnd_bind('<<Drop>>', self.on_file_drop)
-        
-        self.drop_label = ctk.CTkLabel(
-            self.drop_frame,
-            text="Drag & Drop Video File Here\nor Click Browse Below",
-            font=ctk.CTkFont(size=14),
-            text_color="gray"
-        )
-        self.drop_label.grid(row=0, column=0, pady=40)
-        
-        # Browse button
-        self.browse_btn = ctk.CTkButton(
-            file_frame,
-            text="Browse for Video File",
-            command=self.browse_file
-        )
-        self.browse_btn.grid(row=2, column=0, pady=(0, 10))
-        
-        # Selected file display
-        self.file_path_var = tk.StringVar()
         self.file_path_label = ctk.CTkLabel(
             file_frame,
-            textvariable=self.file_path_var,
-            font=ctk.CTkFont(size=10),
-            text_color="green"
+            text="No file selected (drag & drop or browse)",
+            font=ctk.CTkFont(size=11),
+            anchor="w"
         )
-        self.file_path_label.grid(row=3, column=0, pady=(0, 15), padx=20, sticky="ew")
+        self.file_path_label.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        
+        self.browse_btn = ctk.CTkButton(
+            file_frame,
+            text="Browse",
+            width=80,
+            height=28,
+            command=self.browse_file
+        )
+        self.browse_btn.grid(row=1, column=2, padx=(5, 10), pady=5)
+        
+        # Drag & drop instruction
+        ctk.CTkLabel(
+            file_frame,
+            text="💡 Tip: You can also drag & drop video files directly onto this window",
+            font=ctk.CTkFont(size=10),
+            text_color="gray"
+        ).grid(row=2, column=0, columnspan=3, pady=(0, 8))
         
     def setup_analysis_controls_section(self):
-        """Setup analysis submission controls"""
+        """Setup analysis controls with inline button"""
         controls_frame = ctk.CTkFrame(self.main_frame)
-        controls_frame.grid(row=3, column=0, sticky="ew", padx=20, pady=(0, 20))
-        controls_frame.grid_columnconfigure(0, weight=1)
+        controls_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=(0, 10))
+        controls_frame.grid_columnconfigure(1, weight=1)  # Make input column expandable
         
         # Section title
         ctk.CTkLabel(
             controls_frame, 
             text="Analysis Settings", 
-            font=ctk.CTkFont(size=16, weight="bold")
-        ).grid(row=0, column=0, pady=(15, 10))
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).grid(row=0, column=0, columnspan=3, pady=(8, 5))
         
-        # Settings frame
-        settings_frame = ctk.CTkFrame(controls_frame)
-        settings_frame.grid(row=1, column=0, sticky="ew", padx=20, pady=(0, 15))
-        settings_frame.grid_columnconfigure(1, weight=1)
-        
-        # Silence threshold
-        ctk.CTkLabel(settings_frame, text="Silence Threshold (ms):").grid(
-            row=0, column=0, padx=10, pady=10, sticky="w"
-        )
+        # Silence threshold setting and submit button on same row
+        ctk.CTkLabel(
+            controls_frame, 
+            text="Silence Threshold (ms):"
+        ).grid(row=1, column=0, padx=(10, 5), pady=5, sticky="w")
         
         self.silence_threshold_var = tk.StringVar(value="1000")
         silence_entry = ctk.CTkEntry(
-            settings_frame,
+            controls_frame,
             textvariable=self.silence_threshold_var,
-            width=100
+            width=100,
+            height=32
         )
-        silence_entry.grid(row=0, column=1, padx=10, pady=10, sticky="w")
+        silence_entry.grid(row=1, column=1, padx=5, pady=5, sticky="w")
         
-        # Submit button
         self.submit_btn = ctk.CTkButton(
             controls_frame,
             text="Start Analysis",
-            font=ctk.CTkFont(size=14, weight="bold"),
-            height=40,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            height=32,
+            width=120,
             command=self.submit_analysis,
             state="disabled"
         )
-        self.submit_btn.grid(row=2, column=0, pady=(0, 15))
+        self.submit_btn.grid(row=1, column=2, padx=(5, 10), pady=5)
         
     def setup_status_display_section(self):
-        """Setup job status monitoring display"""
+        """Setup status display with copy functionality"""
         status_frame = ctk.CTkFrame(self.main_frame)
-        status_frame.grid(row=4, column=0, sticky="ew", padx=20, pady=(0, 20))
+        status_frame.grid(row=3, column=0, sticky="ew", padx=10, pady=(0, 10))
         status_frame.grid_columnconfigure(0, weight=1)
         
-        # Section title
-        ctk.CTkLabel(
-            status_frame, 
-            text="Analysis Status", 
-            font=ctk.CTkFont(size=16, weight="bold")
-        ).grid(row=0, column=0, pady=(15, 10))
+        # Title and copy button row
+        title_frame = ctk.CTkFrame(status_frame)
+        title_frame.grid(row=0, column=0, sticky="ew", padx=8, pady=(8, 0))
+        title_frame.grid_columnconfigure(0, weight=1)
         
-        # Status display
+        ctk.CTkLabel(
+            title_frame, 
+            text="Status & Progress", 
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).grid(row=0, column=0, sticky="w", pady=5)
+        
+        self.copy_btn = ctk.CTkButton(
+            title_frame,
+            text="📋 Copy",
+            width=70,
+            height=24,
+            font=ctk.CTkFont(size=10),
+            command=self.copy_status_to_clipboard
+        )
+        self.copy_btn.grid(row=0, column=1, padx=(5, 0), pady=5)
+        
+        # Status display - much taller for better readability
         self.status_text = ctk.CTkTextbox(
             status_frame,
-            height=120,
-            font=ctk.CTkFont(family="Consolas", size=11)
+            height=200,  # Increased from 100 to 200
+            font=ctk.CTkFont(family="Consolas", size=10),
+            wrap="word"
         )
-        self.status_text.grid(row=1, column=0, sticky="ew", padx=20, pady=(0, 15))
+        self.status_text.grid(row=1, column=0, sticky="ew", padx=8, pady=(5, 8))
         
-        # Initial status
+        # Initialize with ready message
         self.update_status_display("Ready to analyze video files...")
-        
-    def setup_results_section(self):
-        """Setup results display section"""
-        results_frame = ctk.CTkFrame(self.main_frame)
-        results_frame.grid(row=5, column=0, sticky="nsew", padx=20, pady=(0, 20))
-        results_frame.grid_columnconfigure(0, weight=1)
-        results_frame.grid_rowconfigure(1, weight=1)
-        
-        # Section title
-        ctk.CTkLabel(
-            results_frame, 
-            text="Analysis Results", 
-            font=ctk.CTkFont(size=16, weight="bold")
-        ).grid(row=0, column=0, pady=(15, 10))
-        
-        # Results display
-        self.results_text = ctk.CTkTextbox(
-            results_frame,
-            font=ctk.CTkFont(family="Consolas", size=10)
-        )
-        self.results_text.grid(row=1, column=0, sticky="nsew", padx=20, pady=(0, 15))
-        
+    
+    def copy_status_to_clipboard(self):
+        """Copy status text content to clipboard for debugging"""
+        try:
+            status_content = self.status_text.get("1.0", tk.END).strip()
+            self.root.clipboard_clear()
+            self.root.clipboard_append(status_content)
+            
+            # Temporarily change button text to show success
+            original_text = self.copy_btn.cget("text")
+            self.copy_btn.configure(text="✅ Copied!")
+            self.root.after(1500, lambda: self.copy_btn.configure(text=original_text))
+            
+        except Exception as e:
+            print(f"Failed to copy to clipboard: {e}")
+    
+    def periodic_api_check(self):
+        """Periodically check API status"""
+        self.check_api_status()
+        self.root.after(5000, self.periodic_api_check)  # Check every 5 seconds
+    
     def check_api_status(self):
         """Check if the FastAPI server is running"""
         try:
@@ -280,7 +277,7 @@ class VideoAnalysisTestUI:
     def select_file(self, file_path: str):
         """Process selected file"""
         if os.path.isfile(file_path):
-            self.file_path_var.set(f"Selected: {os.path.basename(file_path)}")
+            self.file_path_label.configure(text=f"Selected: {os.path.basename(file_path)}")
             self.selected_file_path = file_path
             self.submit_btn.configure(state="normal")
             self.update_status_display(f"File selected: {file_path}")
@@ -362,7 +359,7 @@ class VideoAnalysisTestUI:
             try:
                 response = requests.get(
                     f"{self.api_base_url}/analysis/status/{self.current_job_id}",
-                    timeout=5
+                    timeout=10
                 )
                 
                 if response.status_code == 200:
@@ -385,26 +382,31 @@ class VideoAnalysisTestUI:
                 self.root.after(0, self.update_status_display, error_msg)
             
             # Wait before next check
-            time.sleep(2)
+            time.sleep(3)
     
     def update_job_status_display(self, status_data: Dict[str, Any]):
         """Update the status display with job information"""
-        status_text = (
-            f"Job ID: {status_data['job_id']}\n"
-            f"Status: {status_data['status'].upper()}\n"
-            f"Message: {status_data['message']}\n"
-        )
+        status = status_data["status"].upper()
+        message = status_data.get("message", "")
+        progress = status_data.get("progress", "")
         
-        if status_data.get('progress'):
-            status_text += f"Progress: {status_data['progress']}\n"
+        # Format the display
+        display_text = f"Job ID: {status_data['job_id']}\n"
+        display_text += f"Status: {status}\n"
+        display_text += f"Message: {message}\n"
         
-        if status_data.get('created_at'):
-            status_text += f"Created: {status_data['created_at']}\n"
+        if progress and progress != message:
+            display_text += f"Progress: {progress}\n"
         
-        if status_data.get('completed_at'):
-            status_text += f"Completed: {status_data['completed_at']}\n"
+        display_text += f"Created: {status_data['created_at']}\n"
         
-        self.update_status_display(status_text)
+        if status_data.get("completed_at"):
+            display_text += f"Completed: {status_data['completed_at']}\n"
+        
+        if status_data.get("error"):
+            display_text += f"Error: {status_data['error']}\n"
+        
+        self.update_status_display(display_text)
     
     def on_job_complete(self, status_data: Dict[str, Any]):
         """Handle job completion"""
@@ -415,10 +417,6 @@ class VideoAnalysisTestUI:
                 f"✅ Analysis completed successfully!\n"
                 f"Output file: {status_data.get('output_file', 'N/A')}"
             )
-            
-            # Display results
-            if status_data.get('result'):
-                self.display_results(status_data['result'])
         
         elif status_data["status"] == "failed":
             error_msg = status_data.get('error', 'Unknown error')
@@ -427,35 +425,6 @@ class VideoAnalysisTestUI:
         # Re-enable submit button
         self.submit_btn.configure(state="normal")
         self.current_job_id = None
-    
-    def display_results(self, result_data: Dict[str, Any]):
-        """Display analysis results"""
-        self.results_text.delete("1.0", tk.END)
-        
-        # Format results nicely
-        results_text = "=== ANALYSIS RESULTS ===\n\n"
-        results_text += f"File: {result_data.get('file_name', 'N/A')}\n"
-        results_text += f"FPS: {result_data.get('fps', 'N/A')}\n"
-        results_text += f"Duration (frames): {result_data.get('duration_frames', 'N/A')}\n"
-        results_text += f"Speakers: {', '.join(result_data.get('speakers', []))}\n"
-        
-        # Count words and silence periods
-        words = result_data.get('words', [])
-        word_count = len([w for w in words if w.get('word') != '**SILENCE**'])
-        silence_count = len([w for w in words if w.get('word') == '**SILENCE**'])
-        
-        results_text += f"Words: {word_count}\n"
-        results_text += f"Silence periods: {silence_count}\n\n"
-        
-        # Show transcript preview (first 500 characters)
-        full_transcript = result_data.get('full_transcript', '')
-        if full_transcript:
-            results_text += "=== TRANSCRIPT PREVIEW ===\n"
-            results_text += full_transcript[:500]
-            if len(full_transcript) > 500:
-                results_text += "...\n\n[Transcript truncated for display]"
-        
-        self.results_text.insert("1.0", results_text)
     
     def update_status_display(self, message: str):
         """Update the status text display"""
