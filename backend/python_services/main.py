@@ -491,6 +491,55 @@ async def get_chatbot_welcome(conversation_id: str):
         conversation_id=conversation_id
     )
 
+@app.get("/chatbot/conversations/{conversation_id}/messages")
+async def get_chatbot_messages(conversation_id: str):
+    """
+    Get the message history for a specific conversation
+    """
+    if ChatbotBackend is None:
+        raise HTTPException(status_code=503, detail="Chatbot services not available")
+    
+    if conversation_id not in chatbot_instances:
+        raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")
+    
+    chatbot = chatbot_instances[conversation_id]
+    
+    # Convert backend conversation history to frontend format
+    messages = []
+    
+    # Add welcome message first
+    welcome_message = chatbot.get_welcome_message()
+    messages.append({
+        "type": "system",
+        "content": welcome_message,
+        "timestamp": datetime.now().isoformat(),
+        "conversation_id": conversation_id
+    })
+    
+    # Add conversation history
+    for entry in chatbot.conversation_history:
+        # Add user message
+        messages.append({
+            "type": "user", 
+            "content": entry["user"],
+            "timestamp": entry["timestamp"],
+            "conversation_id": conversation_id
+        })
+        
+        # Add assistant message
+        messages.append({
+            "type": "assistant",
+            "content": entry["assistant"], 
+            "timestamp": entry["timestamp"],
+            "conversation_id": conversation_id
+        })
+    
+    return {
+        "conversation_id": conversation_id,
+        "message_count": len(messages),
+        "messages": messages
+    }
+
 @app.post("/chatbot/conversations/{conversation_id}/tools/toggle", response_model=ChatbotToggleToolsResponse)
 async def toggle_chatbot_tools(conversation_id: str, request: ChatbotToggleToolsRequest):
     """

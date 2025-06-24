@@ -9,7 +9,7 @@ interface ChatMessage {
 }
 
 const ChatbotInterface: React.FC = () => {
-  // State management
+  // State management - no localStorage, use backend history
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState<string>('');
@@ -17,6 +17,7 @@ const ChatbotInterface: React.FC = () => {
   const [streamingContent, setStreamingContent] = useState<string>('');
   const [currentConversationToolsEnabled, setCurrentConversationToolsEnabled] = useState<boolean>(true);
   const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isInitializing, setIsInitializing] = useState<boolean>(false);
   
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -43,8 +44,11 @@ const ChatbotInterface: React.FC = () => {
     }
   }, []);
 
-  // Create new conversation
-  const createConversation = async () => {
+  // Create conversation when needed
+  const createConversationIfNeeded = useCallback(async () => {
+    if (currentConversationId || !isConnected) return currentConversationId;
+    
+    setIsInitializing(true);
     try {
       const response = await fetch(`${API_BASE_URL}/chatbot/conversations`, {
         method: 'POST',
@@ -59,21 +63,28 @@ const ChatbotInterface: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setCurrentConversationId(data.conversation_id);
-        setMessages([{
+        setCurrentConversationToolsEnabled(data.tools_enabled);
+        
+        // Add welcome message
+        setMessages(prev => [{
           type: 'system',
           content: data.welcome_message,
           timestamp: new Date().toISOString()
-        }]);
+        }, ...prev]);
         
-        addSystemMessage(`New conversation created: ${data.conversation_id}`);
+        return data.conversation_id;
       } else {
         const errorData = await response.json();
         addSystemMessage(`Failed to create conversation: ${errorData.detail}`);
+        return null;
       }
     } catch (error) {
       addSystemMessage(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return null;
+    } finally {
+      setIsInitializing(false);
     }
-  };
+  }, [currentConversationId, isConnected]);
 
   // Clear current conversation
   const clearConversation = async () => {
@@ -90,6 +101,14 @@ const ChatbotInterface: React.FC = () => {
           content: 'Conversation history cleared',
           timestamp: new Date().toISOString()
         }]);
+      } else if (response.status === 404) {
+        // Conversation doesn't exist anymore, start fresh
+        setCurrentConversationId(null);
+        setMessages([]);
+        addSystemMessage('Conversation no longer exists. Ready for new conversation.');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        addSystemMessage(`Failed to clear conversation: ${errorData.detail || 'Unknown error'}`);
       }
     } catch (error) {
       addSystemMessage(`Failed to clear conversation: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -116,9 +135,14 @@ const ChatbotInterface: React.FC = () => {
         const data = await response.json();
         setCurrentConversationToolsEnabled(newToolsState);
         addSystemMessage(data.message);
+      } else if (response.status === 404) {
+        // Conversation doesn't exist anymore, start fresh
+        setCurrentConversationId(null);
+        setMessages([]);
+        addSystemMessage('Conversation no longer exists. Ready for new conversation.');
       } else {
-        const errorData = await response.json();
-        addSystemMessage(`Failed to toggle tools: ${errorData.detail}`);
+        const errorData = await response.json().catch(() => ({}));
+        addSystemMessage(`Failed to toggle tools: ${errorData.detail || 'Unknown error'}`);
       }
     } catch (error) {
       addSystemMessage(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -145,9 +169,14 @@ const ChatbotInterface: React.FC = () => {
         
         // Update tools status
         setCurrentConversationToolsEnabled(data.tools_enabled);
+      } else if (response.status === 404) {
+        // Conversation doesn't exist anymore, start fresh
+        setCurrentConversationId(null);
+        setMessages([]);
+        addSystemMessage('Conversation no longer exists. Ready for new conversation.');
       } else {
-        const errorData = await response.json();
-        addSystemMessage(`Failed to restart conversation: ${errorData.detail}`);
+        const errorData = await response.json().catch(() => ({}));
+        addSystemMessage(`Failed to restart conversation: ${errorData.detail || 'Unknown error'}`);
       }
     } catch (error) {
       addSystemMessage(`Failed to restart conversation: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -165,7 +194,17 @@ const ChatbotInterface: React.FC = () => {
 
   // Send message with streaming
   const sendMessage = async () => {
-    if (!inputMessage.trim() || !currentConversationId || isStreaming) return;
+    if (!inputMessage.trim() || isStreaming || !isConnected) return;
+    
+    // Create conversation if we don't have one
+    let conversationId = currentConversationId;
+    if (!conversationId) {
+      conversationId = await createConversationIfNeeded();
+      if (!conversationId) {
+        addSystemMessage('Failed to create conversation. Please try again.');
+        return;
+      }
+    }
 
     const userMessage: ChatMessage = {
       type: 'user',
@@ -185,19 +224,27 @@ const ChatbotInterface: React.FC = () => {
       }
 
       // Use fetch with streaming
-      const response = await fetch(`${API_BASE_URL}/chatbot/conversations/${currentConversationId}/message/stream`, {
+      const response = await fetch(`${API_BASE_URL}/chatbot/conversations/${conversationId}/message/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: inputMessage,
-          conversation_id: currentConversationId,
+          conversation_id: conversationId,
           stream: true
         })
       });
 
       if (!response.ok) {
+        if (response.status === 404) {
+          // Conversation doesn't exist, clear it and let user try again
+          setCurrentConversationId(null);
+          setMessages([]);
+          addSystemMessage('Conversation no longer exists. Please send your message again to start a new conversation.');
+          setIsStreaming(false);
+          return;
+        }
         throw new Error(`HTTP ${response.status}`);
       }
 
@@ -308,6 +355,33 @@ const ChatbotInterface: React.FC = () => {
     }
   };
 
+  // Check for existing conversations on startup
+  const checkForExistingConversations = useCallback(async () => {
+    if (!isConnected) return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/chatbot/conversations`);
+      if (response.ok) {
+        const data = await response.json();
+        const conversations = data.conversations || [];
+        
+        // If we have active conversations, use the most recent one
+        if (conversations.length > 0 && !currentConversationId) {
+          const mostRecent = conversations.reduce((latest: any, current: any) => {
+            const latestTime = new Date(latest.last_message_at || latest.created_at || 0);
+            const currentTime = new Date(current.last_message_at || current.created_at || 0);
+            return currentTime > latestTime ? current : latest;
+          });
+          
+          setCurrentConversationId(mostRecent.conversation_id);
+          setCurrentConversationToolsEnabled(mostRecent.tools_enabled);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to check for existing conversations:', error);
+    }
+  }, [isConnected, currentConversationId]);
+
   // Effects
   useEffect(() => {
     checkConnection();
@@ -318,6 +392,37 @@ const ChatbotInterface: React.FC = () => {
     
     return () => clearInterval(interval);
   }, [checkConnection]);
+
+  // Check for existing conversations when connected
+  useEffect(() => {
+    if (isConnected && !currentConversationId) {
+      checkForExistingConversations();
+    }
+  }, [isConnected, currentConversationId, checkForExistingConversations]);
+
+  // Load conversation history from backend when we have a conversation ID
+  const loadConversationHistory = useCallback(async (conversationId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/chatbot/conversations/${conversationId}/messages`);
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(data.messages || []);
+      } else if (response.status === 404) {
+        // Conversation doesn't exist anymore
+        setCurrentConversationId(null);
+        setMessages([]);
+      }
+    } catch (error) {
+      console.warn('Failed to load conversation history:', error);
+    }
+  }, []);
+
+  // Load conversation history when we have a conversation ID
+  useEffect(() => {
+    if (currentConversationId && isConnected && messages.length === 0) {
+      loadConversationHistory(currentConversationId);
+    }
+  }, [currentConversationId, isConnected, messages.length, loadConversationHistory]);
 
   // Cleanup EventSource on unmount
   useEffect(() => {
@@ -354,11 +459,7 @@ const ChatbotInterface: React.FC = () => {
         <div className="section-header">
           <h3>💬 Chat</h3>
           <div className="chat-controls">
-            {!currentConversationId ? (
-              <button onClick={createConversation} className="btn-success" disabled={!isConnected}>
-                ➕ Start Chat
-              </button>
-            ) : (
+            {currentConversationId && (
               <>
                 <label className="tools-toggle">
                   <input
@@ -388,6 +489,45 @@ const ChatbotInterface: React.FC = () => {
         </div>
 
         <div className="chat-messages">
+          {/* Show initialization status */}
+          {isInitializing && (
+            <div className="message system">
+              <div className="message-header">
+                <span className="message-type">⚙️ System</span>
+                <span className="message-time">Initializing...</span>
+              </div>
+              <div className="message-content">
+                <pre>🔄 Creating chat conversation...</pre>
+              </div>
+            </div>
+          )}
+          
+          {/* Show connection status if not connected */}
+          {!isConnected && !isInitializing && (
+            <div className="message system">
+              <div className="message-header">
+                <span className="message-type">⚙️ System</span>
+                <span className="message-time">Disconnected</span>
+              </div>
+              <div className="message-content">
+                <pre>🔴 Waiting for connection to chatbot API...</pre>
+              </div>
+            </div>
+          )}
+          
+          {/* Show welcome message when connected but no conversation */}
+          {isConnected && !currentConversationId && !isInitializing && messages.length === 0 && (
+            <div className="message system">
+              <div className="message-header">
+                <span className="message-type">💬 Welcome</span>
+                <span className="message-time">Ready</span>
+              </div>
+              <div className="message-content">
+                <pre>🤖 Welcome! Send a message to start your conversation with the AI assistant.</pre>
+              </div>
+            </div>
+          )}
+          
           {messages.map((message, index) => (
             <div key={index} className={`message ${message.type}`}>
               <div className="message-header">
@@ -430,16 +570,22 @@ const ChatbotInterface: React.FC = () => {
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={currentConversationId ? "Type your message... (Enter to send, Shift+Enter for new line)" : "Start a chat to begin"}
-            disabled={!currentConversationId || isStreaming}
+            placeholder={
+              isInitializing ? "Creating conversation..." :
+              !isConnected ? "Connecting to chatbot..." :
+              "Type your message to start chatting... (Enter to send, Shift+Enter for new line)"
+            }
+            disabled={!isConnected || isStreaming || isInitializing}
             rows={3}
           />
           <button 
             onClick={sendMessage}
             className="btn-success send-btn"
-            disabled={!currentConversationId || !inputMessage.trim() || isStreaming}
+            disabled={!isConnected || !inputMessage.trim() || isStreaming || isInitializing}
           >
-            {isStreaming ? '⏳ Sending...' : '📤 Send'}
+            {isInitializing ? '⏳ Creating...' : 
+             isStreaming ? '⏳ Sending...' : 
+             '📤 Send'}
           </button>
         </div>
       </div>
