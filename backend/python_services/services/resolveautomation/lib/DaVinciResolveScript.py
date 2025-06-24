@@ -24,13 +24,24 @@ script_module = None
 try:
     import fusionscript as script_module
 except ImportError:
-    # Look for installer based environment variables:
-    lib_path = os.getenv("RESOLVE_SCRIPT_LIB")
-    if lib_path:
+    # First, try to load from the current directory (local lib folder)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    local_dll_path = os.path.join(current_dir, "fusionscript.dll")
+    if os.path.exists(local_dll_path):
         try:
-            script_module = load_dynamic("fusionscript", lib_path)
+            script_module = load_dynamic("fusionscript", local_dll_path)
         except ImportError:
             pass
+    
+    if not script_module:
+        # Look for installer based environment variables:
+        lib_path = os.getenv("RESOLVE_SCRIPT_LIB")
+        if lib_path:
+            try:
+                script_module = load_dynamic("fusionscript", lib_path)
+            except ImportError:
+                pass
+    
     if not script_module:
         # Look for default install locations:
         path = ""
@@ -48,4 +59,4 @@ except ImportError:
 if script_module:
     sys.modules[__name__] = script_module
 else:
-    raise ImportError("Could not locate module dependencies")
+    raise ImportError("Could not locate module dependencies") 

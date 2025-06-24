@@ -1,0 +1,357 @@
+{
+  "schema_version": "1.0",
+  "otio_schema_version": "0.17.0",
+  "timeline": {
+    "name": "Nice Touch Launch Video - Rough Cut",
+    "fps": 25.0,
+    "metadata": {
+      "generated_by": "editagent_roughcut",
+      "source_file": "20250509_MTC_2206.MP4",
+      "target_duration_frames": 3000,
+      "actual_duration_frames": 2986
+    }
+  },
+  "tracks": [
+    {
+      "track_index": 0,
+      "name": "Video Track",
+      "kind": "Video",
+      "metadata": {
+        "track_type": "video",
+        "total_clips": 12,
+        "track_duration_frames": 2986
+      },
+      "clips": [
+        {
+          "clip_index": 0,
+          "name": "Opening - Introduction",
+          "metadata": {
+            "speaker": "A/B",
+            "text": "Hi, I'm Cooksey. And I'm Paul. We've started something really exciting and we want you to be the first to know about it.",
+            "avg_confidence": 0.97,
+            "original_segment_id": 1
+          },
+          "source_range": {
+            "start_frame": 186556,
+            "duration_frames": 216,
+            "end_frame": 186772,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "file://20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186556,
+              "duration_frames": 216,
+              "end_frame": 186772,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 1,
+          "name": "Core Message - Creativity and Innovation",
+          "metadata": {
+            "speaker": "B",
+            "text": "It's all about creativity, innovation and helping creators to do their best work faster, better and easier.",
+            "avg_confidence": 0.96,
+            "original_segment_id": 2
+          },
+          "source_range": {
+            "start_frame": 186804,
+            "duration_frames": 223,
+            "end_frame": 187027,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "file://20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186804,
+              "duration_frames": 223,
+              "end_frame": 187027,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 2,
+          "name": "History Section - Clean Take",
+          "metadata": {
+            "speaker": "A",
+            "text": "But first, a bit of history. We both cut our teeth in TV and visual effects and then found ourselves in the world of elearning.",
+            "avg_confidence": 0.94,
+            "original_segment_id": 3
+          },
+          "source_range": {
+            "start_frame": 193104,
+            "duration_frames": 186,
+            "end_frame": 193290,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "file://20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 193104,
+              "duration_frames": 186,
+              "end_frame": 193290,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 3,
+          "name": "Circus Street Experience",
+          "metadata": {
+            "speaker": "A",
+            "text": "It's there at a company called Circus street that we were able to collaborate, argue, bounce ideas off each other for over a decade.",
+            "avg_confidence": 0.95,
+            "original_segment_id": 4
+          },
+          "source_range": {
+            "start_frame": 193294,
+            "duration_frames": 190,
+            "end_frame": 193484,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "file://20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 193294,
+              "duration_frames": 190,
+              "end_frame": 193484,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 4,
+          "name": "Circus Street Advantage",
+          "metadata": {
+            "speaker": "B",
+            "text": "At Circus street, our real advantage was creativity. While our competitors were just ticking boxes, we were building something different.",
+            "avg_confidence": 0.96,
+            "original_segment_id": 5
+          },
+          "source_range": {
+            "start_frame": 193500,
+            "duration_frames": 199,
+            "end_frame": 193699,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "file://20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 193500,
+              "duration_frames": 199,
+              "end_frame": 193699,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 5,
+          "name": "Product Innovation",
+          "metadata": {
+            "speaker": "B",
+            "text": "A product driven by innovation, quality and genuine creativity. That's what set us apart.",
+            "avg_confidence": 0.95,
+            "original_segment_id": 6
+          },
+          "source_range": {
+            "start_frame": 193713,
+            "duration_frames": 190,
+            "end_frame": 193903,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "file://20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 193713,
+              "duration_frames": 190,
+              "end_frame": 193903,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 6,
+          "name": "Nice Touch Introduction",
+          "metadata": {
+            "speaker": "A",
+            "text": "All of that experience, insight, shared passion led us to Nice Touch, a new chapter dedicated entirely to empowering creators like never before.",
+            "avg_confidence": 0.97,
+            "original_segment_id": 7
+          },
+          "source_range": {
+            "start_frame": 193923,
+            "duration_frames": 348,
+            "end_frame": 195271,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "file://20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 193923,
+              "duration_frames": 348,
+              "end_frame": 195271,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 7,
+          "name": "Operating System for Creators",
+          "metadata": {
+            "speaker": "A/B",
+            "text": "Introducing Nice Touch. We're calling it the Operating System for Creators. Not an actual os, but a smart, intuitive set of tools that streamline your existing creative processes.",
+            "avg_confidence": 0.94,
+            "original_segment_id": 8
+          },
+          "source_range": {
+            "start_frame": 198452,
+            "duration_frames": 304,
+            "end_frame": 198756,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "file://20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 198452,
+              "duration_frames": 304,
+              "end_frame": 198756,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 8,
+          "name": "Benefits and Outcomes",
+          "metadata": {
+            "speaker": "A",
+            "text": "This means smoother workflows, fewer disruptions, more opportunities to create amazing work, leading to better projects, more gigs, and more income for creators.",
+            "avg_confidence": 0.96,
+            "original_segment_id": 9
+          },
+          "source_range": {
+            "start_frame": 198772,
+            "duration_frames": 230,
+            "end_frame": 199002,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "file://20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 198772,
+              "duration_frames": 230,
+              "end_frame": 199002,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 9,
+          "name": "Not Automating Creativity",
+          "metadata": {
+            "speaker": "A",
+            "text": "We're not trying to automate creativity itself. We want to take away the mundane tasks that hold you back.",
+            "avg_confidence": 0.97,
+            "original_segment_id": 10
+          },
+          "source_range": {
+            "start_frame": 201284,
+            "duration_frames": 134,
+            "end_frame": 201418,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "file://20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 201284,
+              "duration_frames": 134,
+              "end_frame": 201418,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 10,
+          "name": "Journey and Collaboration",
+          "metadata": {
+            "speaker": "B/A",
+            "text": "We're just at the start of this journey and we need you. We wouldn't be where we are now if we hadn't worked with some of the most talented and amazing people. It's all about collaboration.",
+            "avg_confidence": 0.96,
+            "original_segment_id": 11
+          },
+          "source_range": {
+            "start_frame": 205552,
+            "duration_frames": 246,
+            "end_frame": 205798,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "file://20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 205552,
+              "duration_frames": 246,
+              "end_frame": 205798,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 11,
+          "name": "Call to Action and Ending",
+          "metadata": {
+            "speaker": "B/A",
+            "text": "So whether it's just a chat or you want to see what we're up to, get involved. Go sign up on the site nicetouch app. Come chat with us on Discord. We're online most days. This is just the beginning. Who knows where we'll end up, but it's going to be big. Join us for the journey.",
+            "avg_confidence": 0.94,
+            "original_segment_id": 12
+          },
+          "source_range": {
+            "start_frame": 208202,
+            "duration_frames": 368,
+            "end_frame": 210857,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "file://20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 208202,
+              "duration_frames": 368,
+              "end_frame": 210857,
+              "fps": 25.0
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_tracks": 1,
+    "total_clips": 12,
+    "timeline_duration_frames": 2986
+  }
+}

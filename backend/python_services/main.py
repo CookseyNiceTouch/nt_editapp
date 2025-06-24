@@ -92,6 +92,24 @@ class ChatbotCreateResponse(BaseModel):
     tools_enabled: bool
     created_at: str
 
+class ChatbotToggleToolsRequest(BaseModel):
+    enable_tools: bool
+
+class ChatbotToggleToolsResponse(BaseModel):
+    conversation_id: str
+    tools_enabled: bool
+    message: str
+
+class ChatbotProjectInfoResponse(BaseModel):
+    project_loaded: bool
+    project_title: Optional[str] = None
+    brief_length: Optional[int] = None
+    brief_preview: Optional[str] = None
+
+class ChatbotWelcomeResponse(BaseModel):
+    welcome_message: str
+    conversation_id: str
+
 class ChatbotMessageRequest(BaseModel):
     message: str
     conversation_id: str
@@ -341,14 +359,41 @@ async def delete_analysis_job(job_id: str):
 # Chatbot Routes
 @app.get("/chatbot/status")
 async def chatbot_status():
-    """Status of chatbot services"""
+    """Enhanced status of chatbot services with detailed information"""
     if ChatbotBackend is None:
         return {"status": "Chatbot services not available", "error": "ChatbotBackend not imported"}
+    
+    # Get project info
+    project_info = {"loaded": False}
+    try:
+        temp_chatbot = ChatbotBackend()
+        if temp_chatbot.project_data:
+            project_info = {
+                "loaded": True,
+                "title": temp_chatbot.project_data.get('title', 'Unknown'),
+                "brief_length": len(temp_chatbot.project_data.get('brief', ''))
+            }
+    except Exception:
+        pass
+    
+    # Get conversation summaries
+    conversation_summaries = []
+    for conv_id, chatbot in chatbot_instances.items():
+        summary = chatbot.get_conversation_summary()
+        conversation_summaries.append({
+            "conversation_id": conv_id,
+            "message_count": summary["message_count"],
+            "tools_enabled": chatbot.enable_tools,
+            "last_message_at": summary.get("last_message_at")
+        })
     
     return {
         "status": "Chatbot services available",
         "active_conversations": len(chatbot_instances),
-        "services": ["conversation_management", "ai_chat", "tool_calling"]
+        "project_info": project_info,
+        "conversations": conversation_summaries,
+        "services": ["conversation_management", "ai_chat", "tool_calling"],
+        "claude_model": "claude-sonnet-4-20250514"
     }
 
 @app.post("/chatbot/conversations", response_model=ChatbotCreateResponse)
@@ -426,6 +471,126 @@ async def get_chatbot_conversation(conversation_id: str):
         last_message_at=summary.get("last_message_at"),
         tools_enabled=chatbot.enable_tools
     )
+
+@app.get("/chatbot/conversations/{conversation_id}/welcome", response_model=ChatbotWelcomeResponse)
+async def get_chatbot_welcome(conversation_id: str):
+    """
+    Get the welcome message for a specific conversation
+    """
+    if ChatbotBackend is None:
+        raise HTTPException(status_code=503, detail="Chatbot services not available")
+    
+    if conversation_id not in chatbot_instances:
+        raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")
+    
+    chatbot = chatbot_instances[conversation_id]
+    welcome_message = chatbot.get_welcome_message()
+    
+    return ChatbotWelcomeResponse(
+        welcome_message=welcome_message,
+        conversation_id=conversation_id
+    )
+
+@app.post("/chatbot/conversations/{conversation_id}/tools/toggle", response_model=ChatbotToggleToolsResponse)
+async def toggle_chatbot_tools(conversation_id: str, request: ChatbotToggleToolsRequest):
+    """
+    Toggle tools on/off for a chatbot conversation
+    
+    Enables or disables tool usage for the specified conversation.
+    """
+    if ChatbotBackend is None:
+        raise HTTPException(status_code=503, detail="Chatbot services not available")
+    
+    if conversation_id not in chatbot_instances:
+        raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")
+    
+    chatbot = chatbot_instances[conversation_id]
+    chatbot.enable_tools = request.enable_tools
+    
+    status_message = "enabled" if request.enable_tools else "disabled"
+    
+    return ChatbotToggleToolsResponse(
+        conversation_id=conversation_id,
+        tools_enabled=request.enable_tools,
+        message=f"Tools are now {status_message} for conversation {conversation_id}"
+    )
+
+@app.get("/chatbot/project", response_model=ChatbotProjectInfoResponse)
+async def get_chatbot_project_info():
+    """
+    Get current project information available to chatbots
+    
+    Returns information about the loaded project data including title and brief.
+    """
+    if ChatbotBackend is None:
+        raise HTTPException(status_code=503, detail="Chatbot services not available")
+    
+    try:
+        # Create a temporary chatbot instance to get project data
+        temp_chatbot = ChatbotBackend()
+        
+        if not temp_chatbot.project_data:
+            return ChatbotProjectInfoResponse(
+                project_loaded=False,
+                project_title=None,
+                brief_length=None,
+                brief_preview=None
+            )
+        
+        project_data = temp_chatbot.project_data
+        brief = project_data.get('brief', '')
+        brief_preview = brief[:200] + "..." if len(brief) > 200 else brief if brief else None
+        
+        return ChatbotProjectInfoResponse(
+            project_loaded=True,
+            project_title=project_data.get('title', 'Unknown'),
+            brief_length=len(brief),
+            brief_preview=brief_preview
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get project info: {str(e)}")
+
+@app.post("/chatbot/conversations/{conversation_id}/restart")
+async def restart_chatbot_conversation(conversation_id: str):
+    """
+    Restart a chatbot conversation
+    
+    Clears the conversation history and reinitializes the chatbot instance.
+    """
+    if ChatbotBackend is None:
+        raise HTTPException(status_code=503, detail="Chatbot services not available")
+    
+    if conversation_id not in chatbot_instances:
+        raise HTTPException(status_code=404, detail=f"Conversation {conversation_id} not found")
+    
+    try:
+        # Get current settings
+        old_chatbot = chatbot_instances[conversation_id]
+        enable_tools = old_chatbot.enable_tools
+        
+        # Create new chatbot instance with same ID and settings
+        new_chatbot = ChatbotBackend(
+            conversation_id=conversation_id,
+            enable_tools=enable_tools
+        )
+        
+        # Replace in global tracking
+        chatbot_instances[conversation_id] = new_chatbot
+        
+        # Get welcome message
+        welcome_message = new_chatbot.get_welcome_message()
+        
+        return {
+            "message": f"Conversation {conversation_id} restarted successfully",
+            "conversation_id": conversation_id,
+            "tools_enabled": enable_tools,
+            "welcome_message": welcome_message,
+            "restarted_at": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to restart conversation: {str(e)}")
 
 @app.delete("/chatbot/conversations/{conversation_id}")
 async def delete_chatbot_conversation(conversation_id: str):
@@ -526,45 +691,55 @@ async def send_chatbot_message_stream(conversation_id: str, request: ChatbotMess
             "error": None
         }
         
+        # Store streaming events to send them out
+        streaming_events = []
+        
         def streaming_callback(stream_type: str, content: str):
             """Callback to capture streaming content"""
-            nonlocal streaming_data
+            nonlocal streaming_data, streaming_events
+            
+            print(f"Streaming callback: {stream_type} - {content[:100]}...")  # Debug log
             
             if stream_type == "thinking":
                 streaming_data["thinking"] += content
-                # Send thinking update
                 event_data = {
                     "type": "thinking",
                     "content": content,
                     "conversation_id": conversation_id
                 }
-                return f"data: {json.dumps(event_data)}\n\n"
+                streaming_events.append(f"data: {json.dumps(event_data)}\n\n")
             
             elif stream_type == "tool":
-                # Send tool update
                 event_data = {
                     "type": "tool",
                     "content": content,
                     "conversation_id": conversation_id
                 }
-                return f"data: {json.dumps(event_data)}\n\n"
+                streaming_events.append(f"data: {json.dumps(event_data)}\n\n")
             
             elif stream_type == "response":
                 streaming_data["response"] += content
-                # Send response update
                 event_data = {
                     "type": "response",
                     "content": content,
                     "conversation_id": conversation_id
                 }
-                return f"data: {json.dumps(event_data)}\n\n"
+                streaming_events.append(f"data: {json.dumps(event_data)}\n\n")
         
         try:
             # Send start event
             yield f"data: {json.dumps({'type': 'start', 'conversation_id': conversation_id})}\n\n"
             
-            # Send message to chatbot with streaming
+            # Send message to chatbot with streaming callback
+            print(f"Sending message to chatbot: {request.message}")
             result = chatbot.send_message(request.message, streaming_callback=streaming_callback)
+            
+            print(f"Chatbot result: success={result.get('success')}, tool_calls={len(result.get('tool_calls', []))}")
+            print(f"Collected {len(streaming_events)} streaming events")
+            
+            # Send all collected streaming events first
+            for event in streaming_events:
+                yield event
             
             # Send completion event
             completion_data = {
@@ -830,10 +1005,18 @@ def main():
     
     if ChatbotBackend is not None:
         print("  - AI Chatbot:")
+        print("    - Status: GET /chatbot/status")
+        print("    - Project Info: GET /chatbot/project")
         print("    - Create Conversation: POST /chatbot/conversations")
         print("    - List Conversations: GET /chatbot/conversations")
+        print("    - Get Conversation: GET /chatbot/conversations/{id}")
+        print("    - Get Welcome Message: GET /chatbot/conversations/{id}/welcome")
         print("    - Send Message (Sync): POST /chatbot/conversations/{id}/message")
         print("    - Send Message (Stream): POST /chatbot/conversations/{id}/message/stream")
+        print("    - Clear Conversation: POST /chatbot/conversations/{id}/clear")
+        print("    - Restart Conversation: POST /chatbot/conversations/{id}/restart")
+        print("    - Delete Conversation: DELETE /chatbot/conversations/{id}")
+        print("    - Toggle Tools: POST /chatbot/conversations/{id}/tools/toggle")
         print("    - List Tools: GET /chatbot/tools")
         print("    - Call Tool: POST /chatbot/conversations/{id}/tools")
     else:

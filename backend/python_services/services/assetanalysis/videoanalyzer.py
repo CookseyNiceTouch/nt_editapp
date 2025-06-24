@@ -612,6 +612,39 @@ class VideoAnalyzer:
         
         return mapped_speaker
 
+    def _find_project_root(self) -> Path:
+        """
+        Find the backend/python_services directory for data storage.
+        
+        Returns:
+            Path to the backend/python_services directory
+        """
+        # Start from the current script location
+        current_dir = Path(__file__).parent.resolve()
+        
+        # Look for the backend/python_services directory by walking up and checking for key markers
+        search_dir = current_dir
+        max_depth = 10  # Prevent infinite loops
+        
+        for _ in range(max_depth):
+            # Check if this directory contains python_services markers
+            if (search_dir / "pyproject.toml").exists() and (search_dir / "services").exists():
+                logger.info(f"Found backend/python_services directory at: {search_dir}")
+                return search_dir
+            
+            # Move up one directory
+            parent_dir = search_dir.parent
+            if parent_dir == search_dir:  # We've reached the filesystem root
+                break
+            search_dir = parent_dir
+        
+        # Fallback: use relative path from current script location
+        # Script is at: backend/python_services/services/assetanalysis/videoanalyzer.py
+        # We want: backend/python_services/
+        fallback_root = Path(__file__).parent.parent.parent
+        logger.info(f"Using fallback path to backend/python_services: {fallback_root}")
+        return fallback_root
+
     def process_video(self, video_path: str, custom_spell: Optional[List[Dict[str, Any]]] = None, silence_threshold_ms: int = 1000) -> Dict[str, Any]:
         """
         Process a video file: extract metadata, transcribe, and format results.
@@ -708,14 +741,13 @@ class VideoAnalyzer:
         # Process the video with silence detection
         result = self.process_video(video_path, custom_spell, silence_threshold_ms)
         
-        # Always use the data/analyzed directory relative to project root
+        # Always use the data/analyzed directory relative to backend/python_services
         if output_path is None:
-            # Get the directory of this script (backend/python_services/services/assetanalysis)
-            script_dir = Path(__file__).parent
+            # Find backend/python_services directory
+            python_services_dir = self._find_project_root()
             
-            # Navigate to project root (up 4 levels) and then to data/analyzed
-            # Path: services/assetanalysis -> services -> python_services -> backend -> project_root
-            analyzed_dir = script_dir.parent.parent.parent.parent / "data" / "analyzed"
+            # Build path to data/analyzed directory within python_services
+            analyzed_dir = python_services_dir / "data" / "analyzed"
             
             # Ensure the directory exists
             analyzed_dir.mkdir(parents=True, exist_ok=True)

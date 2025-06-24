@@ -178,8 +178,18 @@ def test_output_path_generation():
                 print("✅ File processing failed as expected (no actual video content)")
                 
                 # Check if the expected output directory structure would be created
-                script_dir = Path(__file__).parent
-                expected_analyzed_dir = script_dir.parent.parent.parent.parent / "data" / "analyzed"
+                # Find project root by looking for key project markers
+                current_dir = Path(__file__).parent.resolve()
+                project_root = current_dir
+                for _ in range(10):  # Max 10 levels up
+                    if (project_root / "data").exists() and (project_root / "backend").exists():
+                        break
+                    parent = project_root.parent
+                    if parent == project_root:  # Reached filesystem root
+                        break
+                    project_root = parent
+                
+                expected_analyzed_dir = project_root / "data" / "analyzed"
                 print(f"✅ Expected output directory: {expected_analyzed_dir}")
                 
                 return True

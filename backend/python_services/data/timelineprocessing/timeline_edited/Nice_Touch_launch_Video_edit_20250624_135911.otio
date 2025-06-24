@@ -1,0 +1,1400 @@
+{
+    "OTIO_SCHEMA": "Timeline.1",
+    "metadata": {
+        "actual_duration_frames": 2986,
+        "generated_by": "editagent_roughcut",
+        "source_file": "20250509_MTC_2206.MP4",
+        "target_duration_frames": 3000
+    },
+    "name": "Nice Touch Launch Video - Rough Cut",
+    "global_start_time": null,
+    "tracks": {
+        "OTIO_SCHEMA": "Stack.1",
+        "metadata": {},
+        "name": "tracks",
+        "source_range": null,
+        "effects": [],
+        "markers": [],
+        "enabled": true,
+        "children": [
+            {
+                "OTIO_SCHEMA": "Track.1",
+                "metadata": {
+                    "total_clips": 12,
+                    "track_duration_frames": 2986,
+                    "track_type": "video"
+                },
+                "name": "Video Track",
+                "source_range": null,
+                "effects": [],
+                "markers": [],
+                "enabled": true,
+                "children": [
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 1
+                            },
+                            "avg": {
+                                "confidence": 0.97
+                            },
+                            "original": {
+                                "segment_id": 1
+                            },
+                            "speaker": "A/B"
+                        },
+                        "name": "Opening - Introduction",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 216.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 186556.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 216.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 186556.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 2
+                            },
+                            "avg": {
+                                "confidence": 0.96
+                            },
+                            "original": {
+                                "segment_id": 2
+                            },
+                            "speaker": "B"
+                        },
+                        "name": "Core Message - Creativity and Innovation",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 223.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 186804.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 223.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 186804.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 3
+                            },
+                            "avg": {
+                                "confidence": 0.94
+                            },
+                            "original": {
+                                "segment_id": 3
+                            },
+                            "speaker": "A"
+                        },
+                        "name": "History Section - Clean Take",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 186.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 193104.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 186.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 193104.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 4
+                            },
+                            "avg": {
+                                "confidence": 0.95
+                            },
+                            "original": {
+                                "segment_id": 4
+                            },
+                            "speaker": "A"
+                        },
+                        "name": "Circus Street Experience",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 190.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 193294.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 190.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 193294.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 5
+                            },
+                            "avg": {
+                                "confidence": 0.96
+                            },
+                            "original": {
+                                "segment_id": 5
+                            },
+                            "speaker": "B"
+                        },
+                        "name": "Circus Street Advantage",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 199.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 193500.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 199.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 193500.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 6
+                            },
+                            "avg": {
+                                "confidence": 0.95
+                            },
+                            "original": {
+                                "segment_id": 6
+                            },
+                            "speaker": "B"
+                        },
+                        "name": "Product Innovation",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 190.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 193713.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 190.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 193713.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 7
+                            },
+                            "avg": {
+                                "confidence": 0.97
+                            },
+                            "original": {
+                                "segment_id": 7
+                            },
+                            "speaker": "A"
+                        },
+                        "name": "Nice Touch Introduction",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 348.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 193923.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 348.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 193923.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 8
+                            },
+                            "avg": {
+                                "confidence": 0.94
+                            },
+                            "original": {
+                                "segment_id": 8
+                            },
+                            "speaker": "A/B"
+                        },
+                        "name": "Operating System for Creators",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 304.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 198452.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 304.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 198452.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 9
+                            },
+                            "avg": {
+                                "confidence": 0.96
+                            },
+                            "original": {
+                                "segment_id": 9
+                            },
+                            "speaker": "A"
+                        },
+                        "name": "Benefits and Outcomes",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 230.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 198772.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 230.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 198772.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 10
+                            },
+                            "avg": {
+                                "confidence": 0.97
+                            },
+                            "original": {
+                                "segment_id": 10
+                            },
+                            "speaker": "A"
+                        },
+                        "name": "Not Automating Creativity",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 134.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 201284.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 134.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 201284.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 11
+                            },
+                            "avg": {
+                                "confidence": 0.96
+                            },
+                            "original": {
+                                "segment_id": 11
+                            },
+                            "speaker": "B/A"
+                        },
+                        "name": "Journey and Collaboration",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 246.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 205552.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 246.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 205552.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 12
+                            },
+                            "avg": {
+                                "confidence": 0.94
+                            },
+                            "original": {
+                                "segment_id": 12
+                            },
+                            "speaker": "B/A"
+                        },
+                        "name": "Call to Action and Ending",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 368.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 208202.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 368.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 208202.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    }
+                ],
+                "kind": "Video"
+            },
+            {
+                "OTIO_SCHEMA": "Track.1",
+                "metadata": {
+                    "Resolve_OTIO": {
+                        "Audio Type": "Stereo",
+                        "Locked": false,
+                        "SoloOn": false
+                    }
+                },
+                "name": "Audio 1",
+                "source_range": null,
+                "effects": [],
+                "markers": [],
+                "enabled": true,
+                "children": [
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 1
+                            },
+                            "avg": {
+                                "confidence": 0.97
+                            },
+                            "original": {
+                                "segment_id": 1
+                            },
+                            "speaker": "A/B"
+                        },
+                        "name": "Opening - Introduction",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 216.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 186556.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 216.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 186556.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 2
+                            },
+                            "avg": {
+                                "confidence": 0.96
+                            },
+                            "original": {
+                                "segment_id": 2
+                            },
+                            "speaker": "B"
+                        },
+                        "name": "Core Message - Creativity and Innovation",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 223.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 186804.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 223.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 186804.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 3
+                            },
+                            "avg": {
+                                "confidence": 0.94
+                            },
+                            "original": {
+                                "segment_id": 3
+                            },
+                            "speaker": "A"
+                        },
+                        "name": "History Section - Clean Take",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 186.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 193104.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 186.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 193104.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 4
+                            },
+                            "avg": {
+                                "confidence": 0.95
+                            },
+                            "original": {
+                                "segment_id": 4
+                            },
+                            "speaker": "A"
+                        },
+                        "name": "Circus Street Experience",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 190.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 193294.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 190.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 193294.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 5
+                            },
+                            "avg": {
+                                "confidence": 0.96
+                            },
+                            "original": {
+                                "segment_id": 5
+                            },
+                            "speaker": "B"
+                        },
+                        "name": "Circus Street Advantage",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 199.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 193500.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 199.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 193500.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 6
+                            },
+                            "avg": {
+                                "confidence": 0.95
+                            },
+                            "original": {
+                                "segment_id": 6
+                            },
+                            "speaker": "B"
+                        },
+                        "name": "Product Innovation",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 190.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 193713.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 190.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 193713.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 7
+                            },
+                            "avg": {
+                                "confidence": 0.97
+                            },
+                            "original": {
+                                "segment_id": 7
+                            },
+                            "speaker": "A"
+                        },
+                        "name": "Nice Touch Introduction",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 348.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 193923.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 348.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 193923.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 8
+                            },
+                            "avg": {
+                                "confidence": 0.94
+                            },
+                            "original": {
+                                "segment_id": 8
+                            },
+                            "speaker": "A/B"
+                        },
+                        "name": "Operating System for Creators",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 304.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 198452.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 304.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 198452.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 9
+                            },
+                            "avg": {
+                                "confidence": 0.96
+                            },
+                            "original": {
+                                "segment_id": 9
+                            },
+                            "speaker": "A"
+                        },
+                        "name": "Benefits and Outcomes",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 230.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 198772.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 230.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 198772.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 10
+                            },
+                            "avg": {
+                                "confidence": 0.97
+                            },
+                            "original": {
+                                "segment_id": 10
+                            },
+                            "speaker": "A"
+                        },
+                        "name": "Not Automating Creativity",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 134.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 201284.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 134.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 201284.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 11
+                            },
+                            "avg": {
+                                "confidence": 0.96
+                            },
+                            "original": {
+                                "segment_id": 11
+                            },
+                            "speaker": "B/A"
+                        },
+                        "name": "Journey and Collaboration",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 246.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 205552.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 246.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 205552.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    },
+                    {
+                        "OTIO_SCHEMA": "Clip.2",
+                        "metadata": {
+                            "Resolve": {
+                                "OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]",
+                                "OTIO_Link Group ID": 12
+                            },
+                            "avg": {
+                                "confidence": 0.94
+                            },
+                            "original": {
+                                "segment_id": 12
+                            },
+                            "speaker": "B/A"
+                        },
+                        "name": "Call to Action and Ending",
+                        "source_range": {
+                            "OTIO_SCHEMA": "TimeRange.1",
+                            "duration": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 368.0
+                            },
+                            "start_time": {
+                                "OTIO_SCHEMA": "RationalTime.1",
+                                "rate": 25.0,
+                                "value": 208202.0
+                            }
+                        },
+                        "effects": [],
+                        "markers": [],
+                        "enabled": true,
+                        "media_references": {
+                            "DEFAULT_MEDIA": {
+                                "OTIO_SCHEMA": "ExternalReference.1",
+                                "metadata": {},
+                                "name": "",
+                                "available_range": {
+                                    "OTIO_SCHEMA": "TimeRange.1",
+                                    "duration": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 368.0
+                                    },
+                                    "start_time": {
+                                        "OTIO_SCHEMA": "RationalTime.1",
+                                        "rate": 25.0,
+                                        "value": 208202.0
+                                    }
+                                },
+                                "available_image_bounds": null,
+                                "target_url": "file://20250509_MTC_2206.MP4"
+                            }
+                        },
+                        "active_media_reference_key": "DEFAULT_MEDIA"
+                    }
+                ],
+                "kind": "Audio"
+            }
+        ]
+    }
+}

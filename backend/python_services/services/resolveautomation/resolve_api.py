@@ -11,9 +11,16 @@ class ResolveAPI:
     def __init__(self):
         logger.debug('Initializing ResolveAPI instance...')
         try:
+            # Add the lib directory to the Python path for DaVinci Resolve imports
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            lib_dir = os.path.join(current_dir, 'lib')
+            if lib_dir not in sys.path:
+                sys.path.insert(0, lib_dir)
+            
             import DaVinciResolveScript as dvr_script
         except ImportError as e:
             logger.error('Could not import DaVinciResolveScript: %s', e)
+            logger.error('Make sure DaVinci Resolve is installed and the fusionscript.dll is in the lib directory')
             raise
         self.dvr_script = dvr_script # Store for later use
         
@@ -21,10 +28,18 @@ class ResolveAPI:
         try:
             self.resolve = dvr_script.scriptapp('Resolve')
             if not self.resolve:
+                logger.error('Could not connect to DaVinci Resolve instance. Make sure:')
+                logger.error('1. DaVinci Resolve is running')
+                logger.error('2. "External scripting using" is enabled in Resolve preferences')
+                logger.error('3. The correct scripting mode (Local/Network) is selected')
                 raise RuntimeError('Could not connect to DaVinci Resolve instance.')
             logger.debug('Connected to DaVinci Resolve instance.')
         except Exception as e:
             logger.error('Failed to connect to DaVinci Resolve: %s', e)
+            logger.error('Troubleshooting tips:')
+            logger.error('- Ensure DaVinci Resolve is running')
+            logger.error('- Check that external scripting is enabled in Resolve > Preferences > General')
+            logger.error('- Verify the scripting connection mode matches your setup')
             raise
         
         # Get project manager

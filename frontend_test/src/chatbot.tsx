@@ -8,38 +8,15 @@ interface ChatMessage {
   conversation_id?: string;
 }
 
-interface Conversation {
-  conversation_id: string;
-  message_count: number;
-  created_at?: string;
-  last_message_at?: string;
-  tools_enabled: boolean;
-}
-
-interface Tool {
-  name: string;
-  description: string;
-  parameters?: any;
-}
-
-interface ApiStatus {
-  status: string;
-  isConnected: boolean;
-  active_conversations?: number;
-  error?: string;
-}
-
 const ChatbotInterface: React.FC = () => {
   // State management
-  const [apiStatus, setApiStatus] = useState<ApiStatus>({ status: 'Checking...', isConnected: false });
-  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
-  const [availableTools, setAvailableTools] = useState<Tool[]>([]);
-  const [toolsEnabled, setToolsEnabled] = useState<boolean>(true);
   const [streamingContent, setStreamingContent] = useState<string>('');
+  const [currentConversationToolsEnabled, setCurrentConversationToolsEnabled] = useState<boolean>(true);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
   
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -56,55 +33,13 @@ const ChatbotInterface: React.FC = () => {
     scrollToBottom();
   }, [messages, streamingContent]);
 
-  // API Status Check
-  const checkApiStatus = useCallback(async () => {
+  // Check API connection
+  const checkConnection = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/chatbot/status`);
-      if (response.ok) {
-        const data = await response.json();
-        setApiStatus({
-          status: `✅ Connected - ${data.status}`,
-          isConnected: true,
-          active_conversations: data.active_conversations
-        });
-      } else {
-        setApiStatus({
-          status: `❌ API Error (${response.status})`,
-          isConnected: false
-        });
-      }
+      setIsConnected(response.ok);
     } catch (error) {
-      setApiStatus({
-        status: '❌ Chatbot API Not Available',
-        isConnected: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  }, []);
-
-  // Load available tools
-  const loadAvailableTools = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/chatbot/tools`);
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableTools(data.tools || []);
-      }
-    } catch (error) {
-      console.error('Failed to load tools:', error);
-    }
-  }, []);
-
-  // Load conversations
-  const loadConversations = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/chatbot/conversations`);
-      if (response.ok) {
-        const data = await response.json();
-        setConversations(data.conversations || []);
-      }
-    } catch (error) {
-      console.error('Failed to load conversations:', error);
+      setIsConnected(false);
     }
   }, []);
 
@@ -117,7 +52,7 @@ const ChatbotInterface: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          enable_tools: toolsEnabled
+          enable_tools: true
         })
       });
 
@@ -130,9 +65,6 @@ const ChatbotInterface: React.FC = () => {
           timestamp: new Date().toISOString()
         }]);
         
-        // Reload conversations list
-        loadConversations();
-        
         addSystemMessage(`New conversation created: ${data.conversation_id}`);
       } else {
         const errorData = await response.json();
@@ -141,16 +73,6 @@ const ChatbotInterface: React.FC = () => {
     } catch (error) {
       addSystemMessage(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  };
-
-  // Switch to existing conversation
-  const switchConversation = (conversationId: string) => {
-    setCurrentConversationId(conversationId);
-    setMessages([{
-      type: 'system',
-      content: `Switched to conversation: ${conversationId}`,
-      timestamp: new Date().toISOString()
-    }]);
   };
 
   // Clear current conversation
@@ -174,23 +96,61 @@ const ChatbotInterface: React.FC = () => {
     }
   };
 
-  // Delete conversation
-  const deleteConversation = async (conversationId: string) => {
+  // Toggle tools for current conversation
+  const toggleConversationTools = async () => {
+    if (!currentConversationId) return;
+
     try {
-      const response = await fetch(`${API_BASE_URL}/chatbot/conversations/${conversationId}`, {
-        method: 'DELETE'
+      const newToolsState = !currentConversationToolsEnabled;
+      const response = await fetch(`${API_BASE_URL}/chatbot/conversations/${currentConversationId}/tools/toggle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          enable_tools: newToolsState
+        })
       });
 
       if (response.ok) {
-        loadConversations();
-        if (conversationId === currentConversationId) {
-          setCurrentConversationId(null);
-          setMessages([]);
-        }
-        addSystemMessage(`Conversation ${conversationId} deleted`);
+        const data = await response.json();
+        setCurrentConversationToolsEnabled(newToolsState);
+        addSystemMessage(data.message);
+      } else {
+        const errorData = await response.json();
+        addSystemMessage(`Failed to toggle tools: ${errorData.detail}`);
       }
     } catch (error) {
-      addSystemMessage(`Failed to delete conversation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      addSystemMessage(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  // Restart conversation
+  const restartConversation = async () => {
+    if (!currentConversationId) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/chatbot/conversations/${currentConversationId}/restart`, {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessages([{
+          type: 'system',
+          content: data.welcome_message,
+          timestamp: new Date().toISOString()
+        }]);
+        addSystemMessage(data.message);
+        
+        // Update tools status
+        setCurrentConversationToolsEnabled(data.tools_enabled);
+      } else {
+        const errorData = await response.json();
+        addSystemMessage(`Failed to restart conversation: ${errorData.detail}`);
+      }
+    } catch (error) {
+      addSystemMessage(`Failed to restart conversation: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -224,15 +184,7 @@ const ChatbotInterface: React.FC = () => {
         eventSourceRef.current.close();
       }
 
-      // Create new EventSource for streaming
-      const eventSource = new EventSource(
-        `${API_BASE_URL}/chatbot/conversations/${currentConversationId}/message/stream`,
-        {
-          // Note: EventSource doesn't support POST directly, so we'll use fetch with streaming
-        }
-      );
-
-      // Actually, let's use fetch with streaming instead
+      // Use fetch with streaming
       const response = await fetch(`${API_BASE_URL}/chatbot/conversations/${currentConversationId}/message/stream`, {
         method: 'POST',
         headers: {
@@ -278,48 +230,51 @@ const ChatbotInterface: React.FC = () => {
                     
                   case 'thinking':
                     thinkingMessage += eventData.content;
+                    // Show thinking content in real-time but don't accumulate for final message
                     setStreamingContent(prev => prev + eventData.content);
                     break;
                     
                   case 'tool':
                     toolMessages.push(eventData.content);
-                    setMessages(prev => [...prev, {
-                      type: 'tool',
-                      content: eventData.content,
-                      timestamp: new Date().toISOString()
-                    }]);
+                    addSystemMessage(`🔧 ${eventData.content}`);
                     break;
                     
                   case 'response':
                     assistantMessage += eventData.content;
+                    // Show the assistant response as it streams in
                     setStreamingContent(assistantMessage);
                     break;
                     
                   case 'complete':
-                    // Add final assistant message
-                    if (assistantMessage) {
-                      setMessages(prev => [...prev, {
-                        type: 'assistant',
-                        content: assistantMessage,
-                        timestamp: new Date().toISOString()
-                      }]);
-                    }
+                    // Clear streaming content first
+                    setStreamingContent('');
                     
-                    // Add thinking as separate message if present
-                    if (thinkingMessage) {
+                    // Add thinking as a separate message if present
+                    if (thinkingMessage.trim()) {
                       setMessages(prev => [...prev, {
                         type: 'thinking',
-                        content: thinkingMessage,
+                        content: thinkingMessage.trim(),
                         timestamp: new Date().toISOString()
                       }]);
                     }
                     
-                    setStreamingContent('');
-                    setIsStreaming(false);
-                    
-                    if (eventData.tool_calls && eventData.tool_calls.length > 0) {
-                      addSystemMessage(`✅ Completed with ${eventData.tool_calls.length} tool call(s)`);
+                    // Add final assistant message if we have content
+                    if (assistantMessage.trim()) {
+                      setMessages(prev => [...prev, {
+                        type: 'assistant',
+                        content: assistantMessage.trim(),
+                        timestamp: new Date().toISOString()
+                      }]);
                     }
+                    
+                    // Add tool summary if tools were used
+                    if (eventData.tool_calls && eventData.tool_calls.length > 0) {
+                      addSystemMessage(`✅ Response completed with ${eventData.tool_calls.length} tool call(s)`);
+                    } else {
+                      addSystemMessage(`✅ Response completed`);
+                    }
+                    
+                    setIsStreaming(false);
                     break;
                     
                   case 'error':
@@ -355,17 +310,14 @@ const ChatbotInterface: React.FC = () => {
 
   // Effects
   useEffect(() => {
-    checkApiStatus();
-    loadAvailableTools();
-    loadConversations();
+    checkConnection();
     
     const interval = setInterval(() => {
-      checkApiStatus();
-      loadConversations();
+      checkConnection();
     }, 10000);
     
     return () => clearInterval(interval);
-  }, [checkApiStatus, loadAvailableTools, loadConversations]);
+  }, [checkConnection]);
 
   // Cleanup EventSource on unmount
   useEffect(() => {
@@ -379,71 +331,20 @@ const ChatbotInterface: React.FC = () => {
   return (
     <div className="chatbot-container">
       <div className="chatbot-header">
-        <h1>🤖 AI Video Editing Chatbot</h1>
-        <p>Conversational AI with tool calling capabilities</p>
+        <h1>💬 AI Chat</h1>
+        <p>Conversational AI for video editing assistance</p>
       </div>
 
-      {/* API Status */}
-      <div className="section api-status">
-        <div className="section-header">
-          <h3>API Status</h3>
-          <button onClick={checkApiStatus} className="btn-small">
-            🔄 Refresh
-          </button>
-        </div>
-        <div className="status-display">
-          <span className={`status-indicator ${apiStatus.isConnected ? 'connected' : 'disconnected'}`}>
-            {apiStatus.status}
+      {/* Connection Status */}
+      <div className="chat-status">
+        <div className="status-indicator">
+          <span className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+            {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
           </span>
-          {apiStatus.active_conversations !== undefined && (
-            <span className="conversation-count">
-              Active conversations: {apiStatus.active_conversations}
+          {currentConversationId && (
+            <span className="conversation-id">
+              Conversation: {currentConversationId}
             </span>
-          )}
-        </div>
-      </div>
-
-      {/* Conversation Management */}
-      <div className="section conversation-management">
-        <div className="section-header">
-          <h3>Conversations</h3>
-          <div className="conversation-controls">
-            <label className="tools-toggle">
-              <input
-                type="checkbox"
-                checked={toolsEnabled}
-                onChange={(e) => setToolsEnabled(e.target.checked)}
-              />
-              Tools Enabled
-            </label>
-            <button onClick={createConversation} className="btn-success" disabled={!apiStatus.isConnected}>
-              ➕ New Chat
-            </button>
-          </div>
-        </div>
-        
-        <div className="conversations-list">
-          {conversations.length === 0 ? (
-            <div className="no-conversations">No active conversations</div>
-          ) : (
-            conversations.map(conv => (
-              <div 
-                key={conv.conversation_id} 
-                className={`conversation-item ${conv.conversation_id === currentConversationId ? 'active' : ''}`}
-              >
-                <div className="conversation-info" onClick={() => switchConversation(conv.conversation_id)}>
-                  <span className="conversation-id">{conv.conversation_id}</span>
-                  <span className="message-count">{conv.message_count} messages</span>
-                  <span className="tools-status">{conv.tools_enabled ? '🔧' : '🚫'}</span>
-                </div>
-                <button 
-                  onClick={() => deleteConversation(conv.conversation_id)}
-                  className="btn-small delete-btn"
-                >
-                  🗑️
-                </button>
-              </div>
-            ))
           )}
         </div>
       </div>
@@ -451,15 +352,38 @@ const ChatbotInterface: React.FC = () => {
       {/* Chat Interface */}
       <div className="section chat-interface">
         <div className="section-header">
-          <h3>Chat {currentConversationId && `- ${currentConversationId}`}</h3>
+          <h3>💬 Chat</h3>
           <div className="chat-controls">
-            <button 
-              onClick={clearConversation} 
-              className="btn-small"
-              disabled={!currentConversationId}
-            >
-              🗑️ Clear
-            </button>
+            {!currentConversationId ? (
+              <button onClick={createConversation} className="btn-success" disabled={!isConnected}>
+                ➕ Start Chat
+              </button>
+            ) : (
+              <>
+                <label className="tools-toggle">
+                  <input
+                    type="checkbox"
+                    checked={currentConversationToolsEnabled}
+                    onChange={toggleConversationTools}
+                  />
+                  Tools: {currentConversationToolsEnabled ? '🔧' : '🚫'}
+                </label>
+                <button 
+                  onClick={restartConversation} 
+                  className="btn-small"
+                  disabled={!currentConversationId}
+                >
+                  🔄 Restart
+                </button>
+                <button 
+                  onClick={clearConversation} 
+                  className="btn-small"
+                  disabled={!currentConversationId}
+                >
+                  🗑️ Clear
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -506,7 +430,7 @@ const ChatbotInterface: React.FC = () => {
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={currentConversationId ? "Type your message... (Enter to send, Shift+Enter for new line)" : "Create a conversation to start chatting"}
+            placeholder={currentConversationId ? "Type your message... (Enter to send, Shift+Enter for new line)" : "Start a chat to begin"}
             disabled={!currentConversationId || isStreaming}
             rows={3}
           />
@@ -517,29 +441,6 @@ const ChatbotInterface: React.FC = () => {
           >
             {isStreaming ? '⏳ Sending...' : '📤 Send'}
           </button>
-        </div>
-      </div>
-
-      {/* Tools Panel */}
-      <div className="section tools-panel">
-        <div className="section-header">
-          <h3>Available Tools</h3>
-          <button onClick={loadAvailableTools} className="btn-small">
-            🔄 Refresh
-          </button>
-        </div>
-        
-        <div className="tools-list">
-          {availableTools.length === 0 ? (
-            <div className="no-tools">No tools available</div>
-          ) : (
-            availableTools.map(tool => (
-              <div key={tool.name} className="tool-item">
-                <div className="tool-name">{tool.name}</div>
-                <div className="tool-description">{tool.description}</div>
-              </div>
-            ))
-          )}
         </div>
       </div>
     </div>

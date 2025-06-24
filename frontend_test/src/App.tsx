@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import VideoAnalyzer from './analyzer';
 import ChatbotInterface from './chatbot';
+import ProjectManager from './projectmanager';
 import './App.css';
 import './styles.css';
 
-type TabType = 'analyzer' | 'chatbot';
+type TabType = 'analyzer' | 'chatbot' | 'project';
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabType>('analyzer');
@@ -12,6 +13,12 @@ function App() {
   return (
     <div className="app-container">
       <nav className="tab-navigation">
+        <button
+          className={`tab-button ${activeTab === 'project' ? 'active' : ''}`}
+          onClick={() => setActiveTab('project')}
+        >
+          🎬 Project Manager
+        </button>
         <button
           className={`tab-button ${activeTab === 'analyzer' ? 'active' : ''}`}
           onClick={() => setActiveTab('analyzer')}
@@ -22,13 +29,14 @@ function App() {
           className={`tab-button ${activeTab === 'chatbot' ? 'active' : ''}`}
           onClick={() => setActiveTab('chatbot')}
         >
-          🤖 AI Chatbot
+          💬 AI Chat
         </button>
       </nav>
 
       <div className="tab-content">
         {activeTab === 'analyzer' && <VideoAnalyzer />}
         {activeTab === 'chatbot' && <ChatbotInterface />}
+        {activeTab === 'project' && <ProjectManager />}
       </div>
     </div>
   );
