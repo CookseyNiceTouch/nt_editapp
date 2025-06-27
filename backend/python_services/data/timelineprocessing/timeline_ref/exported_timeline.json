@@ -1,0 +1,414 @@
+{
+  "schema_version": "1.0",
+  "otio_schema_version": "0.17.0",
+  "timeline": {
+    "name": "Untitled Timeline",
+    "fps": 25.0,
+    "metadata": {
+      "Resolve_OTIO": {
+        "Resolve OTIO Meta Version": "1.0"
+      }
+    }
+  },
+  "tracks": [
+    {
+      "track_index": 0,
+      "name": "Video Track",
+      "kind": "Video",
+      "clips": [
+        {
+          "clip_index": 0,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {},
+          "source_range": {
+            "start_frame": 186556,
+            "duration_frames": 250,
+            "end_frame": 186805,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 1,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {},
+          "source_range": {
+            "start_frame": 186804,
+            "duration_frames": 224,
+            "end_frame": 187027,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 2,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {},
+          "source_range": {
+            "start_frame": 194261,
+            "duration_frames": 1011,
+            "end_frame": 195271,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 3,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {},
+          "source_range": {
+            "start_frame": 196756,
+            "duration_frames": 938,
+            "end_frame": 197693,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 4,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {},
+          "source_range": {
+            "start_frame": 199134,
+            "duration_frames": 768,
+            "end_frame": 199901,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 5,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {},
+          "source_range": {
+            "start_frame": 205266,
+            "duration_frames": 532,
+            "end_frame": 205797,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 6,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {},
+          "source_range": {
+            "start_frame": 208360,
+            "duration_frames": 710,
+            "end_frame": 209069,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 7,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {},
+          "source_range": {
+            "start_frame": 209164,
+            "duration_frames": 299,
+            "end_frame": 209462,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        }
+      ],
+      "metadata": {
+        "Resolve_OTIO": {
+          "Locked": false
+        }
+      }
+    },
+    {
+      "track_index": 1,
+      "name": "Audio 1",
+      "kind": "Audio",
+      "clips": [
+        {
+          "clip_index": 0,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {
+            "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
+          },
+          "source_range": {
+            "start_frame": 186556,
+            "duration_frames": 250,
+            "end_frame": 186805,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 1,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {
+            "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
+          },
+          "source_range": {
+            "start_frame": 186804,
+            "duration_frames": 224,
+            "end_frame": 187027,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 2,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {
+            "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
+          },
+          "source_range": {
+            "start_frame": 194261,
+            "duration_frames": 1011,
+            "end_frame": 195271,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 3,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {
+            "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
+          },
+          "source_range": {
+            "start_frame": 196756,
+            "duration_frames": 938,
+            "end_frame": 197693,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 4,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {
+            "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
+          },
+          "source_range": {
+            "start_frame": 199134,
+            "duration_frames": 768,
+            "end_frame": 199901,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 5,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {
+            "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
+          },
+          "source_range": {
+            "start_frame": 205266,
+            "duration_frames": 532,
+            "end_frame": 205797,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 6,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {
+            "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
+          },
+          "source_range": {
+            "start_frame": 208360,
+            "duration_frames": 710,
+            "end_frame": 209069,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        },
+        {
+          "clip_index": 7,
+          "name": "20250509_MTC_2206.MP4",
+          "metadata": {
+            "Resolve_OTIO_Channels": "[{'Source Channel ID': 0, 'Source Track ID': 0}, {'Source Channel ID': 1, 'Source Track ID': 0}]"
+          },
+          "source_range": {
+            "start_frame": 209164,
+            "duration_frames": 299,
+            "end_frame": 209462,
+            "fps": 25.0
+          },
+          "media_reference": {
+            "type": "ExternalReference",
+            "target_url": "D:\\NextCloud\\Nice Touch\\Projects\\Leaunch Videos\\Rushes\\Camera\\20250509_MTC_2206.MP4",
+            "filename": "20250509_MTC_2206.MP4",
+            "available_range": {
+              "start_frame": 186262,
+              "duration_frames": 26616,
+              "end_frame": 212877,
+              "fps": 25.0
+            }
+          }
+        }
+      ],
+      "metadata": {
+        "Resolve_OTIO": {
+          "Audio Type": "Stereo",
+          "Locked": false,
+          "SoloOn": false
+        }
+      }
+    }
+  ],
+  "summary": {
+    "total_tracks": 2,
+    "total_clips": 16,
+    "timeline_duration_frames": 4732
+  }
+}

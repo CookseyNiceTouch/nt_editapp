@@ -83,6 +83,8 @@ Re-editing Guidelines
 5. **Preserve quality**: Maintain or improve confidence scores when making changes
 6. **Handle timecode correctly**: Use timecode_offset_frames from transcript for media_reference available_range
 7. **Maintain synchronization**: Keep video and audio tracks synchronized with identical clips
+8 BE METICULOUS your clip selection, ensure you're taking a good take and there is no awkward silence within a clip.
+9 ALWAYS CHECK YOUR TIMING within clips and ensure it's likely to be the best possible take and contributing to the narrative.
 
 Common Re-editing Operations
 - **Remove clips**: Delete specific segments based on content or speaker

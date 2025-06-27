@@ -20,6 +20,7 @@ from pathlib import Path
 
 from moviepy import VideoFileClip
 from dotenv import load_dotenv
+import av  # Add at the top with other imports
 
 # Load environment variables from .env file (for API keys)
 # Look for .env file in the python_services directory (up 2 levels from this script)
@@ -230,119 +231,162 @@ class VideoAnalyzer:
 
     def probe_video_file(self, file_path: str) -> Dict[str, Any]:
         """
-        Extract metadata from video file using ffprobe, including timecode information.
-        
+        Extract metadata from video file using PyAV, including timecode information.
         Args:
             file_path: Path to the video file
-            
         Returns:
-            Dict containing fps, duration, and timecode offset information
-            
+            Dict containing fps, duration, resolution, and timecode offset information
         Raises:
-            RuntimeError: If ffprobe fails or required metadata is missing
+            RuntimeError: If video probing fails or required metadata is missing
         """
-        logger.info(f"Probing video file: {file_path}")
-        
-        # Normalize path for Windows compatibility and log details
-        normalized_path = os.path.normpath(file_path)
-        logger.info(f"Normalized path: {normalized_path}")
-        logger.info(f"Current working directory: {os.getcwd()}")
-        logger.info(f"File exists check: {os.path.exists(normalized_path)}")
-        
-        # Check if file exists first
-        if not os.path.exists(normalized_path):
-            raise RuntimeError(f"Video file not found: {normalized_path} (original: {file_path})")
-        
-        file_path = normalized_path  # Use normalized path for ffmpeg
-        
+        logger.info(f"Probing video file with PyAV: {file_path}")
+        file_path = os.path.normpath(file_path)
+        if not os.path.exists(file_path):
+            raise RuntimeError(f"Video file not found: {file_path}")
         try:
-            # Use MoviePy to get video information
-            video_clip = VideoFileClip(file_path)
-            
-            try:
-                # Get basic video properties
-                fps = video_clip.fps
-                duration_seconds = video_clip.duration
-                has_audio = video_clip.audio is not None
-                
-                if fps <= 0:
-                    raise RuntimeError("Invalid frame rate detected")
-                
-                if duration_seconds <= 0:
-                    raise RuntimeError("Invalid video duration detected")
-                
-                # Calculate total frames
-                duration_frames = round(duration_seconds * fps)
-                
-                # For now, we'll set timecode offset to 0 since MoviePy doesn't easily expose timecode metadata
-                # This could be enhanced later by reading the file metadata directly if needed
-                timecode_offset_frames = 0
-                logger.info("No timecode extraction implemented with MoviePy, using offset 0")
-                
-                result = {
-                    "fps": fps,
-                    "duration_seconds": duration_seconds,
-                    "duration_frames": duration_frames,
-                    "timecode_offset_frames": timecode_offset_frames,
-                    "has_audio": has_audio
-                }
-                
-                logger.info(f"Video metadata: fps={fps}, duration={duration_seconds}s, frames={duration_frames}, has_audio={has_audio}")
-                return result
-                
-            finally:
-                # Clean up the video clip to free resources
-                video_clip.close()
-            
+            container = av.open(file_path)
+            video_stream = None
+            for stream in container.streams.video:
+                video_stream = stream
+                break
+            if not video_stream:
+                raise RuntimeError("No video stream found in file")
+            fps = float(video_stream.average_rate) if video_stream.average_rate else float(video_stream.base_rate)
+            duration = float(video_stream.duration * video_stream.time_base) if video_stream.duration else 0
+            width = video_stream.width
+            height = video_stream.height
+            frame_count = video_stream.frames if video_stream.frames else int(duration * fps) if fps else 0
+            # Timecode extraction
+            start_timecode = "00:00:00:00"
+            timecode_offset_frames = 0
+            # 1. Search all streams for a timecode in metadata
+            for i, stream in enumerate(container.streams):
+                if stream.metadata:
+                    tc = self._parse_timecode_metadata(stream.metadata)
+                    if tc:
+                        start_timecode = tc
+                        break
+            # 2. Check container metadata if not found
+            if start_timecode == "00:00:00:00" and container.metadata:
+                tc = self._parse_timecode_metadata(container.metadata)
+                if tc:
+                    start_timecode = tc
+            # 3. Check video stream metadata if not found
+            if start_timecode == "00:00:00:00" and video_stream.metadata:
+                tc = self._parse_timecode_metadata(video_stream.metadata)
+                if tc:
+                    start_timecode = tc
+            # Convert timecode to frame offset
+            timecode_offset_frames = self._parse_timecode_to_frames(start_timecode, fps)
+            logger.info(f"PyAV: FPS={fps}, Duration={duration}s, Resolution={width}x{height}, Start TC={start_timecode}, Offset={timecode_offset_frames} frames")
+            container.close()
+            return {
+                "fps": fps,
+                "duration_seconds": duration,
+                "duration_frames": frame_count,
+                "width": width,
+                "height": height,
+                "timecode_offset_frames": timecode_offset_frames,
+                "start_timecode": start_timecode
+            }
         except Exception as e:
-            error_message = f"Video probing error: {str(e)}"
-            logger.error(error_message)
-            raise RuntimeError(error_message)
-    
+            logger.error(f"PyAV video probing error: {e}")
+            raise RuntimeError(f"PyAV video probing error: {e}")
+
+    def _parse_timecode_metadata(self, metadata: dict) -> str:
+        """
+        Parse timecode from various metadata fields (PyAV style).
+        Args:
+            metadata (dict): Video metadata dictionary
+        Returns:
+            str: Parsed timecode if found, else None
+        """
+        timecode_keys = [
+            'timecode', 'TIMECODE', 'Timecode', 'creation_time', 'CREATION_TIME',
+            'tc', 'TC', 'start_timecode', 'START_TIMECODE'
+        ]
+        for key in timecode_keys:
+            if key in metadata:
+                value = metadata[key]
+                if isinstance(value, str) and ':' in value:
+                    parts = value.split(':')
+                    if len(parts) >= 3:
+                        try:
+                            hours = int(parts[0])
+                            minutes = int(parts[1])
+                            seconds = int(parts[2])
+                            if 0 <= hours <= 23 and 0 <= minutes <= 59 and 0 <= seconds <= 59:
+                                if len(parts) == 4:
+                                    frames = int(parts[3])
+                                    return f"{hours:02d}:{minutes:02d}:{seconds:02d}:{frames:02d}"
+                                else:
+                                    return f"{hours:02d}:{minutes:02d}:{seconds:02d}:00"
+                        except (ValueError, IndexError):
+                            continue
+        return None
+
     def _parse_timecode_to_frames(self, timecode: str, fps: float) -> int:
         """
-        Parse timecode string to frame offset.
+        Parse SMPTE timecode string to frame offset.
+        
+        Supports formats: HH:MM:SS:FF and HH:MM:SS;FF (drop-frame)
+        Formula: total_frames = ((HH * 3600) + (MM * 60) + SS) * fps + FF
         
         Args:
-            timecode: Timecode string in format HH:MM:SS:FF or HH:MM:SS;FF
+            timecode: Timecode string in SMPTE format
             fps: Frame rate for calculations
             
         Returns:
-            Frame offset as integer
+            Frame offset as integer, or 0 if parsing fails
         """
-        # Clean up timecode string
-        timecode = timecode.strip()
-        
-        # Handle both : and ; separators for frames
-        if ';' in timecode:
-            time_part, frame_part = timecode.rsplit(';', 1)
-        elif ':' in timecode:
-            parts = timecode.split(':')
-            if len(parts) == 4:
-                time_part = ':'.join(parts[:-1])
-                frame_part = parts[-1]
-            else:
-                # No frame part, assume 00
+        try:
+            # Clean up timecode string
+            timecode = timecode.strip()
+            
+            # Handle SMPTE timecode formats
+            if ';' in timecode:
+                # Drop-frame timecode format (HH:MM:SS;FF)
+                time_part, frame_part = timecode.rsplit(';', 1)
+            elif ':' in timecode and timecode.count(':') == 3:
+                # Non-drop-frame timecode format (HH:MM:SS:FF)
+                parts = timecode.split(':')
+                time_part = ':'.join(parts[:-1])  # HH:MM:SS
+                frame_part = parts[-1]           # FF
+            elif ':' in timecode and timecode.count(':') == 2:
+                # Time only format (HH:MM:SS) - assume 00 frames
                 time_part = timecode
-                frame_part = '00'
-        else:
-            raise ValueError(f"Invalid timecode format: {timecode}")
+                frame_part = '0'
+            else:
+                # Try to parse as pure number (seconds)
+                try:
+                    seconds = float(timecode)
+                    return round(seconds * fps)
+                except ValueError:
+                    return 0
+            
+            # Parse time components (HH:MM:SS)
+            time_parts = time_part.split(':')
+            if len(time_parts) == 3:
+                hours, minutes, seconds = map(int, time_parts)
+                frames = int(frame_part)
+                
+                # Validate SMPTE timecode values
+                if (0 <= hours <= 23 and 0 <= minutes <= 59 and 
+                    0 <= seconds <= 59 and 0 <= frames < fps):
+                    
+                    # Convert to total frames using SMPTE formula
+                    total_frames = ((hours * 3600) + (minutes * 60) + seconds) * fps + frames
+                    total_frames = int(total_frames)
+                    
+                    logger.debug(f"Parsed SMPTE timecode '{timecode}': {hours:02d}:{minutes:02d}:{seconds:02d}:{frames:02d} -> {total_frames} frames")
+                    return total_frames
+                else:
+                    logger.warning(f"Invalid SMPTE timecode values in '{timecode}'")
+            
+        except (ValueError, TypeError) as e:
+            logger.debug(f"Failed to parse timecode '{timecode}': {e}")
         
-        # Parse time components
-        time_parts = time_part.split(':')
-        if len(time_parts) != 3:
-            raise ValueError(f"Invalid time format in timecode: {timecode}")
-        
-        hours = int(time_parts[0])
-        minutes = int(time_parts[1])
-        seconds = int(time_parts[2])
-        frames = int(frame_part)
-        
-        # Convert to total frames
-        total_seconds = hours * 3600 + minutes * 60 + seconds
-        total_frames = round(total_seconds * fps) + frames
-        
-        return total_frames
+        return 0
     
     def extract_audio(self, video_path: str) -> str:
         """Extract audio using MoviePy for standalone operation."""
@@ -768,8 +812,8 @@ class VideoAnalyzer:
         # For API usage, return the result with error information instead of exiting
         # The calling code can check for "error" in the result
         return result
-
-
+  
+  
 def main():
     """Enhanced command-line entry point with brief support and silence detection."""
     import argparse

@@ -79,6 +79,8 @@ Editing Guidelines
 3 Always pick the last take when phrases repeat  
 4 Preserve chronological order but feel free to arrange for better narrative flow  
 5 End clips at sentence boundaries or adjacent to silence markers  
+6 BE METICULOUS your clip selection, ensure you're taking a good take and there is no awkward silence within a clip.
+7 ALWAYS CHECK YOUR TIMING within clips and ensure it's likely to be the best possible take and contributing to the narrative.
 
 Error Handling  
 1 If clips overlap adjust frame ranges rather than error out  
