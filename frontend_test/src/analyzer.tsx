@@ -28,7 +28,7 @@ const VideoAnalyzer: React.FC = () => {
   const [statusLog, setStatusLog] = useState<string>('Ready to analyze video files...\n');
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
 
-  const API_BASE_URL = 'http://localhost:8000';
+  const API_BASE_URL = 'http://127.0.0.1:8000';
 
   // API Status Check
   const checkApiStatus = useCallback(async () => {

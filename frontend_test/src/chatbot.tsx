@@ -23,7 +23,7 @@ const ChatbotInterface: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
-  const API_BASE_URL = 'http://localhost:8000';
+  const API_BASE_URL = 'http://127.0.0.1:8000';
 
   // Auto-scroll to bottom of messages
   const scrollToBottom = () => {

@@ -41,8 +41,8 @@ PROJECT_DATA_PATH = PROJECT_ROOT / "data" / "projectdata.json"
 
 # Constants
 CLAUDE_MODEL = "claude-sonnet-4-20250514"
-MAX_TOKENS = 12000  # Total token limit for response including thinking
-THINKING_BUDGET = 8000  # Maximum tokens for Claude's extended thinking process
+MAX_TOKENS = 8000  # Total token limit for response including thinking
+THINKING_BUDGET = 2000  # Maximum tokens for Claude's extended thinking process
 MAX_CONVERSATION_HISTORY = 10  # Keep last 10 exchanges for context
 
 class ChatbotBackend:
